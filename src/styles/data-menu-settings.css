@@ -1,0 +1,284 @@
+
+
+
+
+        /* =====================================================
+   DATA MENU SETTINGS
+===================================================== */
+
+.data-menu-settings {
+    max-width: 850px;
+    margin-top: 28px;
+}
+
+.settings-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.settings-card-header {
+    margin-bottom: 24px;
+}
+
+.settings-card-header h2 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    color: #111827;
+}
+
+.settings-card-header p {
+    margin: 0;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+
+/* =====================================================
+   DRAG MENU
+===================================================== */
+
+.drag-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+
+/* =====================================================
+   MENU ITEM
+===================================================== */
+
+.drag-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    min-height: 64px;
+
+    padding: 10px 14px;
+
+    background: #f9fafb;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+
+    cursor: grab;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.15s ease;
+}
+
+.drag-menu-item:hover {
+    background: #ffffff;
+    border-color: #d1d5db;
+}
+
+.drag-menu-item:active {
+    cursor: grabbing;
+}
+
+
+/* =====================================================
+   DRAGGING
+===================================================== */
+
+.drag-menu-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.99);
+}
+
+
+/* =====================================================
+   DRAG HANDLE
+===================================================== */
+
+.drag-handle {
+    width: 22px;
+
+    font-size: 18px;
+    line-height: 1;
+
+    color: #9ca3af;
+
+    cursor: grab;
+
+    letter-spacing: -4px;
+}
+
+
+/* =====================================================
+   LETTER
+===================================================== */
+
+.menu-letter {
+    width: 36px;
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+
+    background: #eef2ff;
+
+    color: #4f46e5;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   INFO
+===================================================== */
+
+.menu-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.menu-name {
+    font-size: 14px;
+    font-weight: 600;
+
+    color: #111827;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.menu-meta {
+    margin-top: 3px;
+
+    font-size: 11px;
+
+    color: #9ca3af;
+}
+
+
+/* =====================================================
+   POSITION
+===================================================== */
+
+.menu-position {
+    width: 30px;
+
+    text-align: center;
+
+    font-size: 12px;
+
+    color: #9ca3af;
+}
+
+
+/* =====================================================
+   EMPTY
+===================================================== */
+
+.empty-menu {
+    padding: 35px 20px;
+
+    text-align: center;
+
+    border: 1px dashed #d1d5db;
+    border-radius: 8px;
+
+    color: #6b7280;
+}
+
+.empty-menu div {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.empty-menu span {
+    display: block;
+
+    margin-top: 5px;
+
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   ACTIONS
+===================================================== */
+
+.settings-actions {
+    display: flex;
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 20px;
+
+    padding-top: 20px;
+
+    border-top: 1px solid #e5e7eb;
+}
+
+.settings-actions button {
+    border: 0;
+    border-radius: 7px;
+
+    padding: 9px 16px;
+
+    font-size: 13px;
+
+    cursor: pointer;
+}
+
+.reset-order-btn {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.reset-order-btn:hover {
+    background: #e5e7eb;
+}
+
+.save-order-btn {
+    background: #111827;
+    color: #ffffff;
+}
+
+.save-order-btn:hover {
+    background: #1f2937;
+}
+
+.settings-actions button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   TOAST
+===================================================== */
+
+.settings-toast {
+    position: fixed;
+
+    right: 24px;
+    bottom: 24px;
+
+    padding: 12px 16px;
+
+    background: #111827;
+    color: #ffffff;
+
+    border-radius: 8px;
+
+    font-size: 13px;
+
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.15);
+
+    z-index: 9999;
+}
