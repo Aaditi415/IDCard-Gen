@@ -1,17 +1,56 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
+
 
 const DESIGN_STORAGE_KEY = "idCardDesign";
 const FORM_STORAGE_KEY = "idCardForm";
 
+
+/* =====================================================
+   DEFAULT DESIGN
+===================================================== */
+
 const DEFAULT_DESIGN = {
     template: "modern",
+
     primaryColor: "#2563eb",
+
     orientation: "portrait",
+
     background: "white",
+
     cardSize: "standard",
+
     zoom: 1,
+
+    /* =================================================
+       CARD SIDES
+    ================================================= */
+
+    sides: 1,
+
+    previewSide: "front",
+
+    /* =================================================
+       PHOTO
+    ================================================= */
+
+    photo: {
+        visible: true,
+        position: "left",
+        width: 74,
+        height: 91,
+    },
+
+    /* =================================================
+       LOGO
+    ================================================= */
 
     logo: {
         data: null,
@@ -23,12 +62,20 @@ const DEFAULT_DESIGN = {
         visible: true,
     },
 
+    /* =================================================
+       BACKGROUND IMAGE
+    ================================================= */
+
     backgroundImage: {
         data: null,
         name: "",
         opacity: 1,
         visible: true,
     },
+
+    /* =================================================
+       ORGANIZATION
+    ================================================= */
 
     organization: {
         text: "ORGANIZATION",
@@ -37,20 +84,34 @@ const DEFAULT_DESIGN = {
         visible: true,
     },
 
+    /* =================================================
+       OLD FIELD LAYOUT
+       Kept for backward compatibility.
+    ================================================= */
+
     fields: {},
 
-    /*
-    =====================================================
-    FIELD LAYOUT
-
-    row = row number
-    column = column number
-    width = number of columns occupied
-    =====================================================
-    */
-
     fieldLayout: {},
+
+    /* =================================================
+       FRONT / BACK FIELD LAYOUT
+    ================================================= */
+
+    frontFieldLayout: {},
+
+    backFieldLayout: {},
+
+    /* =================================================
+       FIELD SIDE
+    ================================================= */
+
+    fieldSides: {},
 };
+
+
+/* =====================================================
+   NORMALIZE FIELD
+===================================================== */
 
 function normalizeField(field, index) {
     const id =
@@ -77,12 +138,25 @@ function normalizeField(field, index) {
 
     return {
         id: String(id),
+
         label: String(label),
+
         name: String(name),
+
         type: String(type).toLowerCase(),
+
         required: Boolean(field?.required),
+
+        defaultValue: field?.defaultValue || "",
+
+        placeholder: field?.placeholder || "",
     };
 }
+
+
+/* =====================================================
+   MEDIA FIELD
+===================================================== */
 
 function isMediaField(field) {
     return [
@@ -93,11 +167,18 @@ function isMediaField(field) {
     ].includes(field.type);
 }
 
+
+/* =====================================================
+   DESIGN
+===================================================== */
+
 function Design() {
+
     const [formFields, setFormFields] = useState([]);
 
-    const [design, setDesign] =
-        useState(DEFAULT_DESIGN);
+    const [design, setDesign] = useState(
+        DEFAULT_DESIGN
+    );
 
     const [selectedElement, setSelectedElement] =
         useState(null);
@@ -111,17 +192,16 @@ function Design() {
     const [toast, setToast] =
         useState("");
 
-    /*
-    =====================================================
-    LOAD FORM + DESIGN
-    =====================================================
-    */
+
+    /* =================================================
+       LOAD FORM + DESIGN
+    ================================================= */
 
     useEffect(() => {
 
-        /*
-        LOAD FORM
-        */
+        /* =============================================
+           LOAD FORM
+        ============================================= */
 
         try {
 
@@ -145,9 +225,7 @@ function Design() {
                 );
 
             } else if (
-                Array.isArray(
-                    savedForm?.fields
-                )
+                Array.isArray(savedForm?.fields)
             ) {
 
                 setFormFields(
@@ -170,9 +248,9 @@ function Design() {
         }
 
 
-        /*
-        LOAD DESIGN
-        */
+        /* =============================================
+           LOAD DESIGN
+        ============================================= */
 
         try {
 
@@ -205,12 +283,29 @@ function Design() {
                         ...(savedDesign.organization || {}),
                     },
 
+                    photo: {
+                        ...prev.photo,
+                        ...(savedDesign.photo || {}),
+                    },
+
                     fields: {
                         ...(savedDesign.fields || {}),
                     },
 
                     fieldLayout: {
                         ...(savedDesign.fieldLayout || {}),
+                    },
+
+                    frontFieldLayout: {
+                        ...(savedDesign.frontFieldLayout || {}),
+                    },
+
+                    backFieldLayout: {
+                        ...(savedDesign.backFieldLayout || {}),
+                    },
+
+                    fieldSides: {
+                        ...(savedDesign.fieldSides || {}),
                     },
                 }));
             }
@@ -226,35 +321,64 @@ function Design() {
     }, []);
 
 
-    /*
-    =====================================================
-    CREATE DEFAULT FIELD LAYOUT
-    =====================================================
-    */
+    /* =================================================
+       CREATE DEFAULT FIELD LAYOUT
+    ================================================= */
 
     useEffect(() => {
 
-        if (!formFields.length) return;
+        if (!formFields.length) {
+            return;
+        }
 
         setDesign((prev) => {
 
-            const updatedLayout = {
+            const oldLayout = {
                 ...(prev.fieldLayout || {}),
+            };
+
+            const frontLayout = {
+                ...(prev.frontFieldLayout || {}),
+            };
+
+            const backLayout = {
+                ...(prev.backFieldLayout || {}),
+            };
+
+            const fieldSides = {
+                ...(prev.fieldSides || {}),
             };
 
             let changed = false;
 
+
             formFields.forEach(
                 (field, index) => {
 
-                    /*
-                    Only create layout once.
-                    Never overwrite user's layout.
-                    */
+                    /* =================================
+                       BACKWARD COMPATIBILITY
+                    ================================= */
 
-                    if (!updatedLayout[field.id]) {
+                    if (
+                        !frontLayout[field.id] &&
+                        oldLayout[field.id]
+                    ) {
 
-                        updatedLayout[field.id] = {
+                        frontLayout[field.id] = {
+                            ...oldLayout[field.id],
+                        };
+
+                        changed = true;
+                    }
+
+
+                    /* =================================
+                       DEFAULT FRONT LAYOUT
+                    ================================= */
+
+                    if (!frontLayout[field.id]) {
+
+                        frontLayout[field.id] = {
                             row: index + 1,
                             column: 1,
                             width: 1,
@@ -262,28 +386,67 @@ function Design() {
 
                         changed = true;
                     }
+
+
+                    /* =================================
+                       DEFAULT BACK LAYOUT
+                    ================================= */
+
+                    if (!backLayout[field.id]) {
+
+                        backLayout[field.id] = {
+                            row: index + 1,
+                            column: 1,
+                            width: 1,
+                        };
+
+                        changed = true;
+                    }
+
+
+                    /* =================================
+                       DEFAULT SIDE
+                    ================================= */
+
+                    if (!fieldSides[field.id]) {
+
+                        fieldSides[field.id] =
+                            "front";
+
+                        changed = true;
+                    }
+
                 }
             );
+
 
             if (!changed) {
                 return prev;
             }
 
+
             return {
                 ...prev,
-                fieldLayout:
-                    updatedLayout,
+
+                fieldLayout: frontLayout,
+
+                frontFieldLayout:
+                    frontLayout,
+
+                backFieldLayout:
+                    backLayout,
+
+                fieldSides,
             };
+
         });
 
     }, [formFields]);
 
 
-    /*
-    =====================================================
-    SAVE DESIGN
-    =====================================================
-    */
+    /* =================================================
+       SAVE DESIGN
+    ================================================= */
 
     useEffect(() => {
 
@@ -295,11 +458,9 @@ function Design() {
     }, [design]);
 
 
-    /*
-    =====================================================
-    TOAST
-    =====================================================
-    */
+    /* =================================================
+       TOAST
+    ================================================= */
 
     const showToast = (message) => {
 
@@ -308,14 +469,13 @@ function Design() {
         setTimeout(() => {
             setToast("");
         }, 1800);
+
     };
 
 
-    /*
-    =====================================================
-    UPDATE DESIGN
-    =====================================================
-    */
+    /* =================================================
+       UPDATE DESIGN
+    ================================================= */
 
     const updateDesign = (changes) => {
 
@@ -323,31 +483,35 @@ function Design() {
             ...prev,
             ...changes,
         }));
+
     };
 
 
-    /*
-    =====================================================
-    UPDATE FIELD LAYOUT
-    =====================================================
-    */
+    /* =================================================
+       UPDATE FIELD LAYOUT
+    ================================================= */
 
     const updateFieldLayout = (
         fieldId,
-        changes
+        changes,
+        side = "front"
     ) => {
 
-        setDesign((prev) => ({
+        setDesign((prev) => {
 
-            ...prev,
+            const layoutKey =
+                side === "back"
+                    ? "backFieldLayout"
+                    : "frontFieldLayout";
 
-            fieldLayout: {
+            const currentLayout =
+                prev[layoutKey] || {};
 
-                ...(prev.fieldLayout || {}),
+            const updatedLayout = {
+                ...currentLayout,
 
                 [fieldId]: {
-
-                    ...(prev.fieldLayout?.[fieldId] || {
+                    ...(currentLayout[fieldId] || {
                         row: 1,
                         column: 1,
                         width: 1,
@@ -355,17 +519,62 @@ function Design() {
 
                     ...changes,
                 },
-            },
+            };
 
-        }));
+
+            return {
+                ...prev,
+
+                [layoutKey]:
+                    updatedLayout,
+
+                /* Keep old fieldLayout
+                   synced with front */
+
+                ...(side === "front"
+                    ? {
+                        fieldLayout:
+                            updatedLayout,
+                    }
+                    : {}),
+            };
+
+        });
+
     };
 
 
-    /*
-    =====================================================
-    UPDATE FIELD POSITION IN LIST
-    =====================================================
-    */
+    /* =================================================
+       UPDATE FIELD SIDE
+    ================================================= */
+
+    const updateFieldSide = (
+        fieldId,
+        side
+    ) => {
+
+        setDesign((prev) => ({
+            ...prev,
+
+            fieldSides: {
+                ...(prev.fieldSides || {}),
+
+                [fieldId]: side,
+            },
+        }));
+
+        showToast(
+            side === "front"
+                ? "Field moved to front"
+                : "Field moved to back"
+        );
+
+    };
+
+
+    /* =================================================
+       MOVE FIELD
+    ================================================= */
 
     const moveField = (
         fieldId,
@@ -378,13 +587,16 @@ function Design() {
                     field.id === fieldId
             );
 
-        if (currentIndex === -1)
+        if (currentIndex === -1) {
             return;
+        }
+
 
         const newIndex =
             direction === "up"
                 ? currentIndex - 1
                 : currentIndex + 1;
+
 
         if (
             newIndex < 0 ||
@@ -392,6 +604,7 @@ function Design() {
         ) {
             return;
         }
+
 
         const updatedFields =
             [...formFields];
@@ -405,129 +618,160 @@ function Design() {
         updatedFields[newIndex] =
             temp;
 
+
         setFormFields(
             updatedFields
         );
 
-        /*
-        Rebuild row positions
-        */
+
+        /* =============================================
+           REBUILD ROW POSITIONS
+        ============================================= */
 
         setDesign((prev) => {
 
-            const updatedLayout = {
-                ...(prev.fieldLayout || {}),
+            const frontLayout = {
+                ...(prev.frontFieldLayout || {}),
             };
+
+            const backLayout = {
+                ...(prev.backFieldLayout || {}),
+            };
+
 
             updatedFields.forEach(
                 (field, index) => {
 
-                    updatedLayout[field.id] = {
+                    if (
+                        frontLayout[field.id]
+                    ) {
 
-                        ...(updatedLayout[field.id] || {}),
+                        frontLayout[field.id] = {
+                            ...frontLayout[field.id],
 
-                        row: index + 1,
-                    };
+                            row: index + 1,
+                        };
+                    }
+
+
+                    if (
+                        backLayout[field.id]
+                    ) {
+
+                        backLayout[field.id] = {
+                            ...backLayout[field.id],
+
+                            row: index + 1,
+                        };
+                    }
+
                 }
             );
 
+
             return {
                 ...prev,
+
                 fieldLayout:
-                    updatedLayout,
+                    frontLayout,
+
+                frontFieldLayout:
+                    frontLayout,
+
+                backFieldLayout:
+                    backLayout,
             };
+
         });
+
 
         showToast(
             direction === "up"
                 ? "Field moved up"
                 : "Field moved down"
         );
+
     };
 
 
-    /*
-    =====================================================
-    CARD DIMENSIONS
-    =====================================================
-    */
+    /* =================================================
+       CARD DIMENSIONS
+    ================================================= */
 
-    const cardDimensions =
-        useMemo(() => {
+    const cardDimensions = useMemo(() => {
 
-            if (
-                design.orientation ===
-                "landscape"
-            ) {
-
-                return {
-                    width:
-                        design.cardSize ===
-                        "compact"
-                            ? 360
-                            : 440,
-
-                    height:
-                        design.cardSize ===
-                        "compact"
-                            ? 230
-                            : 280,
-                };
-            }
+        if (
+            design.orientation ===
+            "landscape"
+        ) {
 
             return {
                 width:
                     design.cardSize ===
                     "compact"
-                        ? 230
-                        : 280,
+                        ? 360
+                        : 440,
 
                 height:
                     design.cardSize ===
                     "compact"
-                        ? 360
-                        : 440,
+                        ? 230
+                        : 280,
             };
-
-        }, [
-            design.orientation,
-            design.cardSize,
-        ]);
+        }
 
 
-    /*
-    =====================================================
-    TEMPLATE
-    =====================================================
-    */
+        return {
+            width:
+                design.cardSize ===
+                "compact"
+                    ? 230
+                    : 280,
 
-    const templateClass =
-        `id-card-template-${design.template}`;
+            height:
+                design.cardSize ===
+                "compact"
+                    ? 360
+                    : 440,
+        };
+
+    }, [
+        design.orientation,
+        design.cardSize,
+    ]);
 
 
-    /*
-    =====================================================
-    FIELD VALUE
-    =====================================================
-    */
+    /* =================================================
+       TEMPLATE
+    ================================================= */
+
+    const templateClass = design.template || "modern";
+
+
+    /* =================================================
+       FIELD VALUE
+    ================================================= */
 
     const getFieldValue = (
         field
     ) => {
+
+        if (!field) {
+            return "";
+        }
 
         return (
             field.defaultValue ||
             field.placeholder ||
             field.label
         );
+
     };
 
 
-    /*
-    =====================================================
-    LOGO UPLOAD
-    =====================================================
-    */
+    /* =================================================
+       LOGO UPLOAD
+    ================================================= */
 
     const handleLogoUpload = (
         event
@@ -536,9 +780,13 @@ function Design() {
         const file =
             event.target.files?.[0];
 
-        if (!file) return;
+        if (!file) {
+            return;
+        }
+
 
         setLogoError("");
+
 
         if (
             !file.type.startsWith(
@@ -552,6 +800,7 @@ function Design() {
 
             return;
         }
+
 
         if (
             file.size >
@@ -565,17 +814,17 @@ function Design() {
             return;
         }
 
+
         const reader =
             new FileReader();
+
 
         reader.onload = () => {
 
             setDesign((prev) => ({
-
                 ...prev,
 
                 logo: {
-
                     ...prev.logo,
 
                     data:
@@ -586,23 +835,23 @@ function Design() {
 
                     visible: true,
                 },
-
             }));
 
             showToast(
                 "Organization logo updated"
             );
+
         };
 
+
         reader.readAsDataURL(file);
+
     };
 
 
-    /*
-    =====================================================
-    BACKGROUND UPLOAD
-    =====================================================
-    */
+    /* =================================================
+       BACKGROUND UPLOAD
+    ================================================= */
 
     const handleBackgroundUpload = (
         event
@@ -611,9 +860,13 @@ function Design() {
         const file =
             event.target.files?.[0];
 
-        if (!file) return;
+        if (!file) {
+            return;
+        }
+
 
         setBackgroundError("");
+
 
         if (
             !file.type.startsWith(
@@ -628,6 +881,7 @@ function Design() {
             return;
         }
 
+
         if (
             file.size >
             4 * 1024 * 1024
@@ -640,17 +894,17 @@ function Design() {
             return;
         }
 
+
         const reader =
             new FileReader();
+
 
         reader.onload = () => {
 
             setDesign((prev) => ({
-
                 ...prev,
 
                 backgroundImage: {
-
                     ...prev.backgroundImage,
 
                     data:
@@ -661,86 +915,98 @@ function Design() {
 
                     visible: true,
                 },
-
             }));
 
             showToast(
                 "Background image updated"
             );
+
         };
 
+
         reader.readAsDataURL(file);
+
     };
 
 
-    /*
-    =====================================================
-    REMOVE LOGO
-    =====================================================
-    */
+    /* =================================================
+       REMOVE LOGO
+    ================================================= */
 
     const removeLogo = () => {
 
         setDesign((prev) => ({
-
             ...prev,
 
             logo: {
-
                 ...prev.logo,
 
                 data: null,
 
                 name: "",
             },
-
         }));
+
+        setSelectedElement(null);
 
         showToast(
             "Logo removed"
         );
+
     };
 
 
-    /*
-    =====================================================
-    REMOVE BACKGROUND
-    =====================================================
-    */
+    /* =================================================
+       REMOVE BACKGROUND
+    ================================================= */
 
     const removeBackground = () => {
 
         setDesign((prev) => ({
-
             ...prev,
 
             backgroundImage: {
-
                 ...prev.backgroundImage,
 
                 data: null,
 
                 name: "",
             },
-
         }));
 
         showToast(
             "Background removed"
         );
+
     };
 
 
-    /*
-    =====================================================
-    NAVIGATION
-    =====================================================
-    */
+    /* =================================================
+       CHANGE PREVIEW SIDE
+    ================================================= */
+
+    const changePreviewSide = (
+        side
+    ) => {
+
+        updateDesign({
+            previewSide: side,
+        });
+
+        setSelectedElement(null);
+
+    };
+
+
+    /* =================================================
+       NAVIGATION
+    ================================================= */
 
     const handleBack = () => {
 
         window.location.href =
             "/create-form";
+
     };
 
 
@@ -755,20 +1021,97 @@ function Design() {
             "Design saved"
         );
 
+
         setTimeout(() => {
 
             window.location.href =
-                "/id-card-demo";
+                "/demo";
 
         }, 350);
+
     };
 
 
-    /*
-    =====================================================
-    RENDER
-    =====================================================
-    */
+    /* =================================================
+       ACTIVE SIDE
+    ================================================= */
+
+    const activeSide =
+        design.sides === 2
+            ? design.previewSide === "back"
+                ? "back"
+                : "front"
+            : "front";
+
+
+    /* =================================================
+       ACTIVE FIELD LAYOUT
+    ================================================= */
+
+    const activeFieldLayout =
+        activeSide === "back"
+            ? design.backFieldLayout || {}
+            : design.frontFieldLayout ||
+              design.fieldLayout ||
+              {};
+
+
+    /* =================================================
+       ACTIVE FIELDS
+    ================================================= */
+
+    const visibleFields =
+        formFields.filter((field) => {
+
+            if (
+                design.sides === 1
+            ) {
+
+                return true;
+            }
+
+
+            return (
+                (
+                    design.fieldSides?.[
+                        field.id
+                    ] ||
+                    "front"
+                ) === activeSide
+            );
+
+        });
+
+
+    /* =================================================
+       PHOTO FIELD
+
+       IMPORTANT:
+       Photo is now completely separated
+       from the normal field grid.
+    ================================================= */
+
+    const photoField =
+        visibleFields.find(
+            (field) =>
+                isMediaField(field)
+        );
+
+
+    /* =================================================
+       NORMAL INFORMATION FIELDS
+    ================================================= */
+
+    const informationFields =
+        visibleFields.filter(
+            (field) =>
+                !isMediaField(field)
+        );
+
+
+    /* =================================================
+       RENDER
+    ================================================= */
 
     return (
         <>
@@ -780,9 +1123,12 @@ function Design() {
 
                 <Topbar />
 
+
                 <div className="content">
 
-                    {/* BREADCRUMB */}
+                    {/* =================================
+                        BREADCRUMB
+                    ================================= */}
 
                     <div className="breadcrumb">
 
@@ -805,7 +1151,9 @@ function Design() {
                     </div>
 
 
-                    {/* HEADER */}
+                    {/* =================================
+                        HEADER
+                    ================================= */}
 
                     <div className="page-header">
 
@@ -816,9 +1164,9 @@ function Design() {
                             </h1>
 
                             <p className="page-subtitle">
-                                Customize your ID card
-                                and arrange your fields
-                                exactly how you want.
+                                Customize your ID card and
+                                arrange your fields exactly
+                                how you want.
                             </p>
 
                         </div>
@@ -826,7 +1174,9 @@ function Design() {
                     </div>
 
 
-                    {/* STEPS */}
+                    {/* =================================
+                        STEPS
+                    ================================= */}
 
                     <div className="steps">
 
@@ -842,7 +1192,9 @@ function Design() {
 
                         </div>
 
+
                         <div className="step-line completed" />
+
 
                         <div className="step active">
 
@@ -856,7 +1208,9 @@ function Design() {
 
                         </div>
 
+
                         <div className="step-line" />
+
 
                         <div className="step">
 
@@ -870,7 +1224,9 @@ function Design() {
 
                         </div>
 
+
                         <div className="step-line" />
+
 
                         <div className="step">
 
@@ -887,25 +1243,30 @@ function Design() {
                     </div>
 
 
-                    {/* WORKSPACE */}
+                    {/* =================================
+                        WORKSPACE
+                    ================================= */}
 
                     <div className="design-workspace">
 
 
-                        {/* =================================================
+                        {/* =================================
                             LEFT SETTINGS
-                        ================================================= */}
+                        ================================= */}
 
                         <aside className="settings-panel">
 
 
-                            {/* TEMPLATE */}
+                            {/* =================================
+                                TEMPLATE
+                            ================================= */}
 
                             <section className="setting-section">
 
                                 <div className="setting-title">
                                     Template
                                 </div>
+
 
                                 <div className="template-grid">
 
@@ -914,14 +1275,10 @@ function Design() {
                                         "classic",
                                         "minimal",
                                     ].map(
-                                        (
-                                            template
-                                        ) => (
+                                        (template) => (
 
                                             <button
-                                                key={
-                                                    template
-                                                }
+                                                key={template}
                                                 type="button"
                                                 className={
                                                     design.template ===
@@ -930,11 +1287,9 @@ function Design() {
                                                         : "template-option"
                                                 }
                                                 onClick={() =>
-                                                    updateDesign(
-                                                        {
-                                                            template,
-                                                        }
-                                                    )
+                                                    updateDesign({
+                                                        template,
+                                                    })
                                                 }
                                             >
 
@@ -944,9 +1299,7 @@ function Design() {
 
                                                 <span>
                                                     {template
-                                                        .charAt(
-                                                            0
-                                                        )
+                                                        .charAt(0)
                                                         .toUpperCase() +
                                                         template.slice(
                                                             1
@@ -954,6 +1307,7 @@ function Design() {
                                                 </span>
 
                                             </button>
+
                                         )
                                     )}
 
@@ -962,13 +1316,16 @@ function Design() {
                             </section>
 
 
-                            {/* COLOR */}
+                            {/* =================================
+                                PRIMARY COLOR
+                            ================================= */}
 
                             <section className="setting-section">
 
                                 <div className="setting-title">
                                     Primary Color
                                 </div>
+
 
                                 <div className="color-row">
 
@@ -977,36 +1334,27 @@ function Design() {
                                         value={
                                             design.primaryColor
                                         }
-                                        onChange={(
-                                            event
-                                        ) =>
-                                            updateDesign(
-                                                {
-                                                    primaryColor:
-                                                        event
-                                                            .target
-                                                            .value,
-                                                }
-                                            )
+                                        onChange={(event) =>
+                                            updateDesign({
+                                                primaryColor:
+                                                    event.target
+                                                        .value,
+                                            })
                                         }
                                     />
+
 
                                     <input
                                         type="text"
                                         value={
                                             design.primaryColor
                                         }
-                                        onChange={(
-                                            event
-                                        ) =>
-                                            updateDesign(
-                                                {
-                                                    primaryColor:
-                                                        event
-                                                            .target
-                                                            .value,
-                                                }
-                                            )
+                                        onChange={(event) =>
+                                            updateDesign({
+                                                primaryColor:
+                                                    event.target
+                                                        .value,
+                                            })
                                         }
                                     />
 
@@ -1015,13 +1363,64 @@ function Design() {
                             </section>
 
 
-                            {/* CARD SETTINGS */}
+                            {/* =================================
+                                CARD SETTINGS
+                            ================================= */}
 
                             <section className="setting-section">
 
                                 <div className="setting-title">
                                     Card Settings
                                 </div>
+
+
+                                {/* SIDES */}
+
+                                <div className="control-row">
+
+                                    <label>
+                                        Card Sides
+                                    </label>
+
+                                    <select
+                                        value={
+                                            design.sides
+                                        }
+                                        onChange={(event) => {
+
+                                            const sides =
+                                                Number(
+                                                    event.target
+                                                        .value
+                                                );
+
+                                            updateDesign({
+                                                sides,
+                                                previewSide:
+                                                    "front",
+                                            });
+
+                                            setSelectedElement(
+                                                null
+                                            );
+
+                                        }}
+                                    >
+
+                                        <option value={1}>
+                                            Front Only
+                                        </option>
+
+                                        <option value={2}>
+                                            Front + Back
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                {/* ORIENTATION */}
 
                                 <div className="control-row">
 
@@ -1033,17 +1432,12 @@ function Design() {
                                         value={
                                             design.orientation
                                         }
-                                        onChange={(
-                                            event
-                                        ) =>
-                                            updateDesign(
-                                                {
-                                                    orientation:
-                                                        event
-                                                            .target
-                                                            .value,
-                                                }
-                                            )
+                                        onChange={(event) =>
+                                            updateDesign({
+                                                orientation:
+                                                    event.target
+                                                        .value,
+                                            })
                                         }
                                     >
 
@@ -1060,6 +1454,8 @@ function Design() {
                                 </div>
 
 
+                                {/* BACKGROUND */}
+
                                 <div className="control-row">
 
                                     <label>
@@ -1070,17 +1466,12 @@ function Design() {
                                         value={
                                             design.background
                                         }
-                                        onChange={(
-                                            event
-                                        ) =>
-                                            updateDesign(
-                                                {
-                                                    background:
-                                                        event
-                                                            .target
-                                                            .value,
-                                                }
-                                            )
+                                        onChange={(event) =>
+                                            updateDesign({
+                                                background:
+                                                    event.target
+                                                        .value,
+                                            })
                                         }
                                     >
 
@@ -1101,6 +1492,8 @@ function Design() {
                                 </div>
 
 
+                                {/* CARD SIZE */}
+
                                 <div className="control-row">
 
                                     <label>
@@ -1111,17 +1504,12 @@ function Design() {
                                         value={
                                             design.cardSize
                                         }
-                                        onChange={(
-                                            event
-                                        ) =>
-                                            updateDesign(
-                                                {
-                                                    cardSize:
-                                                        event
-                                                            .target
-                                                            .value,
-                                                }
-                                            )
+                                        onChange={(event) =>
+                                            updateDesign({
+                                                cardSize:
+                                                    event.target
+                                                        .value,
+                                            })
                                         }
                                     >
 
@@ -1137,10 +1525,40 @@ function Design() {
 
                                 </div>
 
+
+                                {/* PHOTO POSITION */}
+
+                                <div className="control-row">
+
+                                    <label>
+                                        Photo Position
+                                    </label>
+
+                                    <select
+                                        value={design.photo?.position || "left"}
+                                        onChange={(event) =>
+                                        setDesign((prev) => ({
+                                            ...prev,
+                                            photo: {
+                                            ...prev.photo,
+                                            position: event.target.value,
+                                            },
+                                        }))
+                                        }
+                                    >
+                                        <option value="left">Left</option>
+                                        <option value="center">Center</option>
+                                        <option value="right">Right</option>
+                                    </select>
+
+                                </div>
+
                             </section>
 
 
-                            {/* BACKGROUND IMAGE */}
+                            {/* =================================
+                                BACKGROUND IMAGE
+                            ================================= */}
 
                             <section className="setting-section">
 
@@ -1148,11 +1566,10 @@ function Design() {
                                     Background Image
                                 </div>
 
+
                                 <label className="logo-upload">
 
-                                    {design
-                                        .backgroundImage
-                                        ?.data ? (
+                                    {design.backgroundImage?.data ? (
 
                                         <img
                                             src={
@@ -1171,6 +1588,7 @@ function Design() {
 
                                     )}
 
+
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -1181,22 +1599,20 @@ function Design() {
 
                                 </label>
 
+
                                 <div className="logo-help">
                                     JPG, PNG or SVG · Max 4MB
                                 </div>
 
+
                                 {backgroundError && (
                                     <div className="error">
-                                        {
-                                            backgroundError
-                                        }
+                                        {backgroundError}
                                     </div>
                                 )}
 
-                                {design
-                                    .backgroundImage
-                                    ?.data && (
 
+                                {design.backgroundImage?.data && (
                                     <button
                                         type="button"
                                         className="remove-logo-btn"
@@ -1206,13 +1622,14 @@ function Design() {
                                     >
                                         Remove Background
                                     </button>
-
                                 )}
 
                             </section>
 
 
-                            {/* LOGO */}
+                            {/* =================================
+                                ORGANIZATION LOGO
+                            ================================= */}
 
                             <section className="setting-section">
 
@@ -1220,15 +1637,14 @@ function Design() {
                                     Organization Logo
                                 </div>
 
+
                                 <label className="logo-upload">
 
                                     {design.logo?.data ? (
 
                                         <img
                                             src={
-                                                design
-                                                    .logo
-                                                    .data
+                                                design.logo.data
                                             }
                                             alt="Organization logo"
                                         />
@@ -1241,6 +1657,7 @@ function Design() {
 
                                     )}
 
+
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -1251,9 +1668,11 @@ function Design() {
 
                                 </label>
 
+
                                 <div className="logo-help">
                                     PNG, JPG or SVG · Max 2MB
                                 </div>
+
 
                                 {logoError && (
                                     <div className="error">
@@ -1261,8 +1680,8 @@ function Design() {
                                     </div>
                                 )}
 
-                                {design.logo?.data && (
 
+                                {design.logo?.data && (
                                     <button
                                         type="button"
                                         className="remove-logo-btn"
@@ -1272,21 +1691,21 @@ function Design() {
                                     >
                                         Remove Logo
                                     </button>
-
                                 )}
 
                             </section>
 
 
-                            {/* =================================================
+                            {/* =================================
                                 DESIGN ELEMENTS
-                            ================================================= */}
+                            ================================= */}
 
                             <section className="setting-section">
 
                                 <div className="setting-title">
                                     Design Elements
                                 </div>
+
 
                                 <p className="setting-description">
                                     Select an element to edit
@@ -1362,9 +1781,9 @@ function Design() {
                             </section>
 
 
-                            {/* =================================================
-                                FIELD LAYOUT
-                            ================================================= */}
+                            {/* =================================
+                                FORM FIELDS
+                            ================================= */}
 
                             <section className="setting-section">
 
@@ -1372,22 +1791,27 @@ function Design() {
                                     Form Fields
                                 </div>
 
+
                                 <p className="setting-description">
-                                    Arrange your fields using
-                                    rows and columns.
+                                    Arrange your fields and
+                                    choose which card side
+                                    they appear on.
                                 </p>
 
 
                                 <div className="field-layout-list">
 
-                                    {formFields.length ===
-                                    0 ? (
+                                    {formFields.length === 0 ? (
 
                                         <div className="empty-fields">
+
                                             No form fields found.
+
                                             <br />
+
                                             Create fields in
                                             Step 1.
+
                                         </div>
 
                                     ) : (
@@ -1398,17 +1822,39 @@ function Design() {
                                                 index
                                             ) => {
 
+                                                const fieldSide =
+                                                    design
+                                                        .fieldSides?.[
+                                                        field.id
+                                                    ] ||
+                                                    "front";
+
+
                                                 const layout =
+                                                    (
+                                                        fieldSide ===
+                                                        "back"
+                                                            ? design
+                                                                  .backFieldLayout
+                                                            : design
+                                                                  .frontFieldLayout
+                                                    )?.[
+                                                        field.id
+                                                    ] ||
                                                     design
                                                         .fieldLayout?.[
                                                         field.id
-                                                    ] || {
+                                                    ] ||
+                                                    {
                                                         row:
                                                             index +
                                                             1,
+
                                                         column: 1,
+
                                                         width: 1,
                                                     };
+
 
                                                 return (
 
@@ -1418,6 +1864,8 @@ function Design() {
                                                         }
                                                         className="field-layout-item"
                                                     >
+
+                                                        {/* HEADER */}
 
                                                         <div className="field-layout-header">
 
@@ -1456,6 +1904,7 @@ function Design() {
                                                                     ↑
                                                                 </button>
 
+
                                                                 <button
                                                                     type="button"
                                                                     onClick={() =>
@@ -1478,8 +1927,57 @@ function Design() {
                                                         </div>
 
 
-                                                        <div className="field-layout-controls">
+                                                        {/* SIDE */}
 
+                                                        {design.sides ===
+                                                            2 && (
+
+                                                            <div
+                                                                className="control-row"
+                                                                style={{
+                                                                    marginBottom:
+                                                                        "9px",
+                                                                }}
+                                                            >
+
+                                                                <label>
+                                                                    Side
+                                                                </label>
+
+                                                                <select
+                                                                    value={
+                                                                        fieldSide
+                                                                    }
+                                                                    onChange={(
+                                                                        event
+                                                                    ) =>
+                                                                        updateFieldSide(
+                                                                            field.id,
+                                                                            event
+                                                                                .target
+                                                                                .value
+                                                                        )
+                                                                    }
+                                                                >
+
+                                                                    <option value="front">
+                                                                        Front
+                                                                    </option>
+
+                                                                    <option value="back">
+                                                                        Back
+                                                                    </option>
+
+                                                                </select>
+
+                                                            </div>
+
+                                                        )}
+
+
+                                                        {/* LAYOUT CONTROLS */}
+
+                                                        <div className="field-layout-controls">
 
                                                             {/* ROW */}
 
@@ -1492,6 +1990,7 @@ function Design() {
                                                                 <input
                                                                     type="number"
                                                                     min="1"
+                                                                    max="20"
                                                                     value={
                                                                         layout.row
                                                                     }
@@ -1501,17 +2000,17 @@ function Design() {
                                                                         updateFieldLayout(
                                                                             field.id,
                                                                             {
-                                                                                row:
-                                                                                    Math.max(
-                                                                                        1,
-                                                                                        Number(
-                                                                                            event
-                                                                                                .target
-                                                                                                .value
-                                                                                        ) ||
-                                                                                            1
-                                                                                    ),
-                                                                            }
+                                                                                row: Math.max(
+                                                                                    1,
+                                                                                    Number(
+                                                                                        event
+                                                                                            .target
+                                                                                            .value
+                                                                                    ) ||
+                                                                                        1
+                                                                                ),
+                                                                            },
+                                                                            fieldSide
                                                                         )
                                                                     }
                                                                 />
@@ -1543,7 +2042,8 @@ function Design() {
                                                                                             .target
                                                                                             .value
                                                                                     ),
-                                                                            }
+                                                                            },
+                                                                            fieldSide
                                                                         )
                                                                     }
                                                                 >
@@ -1585,7 +2085,8 @@ function Design() {
                                                                                             .target
                                                                                             .value
                                                                                     ),
-                                                                            }
+                                                                            },
+                                                                            fieldSide
                                                                         )
                                                                     }
                                                                 >
@@ -1605,6 +2106,7 @@ function Design() {
                                                         </div>
 
                                                     </div>
+
                                                 );
                                             }
                                         )
@@ -1618,12 +2120,16 @@ function Design() {
                         </aside>
 
 
-                        {/* =================================================
-                            PREVIEW
-                        ================================================= */}
+                        {/* =================================
+                            PREVIEW PANEL
+                        ================================= */}
 
                         <section className="preview-panel">
 
+
+                            {/* =================================
+                                PREVIEW HEADER
+                            ================================= */}
 
                             <div className="preview-panel-header">
 
@@ -1635,76 +2141,220 @@ function Design() {
 
                                     <span>
                                         Preview your field
-                                        layout in real time.
+                                        layout in realtime.
                                     </span>
 
                                 </div>
 
 
-                                <div className="zoom-controls">
+                                <div
+                                    style={{
+                                        display:
+                                            "flex",
 
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            updateDesign(
-                                                {
-                                                    zoom:
-                                                        Math.max(
-                                                            0.6,
-                                                            Number(
-                                                                (
-                                                                    design.zoom -
-                                                                    0.1
-                                                                ).toFixed(
-                                                                    1
-                                                                )
+                                        alignItems:
+                                            "center",
+
+                                        gap:
+                                            "10px",
+                                    }}
+                                >
+
+                                    {/* FRONT / BACK */}
+
+                                    {design.sides ===
+                                        2 && (
+
+                                        <div
+                                            style={{
+                                                display:
+                                                    "flex",
+
+                                                gap:
+                                                    "4px",
+
+                                                border:
+                                                    "1px solid var(--border)",
+
+                                                borderRadius:
+                                                    "7px",
+
+                                                padding:
+                                                    "3px",
+
+                                                background:
+                                                    "#fff",
+                                            }}
+                                        >
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    changePreviewSide(
+                                                        "front"
+                                                    )
+                                                }
+                                                style={{
+                                                    height:
+                                                        "26px",
+
+                                                    padding:
+                                                        "0 9px",
+
+                                                    border:
+                                                        "0",
+
+                                                    borderRadius:
+                                                        "5px",
+
+                                                    cursor:
+                                                        "pointer",
+
+                                                    fontFamily:
+                                                        "inherit",
+
+                                                    fontSize:
+                                                        "10px",
+
+                                                    fontWeight:
+                                                        "600",
+
+                                                    background:
+                                                        activeSide ===
+                                                        "front"
+                                                            ? "var(--primary)"
+                                                            : "transparent",
+
+                                                    color:
+                                                        activeSide ===
+                                                        "front"
+                                                            ? "#fff"
+                                                            : "#4b5563",
+                                                }}
+                                            >
+                                                Front
+                                            </button>
+
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    changePreviewSide(
+                                                        "back"
+                                                    )
+                                                }
+                                                style={{
+                                                    height:
+                                                        "26px",
+
+                                                    padding:
+                                                        "0 9px",
+
+                                                    border:
+                                                        "0",
+
+                                                    borderRadius:
+                                                        "5px",
+
+                                                    cursor:
+                                                        "pointer",
+
+                                                    fontFamily:
+                                                        "inherit",
+
+                                                    fontSize:
+                                                        "10px",
+
+                                                    fontWeight:
+                                                        "600",
+
+                                                    background:
+                                                        activeSide ===
+                                                        "back"
+                                                            ? "var(--primary)"
+                                                            : "transparent",
+
+                                                    color:
+                                                        activeSide ===
+                                                        "back"
+                                                            ? "#fff"
+                                                            : "#4b5563",
+                                                }}
+                                            >
+                                                Back
+                                            </button>
+
+                                        </div>
+
+                                    )}
+
+
+                                    {/* ZOOM */}
+
+                                    <div className="zoom-controls">
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                updateDesign({
+                                                    zoom: Math.max(
+                                                        0.6,
+                                                        Number(
+                                                            (
+                                                                design.zoom -
+                                                                0.1
+                                                            ).toFixed(
+                                                                1
                                                             )
                                                         )
-                                                }
-                                            )
-                                        }
-                                    >
-                                        −
-                                    </button>
+                                                    ),
+                                                })
+                                            }
+                                        >
+                                            −
+                                        </button>
 
-                                    <span>
-                                        {Math.round(
-                                            design.zoom *
-                                                100
-                                        )}
-                                        %
-                                    </span>
 
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            updateDesign(
-                                                {
-                                                    zoom:
-                                                        Math.min(
-                                                            1.5,
-                                                            Number(
-                                                                (
-                                                                    design.zoom +
-                                                                    0.1
-                                                                ).toFixed(
-                                                                    1
-                                                                )
+                                        <span>
+                                            {Math.round(
+                                                design.zoom *
+                                                    100
+                                            )}
+                                            %
+                                        </span>
+
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                updateDesign({
+                                                    zoom: Math.min(
+                                                        1.5,
+                                                        Number(
+                                                            (
+                                                                design.zoom +
+                                                                0.1
+                                                            ).toFixed(
+                                                                1
                                                             )
                                                         )
-                                                }
-                                            )
-                                        }
-                                    >
-                                        +
-                                    </button>
+                                                    ),
+                                                })
+                                            }
+                                        >
+                                            +
+                                        </button>
+
+                                    </div>
 
                                 </div>
 
                             </div>
 
 
-                            {/* CANVAS */}
+                            {/* =================================
+                                CANVAS
+                            ================================= */}
 
                             <div className="canvas">
 
@@ -1716,34 +2366,34 @@ function Design() {
                                     }}
                                 >
 
+                                    {/* =================================
+                                        PREMIUM CARD
+                                    ================================= */}
+
                                     <div
-                                        className={`id-card ${templateClass}`}
+                                        className={[
+                                            "id-card-premium",
+                                            design.orientation,
+                                            design.cardSize === "compact" ? "compact" : "",
+                                            design.background === "soft" ? "background-soft" : "",
+                                            design.background === "light" ? "background-light" : "",
+                                            templateClass,
+                                        ]
+                                            .filter(Boolean)
+                                            .join(" ")}
                                         style={{
-                                            width:
-                                                `${cardDimensions.width}px`,
-
-                                            height:
-                                                `${cardDimensions.height}px`,
-
-                                            background:
-                                                design.background ===
-                                                "soft"
-                                                    ? "#f8fafc"
-                                                    : design.background ===
-                                                        "light"
-                                                    ? "#f1f5f9"
-                                                    : "#ffffff",
+                                            width: `${cardDimensions.width}px`,
+                                            height: `${cardDimensions.height}px`,
+                                            "--card-primary": design.primaryColor || "#2563eb",
                                         }}
                                     >
 
+                                        {/* =================================
+                                            BACKGROUND IMAGE
+                                        ================================= */}
 
-                                        {/* BACKGROUND IMAGE */}
-
-                                        {design
-                                            .backgroundImage
-                                            ?.data &&
-                                            design
-                                                .backgroundImage
+                                        {design.backgroundImage?.data &&
+                                            design.backgroundImage
                                                 .visible !==
                                                 false && (
 
@@ -1754,7 +2404,7 @@ function Design() {
                                                             .data
                                                     }
                                                     alt=""
-                                                    className="id-card-background-image"
+                                                    className="premium-background-image"
                                                     style={{
                                                         opacity:
                                                             design
@@ -1766,24 +2416,16 @@ function Design() {
                                             )}
 
 
-                                        {/* COLOR BAR */}
+                                        {/* =================================
+                                            PREMIUM CARD HEADER
+                                        ================================= */}
 
-                                        <div
-                                            className="id-card-color-bar"
-                                            style={{
-                                                background:
-                                                    design.primaryColor,
-                                            }}
-                                        />
+                                        <div className="premium-card-header">
 
+                                            {/* LOGO */}
 
-                                        {/* LOGO */}
-
-                                        {design.logo
-                                            ?.data &&
-                                            design.logo
-                                                .visible !==
-                                                false && (
+                                            {design.logo?.visible &&
+                                            design.logo?.data ? (
 
                                                 <img
                                                     src={
@@ -1791,169 +2433,427 @@ function Design() {
                                                             .logo
                                                             .data
                                                     }
-                                                    alt="Organization"
-                                                    className={
-                                                        selectedElement ===
-                                                        "logo"
-                                                            ? "id-card-logo selected"
-                                                            : "id-card-logo"
-                                                    }
-                                                    onClick={() =>
-                                                        setSelectedElement(
-                                                            "logo"
-                                                        )
-                                                    }
+                                                    alt="Organization Logo"
+                                                    className="premium-card-logo"
                                                     style={{
-                                                        left:
-                                                            `${design.logo.x}px`,
-
-                                                        top:
-                                                            `${design.logo.y}px`,
-
                                                         width:
-                                                            `${design.logo.width}px`,
+                                                            `${design.logo.width || 43}px`,
 
                                                         height:
-                                                            `${design.logo.height}px`,
+                                                            `${design.logo.height || 43}px`,
                                                     }}
                                                 />
+
+                                            ) : (
+
+                                                <div className="premium-card-logo-placeholder">
+                                                    LOGO
+                                                </div>
 
                                             )}
 
 
-                                        {/* ORGANIZATION */}
+                                            {/* ORGANIZATION */}
 
-                                        {design.organization
-                                            .visible !==
-                                            false && (
+                                            {design.organization
+                                                ?.visible && (
 
-                                            <div
-                                                className={
-                                                    selectedElement ===
-                                                    "organization"
-                                                        ? "id-card-organization selected"
-                                                        : "id-card-organization"
-                                                }
-                                                onClick={() =>
-                                                    setSelectedElement(
-                                                        "organization"
-                                                    )
-                                                }
-                                                style={{
-                                                    left:
-                                                        `${design.organization.x}px`,
+                                                <div className="premium-card-organization">
 
-                                                    top:
-                                                        `${design.organization.y}px`,
+                                                    <span className="premium-org-name">
 
-                                                    color:
-                                                        design.template ===
-                                                        "minimal"
-                                                            ? "#111827"
-                                                            : "#ffffff",
-                                                }}
-                                            >
+                                                        {
+                                                            design
+                                                                .organization
+                                                                ?.text ||
+                                                            "ORGANIZATION"
+                                                        }
 
-                                                {
-                                                    design
-                                                        .organization
-                                                        .text
-                                                }
+                                                    </span>
+
+
+                                                    <span className="premium-org-subtitle">
+
+                                                        STUDENT IDENTITY CARD
+
+                                                    </span>
+
+                                                </div>
+
+                                            )}
+
+
+                                            {/* HEADER ACCENT */}
+
+                                            <div className="premium-header-accent" />
+
+                                        </div>
+
+
+                                        {/* =================================
+                                            FRONT
+                                        ================================= */}
+
+                                        {activeSide ===
+                                            "front" && (
+
+                                            <div className="premium-card-front">
+
+
+                                                {/* =================================
+                                                    IDENTITY AREA
+                                                ================================= */}
+
+                                                <div
+                                                    className={`
+                                                        premium-identity-area
+                                                        photo-position-${design.photo?.position || "left"}
+                                                    `}
+                                                >
+
+                                                    {/* PHOTO */}
+
+                                                    {design.photo?.visible &&
+                                                        photoField && (
+
+                                                        <div className="premium-photo-wrapper">
+
+                                                            <div
+                                                                className="premium-photo"
+                                                                style={{
+                                                                    width:
+                                                                        `${design.photo.width || 74}px`,
+
+                                                                    height:
+                                                                        `${design.photo.height || 91}px`,
+                                                                }}
+                                                            >
+
+                                                                <span>
+                                                                    PHOTO
+                                                                </span>
+
+                                                            </div>
+
+                                                        </div>
+
+                                                    )}
+
+
+                                                    {/* IDENTITY */}
+
+                                                    <div className="premium-identity-content">
+
+                                                        <div className="premium-student-name">
+
+                                                            {getFieldValue(
+                                                                informationFields.find(
+                                                                    (
+                                                                        field
+                                                                    ) =>
+                                                                        field.label
+                                                                            ?.toLowerCase()
+                                                                            .includes(
+                                                                                "name"
+                                                                            ) ||
+                                                                        field.name
+                                                                            ?.toLowerCase()
+                                                                            .includes(
+                                                                                "name"
+                                                                            )
+                                                                )
+                                                            ) ||
+                                                                "STUDENT NAME"}
+
+                                                        </div>
+
+
+                                                        <div className="premium-student-role">
+
+                                                            STUDENT
+
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+
+                                                {/* =================================
+                                                    INFORMATION AREA
+                                                ================================= */}
+
+                                                <div className="premium-information-area">
+
+                                                    <div className="premium-section-title">
+
+                                                        STUDENT INFORMATION
+
+                                                    </div>
+
+
+                                                    <div className="premium-information-grid">
+
+                                                        {informationFields.map(
+                                                            (
+                                                                field
+                                                            ) => {
+
+                                                                const layout =
+                                                                    activeFieldLayout?.[
+                                                                        field
+                                                                            .id
+                                                                    ] ||
+                                                                    {
+                                                                        row: 1,
+
+                                                                        column: 1,
+
+                                                                        width: 1,
+                                                                    };
+
+
+                                                                const value =
+                                                                    getFieldValue(
+                                                                        field
+                                                                    );
+
+
+                                                                return (
+
+                                                                    <div
+                                                                        key={
+                                                                            field.id
+                                                                        }
+                                                                        className={`
+                                                                            premium-info-item
+                                                                            ${
+                                                                                layout.width ===
+                                                                                2
+                                                                                    ? "premium-info-full"
+                                                                                    : ""
+                                                                            }
+                                                                        `}
+                                                                        style={{
+                                                                            gridColumn:
+                                                                                layout.width ===
+                                                                                2
+                                                                                    ? "1 / -1"
+                                                                                    : layout.column,
+                                                                            gridRow:
+                                                                                layout.row,
+                                                                        }}
+                                                                    >
+
+                                                                        <span className="premium-info-label">
+
+                                                                            {
+                                                                                field.label
+                                                                            }
+
+                                                                        </span>
+
+
+                                                                        <strong className="premium-info-value">
+
+                                                                            {
+                                                                                value ||
+                                                                                "—"
+                                                                            }
+
+                                                                        </strong>
+
+                                                                    </div>
+
+                                                                );
+
+                                                            }
+                                                        )}
+
+                                                    </div>
+
+                                                </div>
+
+
+                                                {/* =================================
+                                                    FRONT FOOTER
+                                                ================================= */}
+
+                                                <div className="premium-card-footer">
+
+                                                    <span>
+                                                        VALID STUDENT IDENTIFICATION
+                                                    </span>
+
+
+                                                    <span className="premium-footer-line" />
+
+
+                                                    <span>
+                                                        ID CARD
+                                                    </span>
+
+                                                </div>
 
                                             </div>
 
                                         )}
 
 
-                                        {/* =================================================
-                                            FORM FIELD GRID
-                                        ================================================= */}
+                                        {/* =================================
+                                            BACK
+                                        ================================= */}
 
-                                        <div className="id-card-fields-grid">
+                                        {activeSide ===
+                                            "back" && (
 
-                                            {formFields.map(
-                                                (
-                                                    field,
-                                                    index
-                                                ) => {
+                                            <div className="premium-card-back">
 
-                                                    const layout =
-                                                        design
-                                                            .fieldLayout?.[
-                                                            field.id
-                                                        ] || {
-                                                            row:
-                                                                index +
-                                                                1,
-                                                            column: 1,
-                                                            width: 1,
-                                                        };
 
-                                                    return (
+                                                {/* BACK TITLE */}
 
-                                                        <div
-                                                            key={
-                                                                field.id
-                                                            }
-                                                            className="id-card-grid-field"
-                                                            style={{
-                                                                gridColumn:
-                                                                    layout.width ===
-                                                                    2
-                                                                        ? "1 / -1"
-                                                                        : layout.column,
+                                                <div className="premium-back-title">
 
-                                                                gridRow:
-                                                                    layout.row,
-                                                            }}
-                                                        >
+                                                    <span>
+                                                        IDENTIFICATION CARD
+                                                    </span>
 
-                                                            {isMediaField(
+                                                    <small>
+                                                        CARD INFORMATION
+                                                    </small>
+
+                                                </div>
+
+
+                                                {/* BACK INFORMATION */}
+
+                                                {informationFields.length >
+                                                    0 ? (
+
+                                                    <div className="premium-back-information">
+
+                                                        {informationFields.map(
+                                                            (
                                                                 field
-                                                            ) ? (
+                                                            ) => (
 
-                                                                <div className="id-card-photo">
+                                                                <div
+                                                                    key={
+                                                                        field.id
+                                                                    }
+                                                                    className="premium-back-item"
+                                                                >
 
                                                                     <span>
-                                                                        PHOTO
-                                                                    </span>
-
-                                                                </div>
-
-                                                            ) : (
-
-                                                                <div className="id-card-normal-field">
-
-                                                                    <span className="id-card-field-label">
                                                                         {
                                                                             field.label
                                                                         }
                                                                     </span>
 
+
                                                                     <strong>
-                                                                        {getFieldValue(
-                                                                            field
-                                                                        )}
+                                                                        {
+                                                                            getFieldValue(
+                                                                                field
+                                                                            ) ||
+                                                                            "—"
+                                                                        }
                                                                     </strong>
 
                                                                 </div>
 
-                                                            )}
+                                                            )
+                                                        )}
 
-                                                        </div>
+                                                    </div>
 
-                                                    );
-                                                }
-                                            )}
+                                                ) : (
 
-                                        </div>
+                                                    <div className="premium-empty-back">
+
+                                                        No fields assigned
+                                                        to the back side.
+
+                                                    </div>
+
+                                                )}
 
 
-                                        {/* FOOTER */}
+                                                {/* BACK NOTE */}
 
-                                        <div className="id-card-footer">
-                                            ID CARD
-                                        </div>
+                                                <div className="premium-back-note">
+
+                                                    <strong>
+                                                        IMPORTANT
+                                                    </strong>
+
+
+                                                    <p>
+                                                        This card is
+                                                        issued by the
+                                                        organization and
+                                                        must be carried
+                                                        by the student
+                                                        while on campus.
+                                                    </p>
+
+                                                </div>
+
+
+                                                {/* SECURITY AREA */}
+
+                                                <div className="premium-security-area">
+
+                                                    <div className="premium-barcode">
+
+                                                        <span />
+                                                        <span />
+                                                        <span />
+                                                        <span />
+                                                        <span />
+                                                        <span />
+                                                        <span />
+                                                        <span />
+                                                        <span />
+                                                        <span />
+                                                        <span />
+                                                        <span />
+
+                                                    </div>
+
+
+                                                    <div className="premium-card-number">
+
+                                                        ID • STUDENT
+
+                                                    </div>
+
+                                                </div>
+
+
+                                                {/* BACK FOOTER */}
+
+                                                <div className="premium-card-footer">
+
+                                                    <span>
+                                                        {
+                                                            design
+                                                                .organization
+                                                                ?.text ||
+                                                            "ORGANIZATION"
+                                                        }
+                                                    </span>
+
+
+                                                    <span>
+                                                        STUDENT SERVICES
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+
+                                        )}
 
                                     </div>
 
@@ -1962,9 +2862,9 @@ function Design() {
                             </div>
 
 
-                            {/* =================================================
-                                SELECTED DESIGN ELEMENT
-                            ================================================= */}
+                            {/* =================================
+                                ORGANIZATION EDITOR
+                            ================================= */}
 
                             {selectedElement ===
                                 "organization" && (
@@ -1980,8 +2880,8 @@ function Design() {
                                             </strong>
 
                                             <span>
-                                                Set the exact position
-                                                of this element.
+                                                Edit the organization
+                                                name used on the card.
                                             </span>
 
                                         </div>
@@ -1990,110 +2890,6 @@ function Design() {
 
 
                                     <div className="preview-position-controls">
-
-                                        <div className="preview-position-field">
-
-                                            <label>
-                                                X Position
-                                            </label>
-
-                                            <div className="position-input">
-
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    value={
-                                                        design
-                                                            .organization
-                                                            .x
-                                                    }
-                                                    onChange={(
-                                                        event
-                                                    ) =>
-                                                        setDesign(
-                                                            (prev) => ({
-                                                                ...prev,
-
-                                                                organization:
-                                                                    {
-                                                                        ...prev.organization,
-
-                                                                        x:
-                                                                            Math.max(
-                                                                                0,
-                                                                                Number(
-                                                                                    event
-                                                                                        .target
-                                                                                        .value
-                                                                                ) ||
-                                                                                    0
-                                                                            ),
-                                                                    },
-                                                            })
-                                                        )
-                                                    }
-                                                />
-
-                                                <span>
-                                                    px
-                                                </span>
-
-                                            </div>
-
-                                        </div>
-
-
-                                        <div className="preview-position-field">
-
-                                            <label>
-                                                Y Position
-                                            </label>
-
-                                            <div className="position-input">
-
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    value={
-                                                        design
-                                                            .organization
-                                                            .y
-                                                    }
-                                                    onChange={(
-                                                        event
-                                                    ) =>
-                                                        setDesign(
-                                                            (prev) => ({
-                                                                ...prev,
-
-                                                                organization:
-                                                                    {
-                                                                        ...prev.organization,
-
-                                                                        y:
-                                                                            Math.max(
-                                                                                0,
-                                                                                Number(
-                                                                                    event
-                                                                                        .target
-                                                                                        .value
-                                                                                ) ||
-                                                                                    0
-                                                                            ),
-                                                                    },
-                                                            })
-                                                        )
-                                                    }
-                                                />
-
-                                                <span>
-                                                    px
-                                                </span>
-
-                                            </div>
-
-                                        </div>
-
 
                                         <div className="preview-position-text">
 
@@ -2139,7 +2935,9 @@ function Design() {
                             )}
 
 
-                            {/* LOGO POSITION */}
+                            {/* =================================
+                                LOGO EDITOR
+                            ================================= */}
 
                             {selectedElement ===
                                 "logo" && (
@@ -2155,111 +2953,9 @@ function Design() {
                                             </strong>
 
                                             <span>
-                                                Set the exact position
-                                                of the logo.
+                                                Logo size is controlled
+                                                by the card design.
                                             </span>
-
-                                        </div>
-
-                                    </div>
-
-
-                                    <div className="preview-position-controls">
-
-                                        <div className="preview-position-field">
-
-                                            <label>
-                                                X Position
-                                            </label>
-
-                                            <div className="position-input">
-
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    value={
-                                                        design.logo.x
-                                                    }
-                                                    onChange={(
-                                                        event
-                                                    ) =>
-                                                        setDesign(
-                                                            (prev) => ({
-                                                                ...prev,
-
-                                                                logo: {
-                                                                    ...prev.logo,
-
-                                                                    x:
-                                                                        Math.max(
-                                                                            0,
-                                                                            Number(
-                                                                                event
-                                                                                    .target
-                                                                                    .value
-                                                                            ) ||
-                                                                                0
-                                                                        ),
-                                                                },
-                                                            })
-                                                        )
-                                                    }
-                                                />
-
-                                                <span>
-                                                    px
-                                                </span>
-
-                                            </div>
-
-                                        </div>
-
-
-                                        <div className="preview-position-field">
-
-                                            <label>
-                                                Y Position
-                                            </label>
-
-                                            <div className="position-input">
-
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    value={
-                                                        design.logo.y
-                                                    }
-                                                    onChange={(
-                                                        event
-                                                    ) =>
-                                                        setDesign(
-                                                            (prev) => ({
-                                                                ...prev,
-
-                                                                logo: {
-                                                                    ...prev.logo,
-
-                                                                    y:
-                                                                        Math.max(
-                                                                            0,
-                                                                            Number(
-                                                                                event
-                                                                                    .target
-                                                                                    .value
-                                                                            ) ||
-                                                                                0
-                                                                        ),
-                                                                },
-                                                            })
-                                                        )
-                                                    }
-                                                />
-
-                                                <span>
-                                                    px
-                                                </span>
-
-                                            </div>
 
                                         </div>
 
@@ -2270,15 +2966,21 @@ function Design() {
                             )}
 
 
+                            {/* =================================
+                                HINT
+                            ================================= */}
+
                             <div className="design-hint">
 
                                 <strong>
                                     Tip:
-                                </strong>{" "}
+                                </strong>
 
-                                Arrange form fields using
-                                rows and columns from the
-                                left panel.
+                                {" "}
+
+                                {design.sides === 2
+                                    ? "Use the Front / Back selector to preview each side and assign fields using the Side option."
+                                    : "Arrange form fields using rows and columns from the left panel."}
 
                             </div>
 
@@ -2287,14 +2989,16 @@ function Design() {
                     </div>
 
 
-                    {/* FOOTER */}
+                    {/* =================================
+                        FOOTER
+                    ================================= */}
 
                     <div className="form-footer">
 
                         <div className="footer-note">
-                            Your design is automatically
-                            saved.
+                            Your design is automatically saved.
                         </div>
+
 
                         <div className="actions">
 
@@ -2307,6 +3011,7 @@ function Design() {
                             >
                                 Back
                             </button>
+
 
                             <button
                                 type="button"
@@ -2327,6 +3032,10 @@ function Design() {
             </main>
 
 
+            {/* =================================
+                TOAST
+            ================================= */}
+
             {toast && (
                 <div className="toast">
                     {toast}
@@ -2336,5 +3045,6 @@ function Design() {
         </>
     );
 }
+
 
 export default Design;

@@ -1,6 +1,6 @@
-/* =====================================================
-   DESIGN PAGE
-===================================================== */
+/*=====================================================
+DESIGN PAGE
+=====================================================*/
 
 .content {
     max-width: 1500px;
@@ -9,9 +9,9 @@
 }
 
 
-/* =====================================================
-   BREADCRUMB
-===================================================== */
+/*=====================================================
+BREADCRUMB
+=====================================================*/
 
 .breadcrumb {
     display: flex;
@@ -27,9 +27,9 @@
 }
 
 
-/* =====================================================
-   PAGE HEADER
-===================================================== */
+/*=====================================================
+PAGE HEADER
+=====================================================*/
 
 .page-header {
     display: flex;
@@ -54,9 +54,9 @@
 }
 
 
-/* =====================================================
-   STEPS
-===================================================== */
+/*=====================================================
+STEPS
+=====================================================*/
 
 .steps {
     display: flex;
@@ -122,49 +122,34 @@
 }
 
 
-/* =====================================================
-   MAIN WORKSPACE
-===================================================== */
+/*=====================================================
+MAIN WORKSPACE
+=====================================================*/
 
 .design-workspace {
     display: grid;
     grid-template-columns: 390px minmax(0, 1fr);
     gap: 18px;
-
-    /*
-    IMPORTANT:
-    This gives both sides their own height.
-    */
-
     height: calc(100vh - 235px);
     min-height: 620px;
     align-items: stretch;
 }
 
 
-/* =====================================================
-   LEFT SETTINGS PANEL
-===================================================== */
+/*=====================================================
+SETTINGS PANEL
+=====================================================*/
 
 .settings-panel {
     min-width: 0;
-
     height: 100%;
-
-    background: #ffffff;
+    background: #fff;
     border: 1px solid var(--border);
     border-radius: 10px;
-
     overflow-y: auto;
     overflow-x: hidden;
-
-    /*
-    Left side stays independent.
-    */
-
     position: sticky;
     top: 20px;
-
     scrollbar-width: thin;
 }
 
@@ -182,9 +167,9 @@
 }
 
 
-/* =====================================================
-   SETTING SECTION
-===================================================== */
+/*=====================================================
+SETTINGS SECTIONS
+=====================================================*/
 
 .setting-section {
     padding: 17px 18px;
@@ -210,9 +195,9 @@
 }
 
 
-/* =====================================================
-   TEMPLATE GRID
-===================================================== */
+/*=====================================================
+TEMPLATE
+=====================================================*/
 
 .template-grid {
     display: grid;
@@ -223,22 +208,17 @@
 .template-option {
     min-width: 0;
     padding: 9px 6px;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 6px;
-
     border: 1px solid var(--border);
     border-radius: 7px;
-
     background: #fff;
     color: #4b5563;
-
     cursor: pointer;
     font-family: inherit;
     font-size: 10px;
-
     transition:
         border-color 0.15s ease,
         background 0.15s ease;
@@ -254,23 +234,15 @@
     color: var(--primary);
 }
 
-
-/* =====================================================
-   TEMPLATE MINI
-===================================================== */
-
 .template-mini {
     width: 48px;
     height: 62px;
-
     display: block;
-
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-
-    background: #fff;
     position: relative;
     overflow: hidden;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    background: #fff;
 }
 
 .template-mini::before {
@@ -305,9 +277,9 @@
 }
 
 
-/* =====================================================
-   COLOR
-===================================================== */
+/*=====================================================
+COLOR
+=====================================================*/
 
 .color-row {
     display: flex;
@@ -319,10 +291,8 @@
     width: 38px;
     height: 34px;
     padding: 2px;
-
     border: 1px solid var(--border);
     border-radius: 7px;
-
     background: #fff;
     cursor: pointer;
 }
@@ -331,12 +301,9 @@
     flex: 1;
     height: 34px;
     padding: 0 9px;
-
     border: 1px solid var(--border);
     border-radius: 7px;
-
     outline: none;
-
     font-family: inherit;
     font-size: 12px;
     color: var(--text);
@@ -347,16 +314,15 @@
 }
 
 
-/* =====================================================
-   CONTROLS
-===================================================== */
+/*=====================================================
+CONTROLS
+=====================================================*/
 
 .control-row {
     display: grid;
     grid-template-columns: 100px minmax(0, 1fr);
     align-items: center;
     gap: 10px;
-
     margin-bottom: 9px;
 }
 
@@ -375,16 +341,11 @@
 .field-layout-controls input {
     width: 100%;
     height: 33px;
-
     padding: 0 8px;
-
     border: 1px solid var(--border);
     border-radius: 7px;
-
     background: #fff;
-
     outline: none;
-
     font-family: inherit;
     color: var(--text);
     font-size: 11px;
@@ -397,29 +358,46 @@
 }
 
 
-/* =====================================================
-   UPLOAD
-===================================================== */
+/*=====================================================
+LABEL OPTIONS
+=====================================================*/
+
+.label-options {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.label-option-row {
+    display: grid;
+    grid-template-columns: 100px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+}
+
+.label-option-row > span {
+    color: #4b5563;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+/*=====================================================
+UPLOAD
+=====================================================*/
 
 .logo-upload {
     height: 110px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
+    position: relative;
+    overflow: hidden;
     border: 1px dashed #cbd5e1;
     border-radius: 8px;
-
     background: #f8fafc;
-
     color: #64748b;
-
     cursor: pointer;
-
-    overflow: hidden;
-    position: relative;
-
     font-size: 11px;
 }
 
@@ -454,15 +432,11 @@
     width: 100%;
     margin-top: 9px;
     padding: 7px 10px;
-
     border: 1px solid #fecaca;
     border-radius: 6px;
-
     background: #fff;
     color: #dc2626;
-
     cursor: pointer;
-
     font-family: inherit;
     font-size: 10px;
 }
@@ -472,28 +446,21 @@
 }
 
 
-/* =====================================================
-   DESIGN ELEMENT ITEMS
-===================================================== */
+/*=====================================================
+DESIGN ELEMENTS
+=====================================================*/
 
 .design-field-item {
     min-height: 48px;
-
     display: flex;
     align-items: center;
-
     gap: 10px;
-
     margin-bottom: 7px;
     padding: 8px 10px;
-
     border: 1px solid var(--border);
     border-radius: 7px;
-
     background: #fff;
-
     cursor: pointer;
-
     transition:
         border-color 0.15s ease,
         background 0.15s ease;
@@ -512,15 +479,8 @@
     background: #eff6ff;
 }
 
-.drag-icon {
-    color: #9ca3af;
-    font-size: 13px;
-    letter-spacing: -2px;
-}
-
 .design-field-info {
     min-width: 0;
-
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -528,10 +488,8 @@
 
 .design-field-info strong {
     overflow: hidden;
-
     color: #374151;
     font-size: 11px;
-
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -542,9 +500,9 @@
 }
 
 
-/* =====================================================
-   FIELD LAYOUT
-===================================================== */
+/*=====================================================
+FIELD LAYOUT
+=====================================================*/
 
 .field-layout-list {
     display: flex;
@@ -554,31 +512,21 @@
 
 .field-layout-item {
     padding: 10px;
-
     border: 1px solid var(--border);
     border-radius: 8px;
-
     background: #fff;
 }
-
-
-/* =====================================================
-   FIELD LAYOUT HEADER
-===================================================== */
 
 .field-layout-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-
     gap: 8px;
-
     margin-bottom: 9px;
 }
 
 .field-layout-header > div:first-child {
     min-width: 0;
-
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -586,10 +534,8 @@
 
 .field-layout-header strong {
     overflow: hidden;
-
     color: #374151;
     font-size: 11px;
-
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -599,11 +545,6 @@
     font-size: 9px;
 }
 
-
-/* =====================================================
-   FIELD LAYOUT ARROWS
-===================================================== */
-
 .field-layout-arrows {
     display: flex;
     gap: 4px;
@@ -612,21 +553,15 @@
 .field-layout-arrows button {
     width: 25px;
     height: 25px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     padding: 0;
-
     border: 1px solid var(--border);
     border-radius: 5px;
-
     background: #fff;
     color: #4b5563;
-
     cursor: pointer;
-
     font-size: 11px;
 }
 
@@ -641,18 +576,9 @@
     cursor: not-allowed;
 }
 
-
-/* =====================================================
-   FIELD LAYOUT CONTROLS
-===================================================== */
-
 .field-layout-controls {
     display: grid;
-    grid-template-columns:
-        minmax(0, 1fr)
-        minmax(0, 1fr)
-        minmax(0, 1fr);
-
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
 }
 
@@ -663,7 +589,6 @@
 .field-layout-controls label > span {
     display: block;
     margin-bottom: 4px;
-
     color: #6b7280;
     font-size: 9px;
     font-weight: 600;
@@ -675,67 +600,42 @@
     font-size: 10px;
 }
 
-
-/* =====================================================
-   EMPTY FIELDS
-===================================================== */
-
 .empty-fields {
     padding: 14px;
-
     border: 1px dashed #d1d5db;
     border-radius: 7px;
-
     background: #f9fafb;
-
     color: #9ca3af;
-
     text-align: center;
-
     font-size: 10px;
     line-height: 1.5;
 }
 
 
-/* =====================================================
-   PREVIEW PANEL
-===================================================== */
+/*=====================================================
+PREVIEW PANEL
+=====================================================*/
 
 .preview-panel {
     min-width: 0;
     min-height: 0;
-
     height: 100%;
-
     display: flex;
     flex-direction: column;
-
-    background: #ffffff;
-
+    background: #fff;
     border: 1px solid var(--border);
     border-radius: 10px;
-
     overflow: hidden;
 }
 
-
-/* =====================================================
-   PREVIEW HEADER
-===================================================== */
-
 .preview-panel-header {
     min-height: 59px;
-
     display: flex;
     align-items: center;
     justify-content: space-between;
-
     gap: 15px;
-
     padding: 10px 16px;
-
     border-bottom: 1px solid #eef0f3;
-
     flex-shrink: 0;
 }
 
@@ -756,9 +656,9 @@
 }
 
 
-/* =====================================================
-   ZOOM
-===================================================== */
+/*=====================================================
+ZOOM
+=====================================================*/
 
 .zoom-controls {
     display: flex;
@@ -769,15 +669,11 @@
 .zoom-controls button {
     width: 28px;
     height: 28px;
-
     border: 1px solid var(--border);
     border-radius: 6px;
-
     background: #fff;
     color: #374151;
-
     cursor: pointer;
-
     font-size: 14px;
 }
 
@@ -788,41 +684,30 @@
 
 .zoom-controls span {
     min-width: 42px;
-
     color: #4b5563;
-
     text-align: center;
-
     font-size: 10px;
     font-weight: 600;
 }
 
 
-/* =====================================================
-   PREVIEW CANVAS
-===================================================== */
+/*=====================================================
+CANVAS
+=====================================================*/
 
 .canvas {
     flex: 1;
-
     min-height: 0;
-
     padding: 50px;
-
     display: flex;
     align-items: flex-start;
     justify-content: center;
-
     overflow: auto;
-
-    background:
-        radial-gradient(
-            #d1d5db 0.8px,
-            transparent 0.8px
-        );
-
+    background: radial-gradient(
+        #d1d5db 0.8px,
+        transparent 0.8px
+    );
     background-size: 18px 18px;
-
     scrollbar-width: thin;
 }
 
@@ -840,279 +725,1352 @@
     border-radius: 10px;
 }
 
-
-/* =====================================================
-   CARD WRAPPER
-===================================================== */
-
 .id-card-canvas-wrapper {
     flex-shrink: 0;
-
     position: relative;
-
     transform-origin: top center;
-
     transition: transform 0.2s ease;
 }
 
 
-/* =====================================================
-   ID CARD
-===================================================== */
+/*=====================================================
+PREMIUM ID CARD BASE
+=====================================================*/
 
-.id-card {
+.id-card-premium {
+    --card-primary: #2563eb;
+
     position: relative;
-
-    flex-shrink: 0;
-
+    width: 100%;
+    height: 100%;
     overflow: hidden;
 
-    border-radius: 10px;
+    background: #ffffff;
+    color: #111827;
+
+    border-radius: 16px;
 
     box-shadow:
-        0 14px 30px rgba(15, 23, 42, 0.14);
+        0 14px 35px rgba(15, 23, 42, 0.16),
+        0 3px 10px rgba(15, 23, 42, 0.08);
 
-    isolation: isolate;
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 }
 
 
-/* =====================================================
-   BACKGROUND IMAGE
-===================================================== */
+/*=====================================================
+BACKGROUND IMAGE
+=====================================================*/
 
-.id-card-background-image {
+.premium-background-image {
     position: absolute;
-
     inset: 0;
-
     width: 100%;
     height: 100%;
-
     object-fit: cover;
+    z-index: 0;
+}
+
+
+/*=====================================================
+CARD HEADER
+=====================================================*/
+
+.premium-card-header {
+    position: relative;
+    z-index: 2;
+
+    display: flex;
+    align-items: center;
+
+    min-height: 72px;
+    padding: 14px 18px;
+
+    background: rgba(255, 255, 255, 0.96);
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.premium-header-accent {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: var(--card-primary);
+}
+
+.premium-card-logo {
+    flex-shrink: 0;
+    object-fit: contain;
+
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    padding: 4px;
+}
+
+.premium-card-logo-placeholder {
+    width: 43px;
+    height: 43px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    border-radius: 10px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+
+    color: #94a3b8;
+    font-size: 8px;
+    font-weight: 700;
+}
+
+.premium-card-organization {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    margin-left: 10px;
+}
+
+.premium-org-name {
+    overflow: hidden;
+
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.premium-org-subtitle {
+    margin-top: 3px;
+
+    color: #64748b;
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+}
+
+
+/*=====================================================
+FRONT
+=====================================================*/
+
+.premium-card-front {
+    position: relative;
+    z-index: 2;
+
+    display: flex;
+    flex-direction: column;
+
+    height: calc(100% - 72px);
+    min-height: 0;
+}
+
+
+/*=====================================================
+IDENTITY
+=====================================================*/
+
+.premium-identity-area {
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+
+    padding: 20px 20px 14px;
+}
+
+.premium-identity-area.photo-position-left {
+    justify-content: flex-start;
+}
+
+.premium-identity-area.photo-position-center {
+    justify-content: center;
+}
+
+.premium-identity-area.photo-position-right {
+    justify-content: flex-end;
+}
+
+.premium-photo-wrapper {
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.premium-photo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e2e8f0,
+            #f8fafc
+        );
+
+    border: 3px solid #fff;
+    border-radius: 12px;
+
+    box-shadow:
+        0 0 0 1px #dbe3ed,
+        0 8px 18px rgba(15, 23, 42, 0.12);
+
+    color: #94a3b8;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    
+    object-fit: contain;
+}
+.premium-photo img{
+}
+
+.premium-identity-content {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.premium-student-name {
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.2px;
+    word-break: break-word;
+}
+
+.premium-student-role {
+    margin-top: 6px;
+
+    color: var(--card-primary);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+
+/*=====================================================
+INFORMATION
+=====================================================*/
+
+.premium-information-area {
+    flex: 1;
+    min-height: 0;
+
+    padding: 6px 20px 14px;
+
+    overflow: hidden;
+}
+
+.premium-section-title {
+    margin-bottom: 9px;
+
+    color: #94a3b8;
+    font-size: 7px;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+}
+
+.premium-information-grid {
+    display: grid;
+
+    gap: 7px 12px;
+
+    width: 100%;
+}
+
+
+/*=====================================================
+INFO ITEM BASE
+=====================================================*/
+
+.premium-info-item {
+    min-width: 0;
+
+    padding-bottom: 6px;
+
+    border-bottom: 1px solid #edf1f5;
+}
+
+.premium-info-full {
+    grid-column: 1 / -1;
+}
+
+
+/*=====================================================
+INFO LABEL
+=====================================================*/
+
+/*
+    IMPORTANT:
+    No fixed text-transform here.
+
+    React controls:
+    .label-normal
+    .label-uppercase
+    .label-capitalize
+*/
+
+.premium-info-label {
+    display: block;
+
+    margin-bottom: 3px;
+
+    color: #94a3b8;
+    font-size: 6.5px;
+    font-weight: 700;
+
+    letter-spacing: 0.7px;
+}
+
+
+/* Normal */
+.premium-info-label.label-normal {
+    text-transform: none;
+}
+
+
+/* UPPERCASE */
+.premium-info-label.label-uppercase {
+    text-transform: uppercase;
+}
+
+
+/* Capitalized */
+.premium-info-label.label-capitalize {
+    text-transform: capitalize;
+}
+
+
+/*=====================================================
+INFO VALUE
+=====================================================*/
+
+.premium-info-value {
+    display: block;
+
+    overflow: hidden;
+
+    color: #1e293b;
+    font-size: 8.5px;
+    font-weight: 700;
+    line-height: 1.25;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/*=====================================================
+INFO LAYOUT
+=====================================================*/
+
+/*
+    SIDE BY SIDE
+
+    Label : Value
+*/
+
+.premium-info-item.layout-inline {
+    display: grid;
+
+    grid-template-columns:
+        auto
+        minmax(0, 1fr);
+
+    align-items: center;
+
+    column-gap: 8px;
+}
+
+.premium-info-item.layout-inline
+.premium-info-label {
+    margin-bottom: 0;
+}
+
+.premium-info-item.layout-inline
+.premium-info-value {
+    text-align: right;
+}
+
+
+/*
+    ABOVE / BELOW
+
+    Label
+    Value
+*/
+
+.premium-info-item.layout-stacked {
+    display: block;
+}
+
+.premium-info-item.layout-stacked
+.premium-info-label {
+    margin-bottom: 3px;
+}
+
+.premium-info-item.layout-stacked
+.premium-info-value {
+    text-align: left;
+}
+
+
+/*=====================================================
+FOOTER
+=====================================================*/
+
+.premium-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+
+    min-height: 25px;
+    padding: 7px 15px;
+
+    background: var(--card-primary);
+
+    color: #fff;
+
+    font-size: 6px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+}
+
+.premium-footer-line {
+    flex: 1;
+
+    height: 1px;
+
+    background: rgba(255, 255, 255, 0.35);
+}
+
+
+/*=====================================================
+LANDSCAPE
+=====================================================*/
+
+.id-card-premium.landscape .premium-card-header {
+    min-height: 58px;
+    padding: 10px 16px;
+}
+
+.id-card-premium.landscape .premium-card-front {
+    height: calc(100% - 58px);
+
+    display: grid;
+
+    grid-template-columns: 43% 57%;
+    grid-template-rows: 1fr auto;
+}
+
+.id-card-premium.landscape .premium-identity-area {
+    grid-column: 1;
+    grid-row: 1;
+
+    width: auto;
+
+    padding: 15px 14px 12px 18px;
+
+    gap: 12px;
+
+    align-items: center;
+
+    border-right: 1px solid #e5e7eb;
+}
+
+.id-card-premium.landscape .premium-photo {
+    border-radius: 10px;
+}
+
+.id-card-premium.landscape .premium-student-name {
+    font-size: 14px;
+}
+
+.id-card-premium.landscape .premium-student-role {
+    font-size: 7px;
+}
+
+.id-card-premium.landscape .premium-information-area {
+    grid-column: 2;
+    grid-row: 1;
+
+    padding: 16px 18px 8px;
+}
+
+.id-card-premium.landscape .premium-card-footer {
+    grid-column: 1 / -1;
+    grid-row: 2;
+}
+
+
+/*=====================================================
+BACK
+=====================================================*/
+
+.premium-card-back {
+    position: relative;
+    z-index: 2;
+
+    display: flex;
+    flex-direction: column;
+
+    height: calc(100% - 72px);
+
+    padding: 20px;
+
+    background: rgba(255, 255, 255, 0.96);
+}
+
+.premium-back-title {
+    display: flex;
+    flex-direction: column;
+
+    padding-bottom: 12px;
+
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.premium-back-title span {
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+.premium-back-title small {
+    margin-top: 4px;
+
+    color: var(--card-primary);
+    font-size: 7px;
+    font-weight: 800;
+    letter-spacing: 1.3px;
+}
+
+.premium-back-information {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 8px 12px;
+
+    margin-top: 14px;
+
+    flex: 1;
+
+    overflow: hidden;
+}
+
+.premium-back-item {
+    min-width: 0;
+
+    padding-bottom: 6px;
+
+    border-bottom: 1px solid #edf1f5;
+}
+
+
+/*=====================================================
+BACK LABEL
+=====================================================*/
+
+.premium-back-item span {
+    display: block;
+
+    margin-bottom: 3px;
+
+    color: #94a3b8;
+    font-size: 6.5px;
+    font-weight: 700;
+
+    letter-spacing: 0.7px;
+}
+
+
+/* Label case controls */
+
+.premium-back-item span.label-normal {
+    text-transform: none;
+}
+
+.premium-back-item span.label-uppercase {
+    text-transform: uppercase;
+}
+
+.premium-back-item span.label-capitalize {
+    text-transform: capitalize;
+}
+
+
+/*=====================================================
+BACK VALUE
+=====================================================*/
+
+.premium-back-item strong {
+    display: block;
+
+    overflow: hidden;
+
+    color: #1e293b;
+    font-size: 8px;
+    font-weight: 700;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/*=====================================================
+BACK EMPTY
+=====================================================*/
+
+.premium-empty-back {
+    flex: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #94a3b8;
+    font-size: 8px;
+}
+
+
+/*=====================================================
+BACK NOTE
+=====================================================*/
+
+.premium-back-note {
+    margin-top: 12px;
+
+    padding: 9px 10px;
+
+    border-radius: 8px;
+
+    background: #f8fafc;
+
+    border-left: 3px solid var(--card-primary);
+}
+
+.premium-back-note strong {
+    display: block;
+
+    margin-bottom: 3px;
+
+    color: #475569;
+    font-size: 7px;
+    letter-spacing: 0.7px;
+}
+
+.premium-back-note p {
+    margin: 0;
+
+    color: #64748b;
+    font-size: 6.5px;
+    line-height: 1.45;
+}
+
+
+/*=====================================================
+SECURITY
+=====================================================*/
+
+.premium-security-area {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin-top: 12px;
+}
+
+.premium-barcode {
+    display: flex;
+    align-items: stretch;
+
+    height: 25px;
+
+    gap: 2px;
+}
+
+.premium-barcode span {
+    display: block;
+
+    width: 2px;
+
+    background: #111827;
+}
+
+.premium-barcode span:nth-child(2n) {
+    width: 1px;
+}
+
+.premium-barcode span:nth-child(3n) {
+    width: 3px;
+}
+
+.premium-card-number {
+    color: #64748b;
+    font-size: 6px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+}
+
+
+/*=====================================================
+LANDSCAPE BACK
+=====================================================*/
+
+.id-card-premium.landscape .premium-card-back {
+    height: calc(100% - 58px);
+    padding: 16px 18px;
+}
+
+.id-card-premium.landscape .premium-back-information {
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 7px 10px;
+}
+
+
+/*=====================================================
+COMPACT
+=====================================================*/
+
+.id-card-premium.compact .premium-card-header {
+    min-height: 58px;
+}
+
+.id-card-premium.compact .premium-card-front {
+    height: calc(100% - 58px);
+}
+
+.id-card-premium.compact .premium-identity-area {
+    padding: 13px 14px 10px;
+    gap: 10px;
+}
+
+.id-card-premium.compact .premium-student-name {
+    font-size: 14px;
+}
+
+.id-card-premium.compact .premium-information-area {
+    padding: 5px 14px 9px;
+}
+
+.id-card-premium.compact .premium-info-item {
+    padding-bottom: 4px;
+}
+
+.id-card-premium.compact .premium-card-footer {
+    min-height: 22px;
+}
+
+
+/*=====================================================
+BACKGROUND VARIANTS
+=====================================================*/
+
+.id-card-premium.background-soft {
+    background: #f8fafc;
+}
+
+.id-card-premium.background-light {
+    background: #f1f5f9;
+}
+
+
+/*=====================================================
+TEMPLATE: MODERN
+=====================================================*/
+
+.id-card-premium.modern {
+    border-radius: 10px;
+    border: 1px solid #dbe2ea;
+
+    box-shadow:
+        0 8px 22px rgba(15, 23, 42, 0.08);
+}
+
+
+/* Header */
+
+.id-card-premium.modern .premium-card-header {
+    min-height: 76px;
+    padding: 13px 17px;
+
+    position: relative;
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--card-primary),
+            color-mix(
+                in srgb,
+                var(--card-primary) 65%,
+                #7c3aed
+            )
+        );
+
+    border-bottom: 0;
+}
+
+
+/* Soft large bubble */
+
+.id-card-premium.modern .premium-card-header::before {
+    content: "";
+
+    position: absolute;
+
+    width: 95px;
+    height: 95px;
+
+    right: -28px;
+    top: -42px;
+
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.12);
 
     z-index: 0;
 }
 
 
-/* =====================================================
-   COLOR BAR
-===================================================== */
+/* Small bubble */
 
-.id-card-color-bar {
+.id-card-premium.modern .premium-card-header::after {
+    content: "";
+
     position: absolute;
 
-    top: 0;
-    left: 0;
+    width: 42px;
+    height: 42px;
 
-    width: 100%;
-    height: 8px;
+    right: 55px;
+    bottom: -20px;
 
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.10);
+
+    z-index: 0;
+}
+
+
+/* Accent line */
+
+.id-card-premium.modern .premium-header-accent {
+    display: none;
+}
+
+
+/* Header content */
+
+.id-card-premium.modern .premium-card-header > * {
+    position: relative;
     z-index: 2;
+    margin-left: 10px;
 }
 
 
-/* =====================================================
-   LOGO
-===================================================== */
+/* Logo */
 
-.id-card-logo {
-    position: absolute;
-
-    object-fit: contain;
-
-    z-index: 5;
-
-    cursor: pointer;
-
-    border: 1px solid transparent;
-
-    border-radius: 4px;
-}
-
-.id-card-logo:hover {
-    border-color: #93c5fd;
-}
-
-.id-card-logo.selected {
-    border: 1px dashed var(--primary);
-    background: rgba(37, 99, 235, 0.05);
+.id-card-premium.modern .premium-card-logo {
+    border: 2px solid rgba(255, 255, 255, 0.75);
+    padding: 3px;
+    border-radius: 9px;
+    background: #fff;
 }
 
 
-/* =====================================================
-   ORGANIZATION
-===================================================== */
+/* Logo placeholder */
 
-.id-card-organization {
-    position: absolute;
+.id-card-premium.modern .premium-card-logo-placeholder {
+    width: 38px;
+    height: 38px;
 
-    z-index: 5;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 9px;
 
-    padding: 3px 5px;
+    background: rgba(255, 255, 255, 0.15);
 
-    border: 1px solid transparent;
-    border-radius: 4px;
+    color: #fff;
+}
 
-    cursor: pointer;
 
-    font-size: 13px;
+/* Organization */
+
+.id-card-premium.modern .premium-org-name {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 750;
+    letter-spacing: 0.25px;
+}
+
+.id-card-premium.modern .premium-org-subtitle {
+    display: block;
+
+    margin-top: 3px;
+
+    color: rgba(255, 255, 255, 0.75);
+
+    font-size: 6px;
     font-weight: 700;
-
-    white-space: nowrap;
-}
-
-.id-card-organization:hover {
-    border-color: #93c5fd;
-}
-
-.id-card-organization.selected {
-    border: 1px dashed var(--primary);
-    background: rgba(37, 99, 235, 0.05);
+    letter-spacing: 1px;
 }
 
 
-/* =====================================================
-   FORM FIELD GRID
-===================================================== */
+/*=====================================================
+MODERN BODY
+=====================================================*/
 
-.id-card-fields-grid {
-    position: absolute;
+.id-card-premium.modern .premium-card-front {
+    background: #fff;
+}
 
-    top: 105px;
-    left: 18px;
-    right: 18px;
-    bottom: 42px;
+.id-card-premium.modern .premium-identity-area {
+    padding: 17px 18px 11px;
+    gap: 13px;
+}
 
-    display: grid;
+.id-card-premium.modern .premium-photo {
+    border-radius: 7px;
+    border: 1px solid #dbe3ed;
 
-    grid-template-columns:
-        minmax(0, 1fr)
-        minmax(0, 1fr);
+    box-shadow:
+        0 4px 12px rgba(15, 23, 42, 0.08);
+}
 
-    grid-auto-rows: minmax(30px, auto);
+.id-card-premium.modern .premium-student-name {
+    font-size: 18px;
+    font-weight: 750;
+    color: #1e293b;
+}
 
-    column-gap: 10px;
-    row-gap: 8px;
+.id-card-premium.modern .premium-student-role {
+    margin-top: 4px;
 
-    z-index: 4;
+    color: var(--card-primary);
 
-    align-content: start;
+    font-size: 12px;
+    letter-spacing: 1px;
 }
 
 
-/* =====================================================
-   GRID FIELD
-===================================================== */
+/* Information title */
 
-.id-card-grid-field {
-    min-width: 0;
+.id-card-premium.modern .premium-section-title {
+    margin-bottom: 7px;
 
-    display: flex;
-    align-items: flex-start;
+    color: #64748b;
+
+    font-size: 10px;
+    letter-spacing: 1px;
 }
 
 
-/* =====================================================
-   NORMAL FIELD
-===================================================== */
+/* Information */
 
-.id-card-normal-field {
-    min-width: 0;
+.id-card-premium.modern .premium-info-item {
+    padding-bottom: 5px;
 
-    width: 100%;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 2px;
-
-    padding: 3px 4px;
+    border-bottom: 1px solid #f1f5f9;
 }
 
-.id-card-field-label {
-    overflow: hidden;
+.id-card-premium.modern .premium-info-label {
+    color: #94a3b8;
+    font-size: 10px;
+}
 
-    color: #6b7280;
-
-    font-size: 9px;
+.id-card-premium.modern .premium-info-value {
+    color: #334155;
+    font-size: 10px;
     font-weight: 600;
-
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
-.id-card-normal-field strong {
-    overflow: hidden;
 
+/*=====================================================
+MODERN FOOTER
+=====================================================*/
+
+.id-card-premium.modern .premium-card-footer {
+    background: #f8fafc;
+
+    color: #64748b;
+
+    border-top: 1px solid #e2e8f0;
+}
+
+.id-card-premium.modern .premium-footer-line {
+    background: #cbd5e1;
+}
+
+
+/*=====================================================
+MODERN BACK
+=====================================================*/
+
+.id-card-premium.modern .premium-card-back {
+    background: #fff;
+}
+
+.id-card-premium.modern .premium-back-title {
+    padding-bottom: 9px;
+}
+
+.id-card-premium.modern .premium-back-title span {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.id-card-premium.modern .premium-back-title small {
+    color: var(--card-primary);
+}
+
+.id-card-premium.modern .premium-back-note {
+    background: #fafafa;
+    border-left: 2px solid var(--card-primary);
+    border-radius: 4px;
+}
+
+.id-card-premium.modern .premium-card-footer {
+    min-height: 24px;
+}
+
+
+/*=====================================================
+TEMPLATE: CLASSIC
+=====================================================*/
+
+.id-card-premium.classic {
+    border-radius: 8px;
+    border: 1px solid var(--card-primary);
+
+    box-shadow:
+        0 10px 25px rgba(15, 23, 42, 0.13);
+}
+
+.id-card-premium.classic .premium-card-header {
+    min-height: 82px;
+    padding: 15px 18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--card-primary),
+            color-mix(
+                in srgb,
+                var(--card-primary) 72%,
+                #0f172a
+            )
+        );
+
+    border-bottom: 0;
+    color: #fff;
+}
+
+.id-card-premium.classic .premium-header-accent {
+    display: none;
+}
+
+.id-card-premium.classic .premium-card-logo {
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    background: #fff;
+    border-radius: 50%;
+}
+
+.id-card-premium.classic .premium-card-logo-placeholder {
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+.id-card-premium.classic .premium-org-name {
+    color: #fff;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 14px;
+    letter-spacing: 0.3px;
+}
+
+.id-card-premium.classic .premium-org-subtitle {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.id-card-premium.classic .premium-card-front {
+    background: #fff;
+}
+
+.id-card-premium.classic .premium-identity-area {
+    padding-top: 18px;
+}
+
+.id-card-premium.classic .premium-photo {
+    border-radius: 4px;
+    border: 1px solid var(--card-primary);
+    box-shadow: none;
+}
+
+.id-card-premium.classic .premium-student-name {
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 18px;
     color: #111827;
+}
+
+.id-card-premium.classic .premium-student-role {
+    color: var(--card-primary);
+    letter-spacing: 1.2px;
+}
+
+.id-card-premium.classic .premium-section-title {
+    color: var(--card-primary);
+
+    border-bottom: 1px solid #dbe3ed;
+
+    padding-bottom: 5px;
+}
+
+.id-card-premium.classic .premium-info-item {
+    border-bottom: 1px solid #d9dee7;
+}
+
+.id-card-premium.classic .premium-info-label {
+    color: #6b7280;
+}
+
+.id-card-premium.classic .premium-info-value {
+    color: #111827;
+}
+
+.id-card-premium.classic .premium-card-footer {
+    background: #111827;
+
+    border-top: 3px solid var(--card-primary);
+}
+
+
+/*=====================================================
+CLASSIC BACK
+=====================================================*/
+
+.id-card-premium.classic .premium-card-back {
+    background: #fff;
+}
+
+.id-card-premium.classic .premium-back-title span {
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 14px;
+}
+
+.id-card-premium.classic .premium-back-title small {
+    color: var(--card-primary);
+}
+
+.id-card-premium.classic .premium-back-note {
+    background: #f8fafc;
+
+    border-left: 3px solid var(--card-primary);
+
+    border-radius: 3px;
+}
+
+.id-card-premium.classic .premium-security-area {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 10px;
+}
+
+
+/*=====================================================
+TEMPLATE: MINIMAL
+=====================================================*/
+
+.id-card-premium.minimal {
+    border-radius: 6px;
+    border: 1px solid #dbe2ea;
+
+    box-shadow:
+        0 8px 22px rgba(15, 23, 42, 0.08);
+}
+
+.id-card-premium.minimal .premium-card-header {
+    min-height: 64px;
+    padding: 12px 17px;
+
+    background: #fff;
+
+    border-bottom: 1px solid #edf1f5;
+}
+
+.id-card-premium.minimal .premium-header-accent {
+    width: 3px;
+}
+
+.id-card-premium.minimal .premium-card-logo {
+    border: 0;
+    padding: 0;
+    border-radius: 6px;
+}
+
+.id-card-premium.minimal .premium-card-logo-placeholder {
+    width: 38px;
+    height: 38px;
+
+    border: 0;
+    border-radius: 6px;
+
+    background: #f8fafc;
+}
+
+.id-card-premium.minimal .premium-org-name {
+    color: #1e293b;
 
     font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+.id-card-premium.minimal .premium-org-subtitle {
+    display: none;
+}
+
+.id-card-premium.minimal .premium-identity-area {
+    padding: 17px 18px 11px;
+    gap: 13px;
+}
+
+.id-card-premium.minimal .premium-photo {
+    border-radius: 6px;
+    border: 1px solid #dbe3ed;
+    box-shadow: none;
+}
+
+.id-card-premium.minimal .premium-student-name {
+    font-size: 16px;
+    font-weight: 750;
+}
+
+.id-card-premium.minimal .premium-student-role {
+    margin-top: 4px;
+
+    color: #64748b;
+
+    font-size: 7px;
+    letter-spacing: 1px;
+}
+
+.id-card-premium.minimal .premium-section-title {
+    margin-bottom: 7px;
+
+    color: #64748b;
+
+    font-size: 6.5px;
+    letter-spacing: 1px;
+}
+
+.id-card-premium.minimal .premium-info-item {
+    padding-bottom: 5px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.id-card-premium.minimal .premium-info-label {
+    color: #94a3b8;
+}
+
+.id-card-premium.minimal .premium-info-value {
+    color: #334155;
     font-weight: 600;
+}
 
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.id-card-premium.minimal .premium-card-footer {
+    background: #f8fafc;
+
+    color: #64748b;
+
+    border-top: 1px solid #e2e8f0;
+}
+
+.id-card-premium.minimal .premium-footer-line {
+    background: #cbd5e1;
 }
 
 
-/* =====================================================
-   PHOTO
-===================================================== */
+/*=====================================================
+MINIMAL BACK
+=====================================================*/
 
-.id-card-photo {
-    width: 74px;
-    height: 91px;
+.id-card-premium.minimal .premium-card-back {
+    background: #fff;
+}
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.id-card-premium.minimal .premium-back-title {
+    padding-bottom: 9px;
+}
 
-    border: 1px solid #d1d5db;
-    border-radius: 5px;
-
-    background: #e5e7eb;
-
-    color: #6b7280;
-
-    font-size: 9px;
+.id-card-premium.minimal .premium-back-title span {
+    font-size: 12px;
     font-weight: 700;
 }
 
+.id-card-premium.minimal .premium-back-title small {
+    color: #64748b;
+}
 
-/* =====================================================
-   FOOTER
-===================================================== */
+.id-card-premium.minimal .premium-back-note {
+    background: #fafafa;
 
-.id-card-footer {
-    position: absolute;
+    border-left: 2px solid var(--card-primary);
 
-    left: 0;
-    right: 0;
-    bottom: 0;
+    border-radius: 4px;
+}
 
-    height: 28px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
-
-    background: rgba(248, 250, 252, 0.9);
-
-    color: #6b7280;
-
-    font-size: 8px;
-    font-weight: 700;
-
-    letter-spacing: 0.5px;
-
-    z-index: 6;
+.id-card-premium.minimal .premium-card-footer {
+    min-height: 24px;
 }
 
 
-/* =====================================================
-   POSITION EDITOR
-===================================================== */
+/*=====================================================
+POSITION EDITOR
+=====================================================*/
 
 .preview-position-editor {
     flex-shrink: 0;
@@ -1124,7 +2082,7 @@
     border: 1px solid var(--border);
     border-radius: 9px;
 
-    background: #ffffff;
+    background: #fff;
 }
 
 .preview-position-header {
@@ -1138,7 +2096,6 @@
 .preview-position-header > div {
     display: flex;
     flex-direction: column;
-
     gap: 3px;
 }
 
@@ -1155,22 +2112,15 @@
 
 .preview-position-controls {
     display: grid;
-
-    grid-template-columns:
-        minmax(150px, 180px)
-        minmax(150px, 180px)
-        minmax(220px, 1fr);
-
+    grid-template-columns: minmax(150px, 1fr);
     gap: 12px;
-
     align-items: end;
 }
 
-.preview-position-field {
+.preview-position-text {
     min-width: 0;
 }
 
-.preview-position-field label,
 .preview-position-text label {
     display: block;
 
@@ -1182,64 +2132,7 @@
     font-weight: 600;
 }
 
-.preview-position-text {
-    min-width: 0;
-}
-
-.position-input {
-    display: flex;
-    align-items: center;
-
-    height: 34px;
-
-    border: 1px solid var(--border);
-    border-radius: 7px;
-
-    background: #fff;
-
-    overflow: hidden;
-}
-
-.position-input:focus-within {
-    border-color: var(--primary);
-}
-
-.position-input input {
-    width: 100%;
-    height: 100%;
-
-    padding: 0 8px;
-
-    border: 0;
-    outline: 0;
-
-    background: transparent;
-
-    font-family: inherit;
-
-    color: var(--text);
-    font-size: 12px;
-}
-
-.position-input span {
-    padding-right: 8px;
-
-    color: #9ca3af;
-
-    font-size: 10px;
-}
-
-.position-input input::-webkit-outer-spin-button,
-.position-input input::-webkit-inner-spin-button {
-    margin: 0;
-    appearance: none;
-}
-
-.position-input input[type="number"] {
-    appearance: textfield;
-}
-
-.preview-position-text .input {
+.preview-position-text input {
     width: 100%;
     height: 34px;
 
@@ -1251,19 +2144,18 @@
     outline: none;
 
     font-family: inherit;
-
     color: var(--text);
     font-size: 12px;
 }
 
-.preview-position-text .input:focus {
+.preview-position-text input:focus {
     border-color: var(--primary);
 }
 
 
-/* =====================================================
-   DESIGN HINT
-===================================================== */
+/*=====================================================
+DESIGN HINT
+=====================================================*/
 
 .design-hint {
     flex-shrink: 0;
@@ -1279,7 +2171,6 @@
     color: #6b7280;
 
     font-size: 10px;
-
     line-height: 1.5;
 }
 
@@ -1288,9 +2179,9 @@
 }
 
 
-/* =====================================================
-   FORM FOOTER
-===================================================== */
+/*=====================================================
+FORM FOOTER
+=====================================================*/
 
 .form-footer {
     display: flex;
@@ -1329,7 +2220,9 @@
 
 .btn-secondary {
     border: 1px solid var(--border);
+
     background: #fff;
+
     color: #374151;
 }
 
@@ -1339,7 +2232,9 @@
 
 .btn-primary {
     border: 1px solid var(--primary);
+
     background: var(--primary);
+
     color: #fff;
 }
 
@@ -1348,9 +2243,9 @@
 }
 
 
-/* =====================================================
-   TOAST
-===================================================== */
+/*=====================================================
+TOAST
+=====================================================*/
 
 .toast {
     position: fixed;
@@ -1365,6 +2260,7 @@
     border-radius: 7px;
 
     background: #111827;
+
     color: #fff;
 
     box-shadow:
@@ -1375,9 +2271,9 @@
 }
 
 
-/* =====================================================
-   RESPONSIVE
-===================================================== */
+/*=====================================================
+RESPONSIVE
+=====================================================*/
 
 @media (max-width: 1200px) {
 
@@ -1387,20 +2283,8 @@
             minmax(0, 1fr);
     }
 
-    .preview-position-controls {
-        grid-template-columns:
-            1fr 1fr;
-    }
-
-    .preview-position-text {
-        grid-column: 1 / -1;
-    }
 }
 
-
-/* =====================================================
-   TABLET
-===================================================== */
 
 @media (max-width: 850px) {
 
@@ -1414,11 +2298,6 @@
 
         grid-template-columns: 1fr;
     }
-
-    /*
-    On smaller screens we no longer need
-    independent fixed height.
-    */
 
     .settings-panel {
         height: auto;
@@ -1446,12 +2325,9 @@
     .step-line {
         min-width: 35px;
     }
+
 }
 
-
-/* =====================================================
-   MOBILE
-===================================================== */
 
 @media (max-width: 550px) {
 
@@ -1484,20 +2360,15 @@
     }
 
     .field-layout-controls {
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns:
+            1fr
+            1fr
+            1fr;
     }
 
     .preview-position-editor {
         margin: 0 12px 12px;
         padding: 13px;
-    }
-
-    .preview-position-controls {
-        grid-template-columns: 1fr;
-    }
-
-    .preview-position-text {
-        grid-column: auto;
     }
 
     .form-footer {
@@ -1508,4 +2379,5 @@
     .actions {
         justify-content: flex-end;
     }
+
 }

@@ -25,6 +25,9 @@ function Sidebar({ activePage = "dashboard" }) {
             : currentPath.endsWith("/card") ||
               currentPath.endsWith("/card.html")
             ? "cards"
+            : currentPath.endsWith("/create-form") ||
+              currentPath.endsWith("/create-form.html")
+            ? "createform"
             : currentPath.endsWith("/settings") ||
               currentPath.endsWith("/settings.html")
             ? "settings"
@@ -121,8 +124,10 @@ function Sidebar({ activePage = "dashboard" }) {
         window.location.href = "/listform";
     };
 
+    
+
     const handleCreate = () => {
-        window.location.href = "/card";
+        window.location.href = "/create-form";
     };
 
     const handleStoredList = (id) => {
@@ -412,7 +417,7 @@ function Sidebar({ activePage = "dashboard" }) {
 
                 <button
                     className={`nav-item create-nav ${
-                        currentPage === "cards"
+                        currentPage === "createform"
                             ? "active"
                             : ""
                     }`}

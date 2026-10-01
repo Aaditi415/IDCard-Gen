@@ -110,19 +110,21 @@
 /* =====================================================
    CREATED FORM
 ===================================================== */
-
+.form-card{
+    max-width: 1500px;
+}
 .created-form-card {
     min-width: 0;
 }
 
-.created-form-card
-.form-card-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 10px;
+.created-form-card{
+    display: block;
 }
 
+.form-card-header
+{
+    display: block;
+}
 .field-count {
     flex-shrink: 0;
 

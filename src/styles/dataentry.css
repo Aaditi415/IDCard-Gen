@@ -1,686 +1,585 @@
-/* =====================================================
-   DATA ENTRY WORKSPACE
-===================================================== */
 
-.data-entry-workspace {
-    display: grid;
-    grid-template-columns: minmax(420px, 0.95fr) minmax(460px, 1.05fr);
-    gap: 18px;
+/* =========================
+   DEMO FORM
+========================= */
 
-    height: calc(100vh - 235px);
-    min-height: 620px;
+.demo-form-card {
+    max-width: none;
 }
 
-
-/* =====================================================
-   COMMON PANEL
-===================================================== */
-
-.live-preview-panel,
-.data-form-panel {
-    min-width: 0;
-    min-height: 0;
-
-    background: #ffffff;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-
-    overflow: hidden;
-}
-
-
-/* =====================================================
-   LIVE PREVIEW PANEL
-===================================================== */
-
-.live-preview-panel {
-    display: flex;
-    flex-direction: column;
-}
-
-
-.live-preview-scroll {
-    flex: 1;
-    min-height: 0;
-
-    overflow: auto;
-
+.demo-card-title-row {
     display: flex;
     align-items: flex-start;
-    justify-content: center;
-
-    padding: 55px;
-}
-
-
-/* =====================================================
-   PANEL HEADER
-===================================================== */
-
-.panel-header {
-    flex-shrink: 0;
-
-    min-height: 68px;
-
-    padding: 16px 20px;
-
-    display: flex;
-    align-items: center;
-
-    border-bottom: 1px solid var(--border);
-}
-
-
-.panel-header h2 {
-    margin: 0;
-
-    font-size: 16px;
-    font-weight: 700;
-
-    color: #111827;
-}
-
-
-.panel-header span {
-    display: block;
-
-    margin-top: 4px;
-
-    font-size: 12px;
-
-    color: var(--muted);
-}
-
-
-/* =====================================================
-   CARD WRAPPER
-===================================================== */
-
-.card-preview-wrapper {
-    display: flex;
-
-    justify-content: center;
-    align-items: flex-start;
-
-    flex-shrink: 0;
-}
-
-
-/* =====================================================
-   ID CARD
-===================================================== */
-
-.id-card-preview {
-    position: relative;
-
-    overflow: hidden;
-
-    flex-shrink: 0;
-
-    border-radius: 12px;
-
-    border: 1px solid #d9dee7;
-
-    box-shadow:
-        0 16px 35px rgba(15, 23, 42, 0.12);
-}
-
-
-/* =====================================================
-   BACKGROUND IMAGE
-===================================================== */
-
-.card-background-image {
-    position: absolute;
-
-    inset: 0;
-
-    width: 100%;
-    height: 100%;
-
-    object-fit: cover;
-
-    z-index: 0;
-
-    pointer-events: none;
-}
-
-
-/* =====================================================
-   COLOR BAR
-===================================================== */
-
-.card-color-bar {
-    position: absolute;
-
-    left: 0;
-    top: 0;
-
-    width: 7px;
-    height: 100%;
-
-    z-index: 2;
-}
-
-
-/* =====================================================
-   LOGO
-===================================================== */
-
-.card-logo {
-    position: absolute;
-
-    object-fit: contain;
-
-    z-index: 5;
-}
-
-
-/* =====================================================
-   ORGANIZATION
-===================================================== */
-
-.card-organization {
-    position: absolute;
-
-    z-index: 5;
-
-    font-size: 15px;
-    font-weight: 700;
-
-    white-space: nowrap;
-}
-
-
-/* =====================================================
-   CARD FIELDS
-===================================================== */
-
-.card-fields-layout {
-    position: absolute;
-
-    left: 18px;
-    right: 18px;
-
-    top: 95px;
-    bottom: 38px;
-
-    z-index: 5;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 9px;
-
-    overflow: hidden;
-}
-
-
-.card-field-row {
-    display: grid;
-
-    grid-template-columns:
-        repeat(2, minmax(0, 1fr));
-
-    gap: 10px;
-
-    min-width: 0;
-}
-
-
-.card-field-row.full-row {
-    grid-template-columns: 1fr;
-}
-
-
-.card-grid-field {
-    min-width: 0;
-}
-
-
-.card-grid-field.full {
-    grid-column: 1 / -1;
-}
-
-
-.card-grid-field.half {
-    min-width: 0;
-}
-
-
-/* =====================================================
-   NORMAL FIELD
-===================================================== */
-
-.preview-normal-field {
-    display: flex;
-
-    align-items: baseline;
-
-    gap: 4px;
-
-    min-width: 0;
-
-    color: #1f2937;
-
-    line-height: 1.3;
-}
-
-
-.preview-field-label {
-    flex-shrink: 0;
-
-    font-weight: 600;
-
-    color: #374151;
-}
-
-
-.preview-field-value {
-    min-width: 0;
-
-    overflow: hidden;
-
-    text-overflow: ellipsis;
-
-    white-space: nowrap;
-
-    color: #111827;
-}
-
-
-/* =====================================================
-   PHOTO
-===================================================== */
-
-.preview-photo-field {
-    width: 75px;
-    height: 90px;
-
-    overflow: hidden;
-
-    border: 1px solid #d1d5db;
-
-    border-radius: 6px;
-
-    background: #f3f4f6;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-
-.preview-photo-field img {
-    width: 100%;
-    height: 100%;
-
-    object-fit: cover;
-}
-
-
-.photo-placeholder {
-    width: 100%;
-    height: 100%;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    color: #9ca3af;
-
-    font-size: 10px;
-    font-weight: 700;
-}
-
-
-/* =====================================================
-   CARD FOOTER
-===================================================== */
-
-.card-footer {
-    position: absolute;
-
-    left: 18px;
-    right: 18px;
-    bottom: 12px;
-
-    z-index: 5;
-
-    padding-top: 7px;
-
-    border-top: 1px solid #e5e7eb;
-
-    text-align: center;
-
-    font-size: 9px;
-    font-weight: 700;
-
-    letter-spacing: 0.8px;
-
-    color: #9ca3af;
-}
-
-
-/* =====================================================
-   DATA FORM PANEL
-===================================================== */
-
-.data-form-panel {
-    display: flex;
-    flex-direction: column;
-}
-
-
-/* =====================================================
-   FORM SCROLL
-===================================================== */
-
-.data-form-scroll {
-    flex: 1;
-
-    min-height: 0;
-
-    overflow-y: auto;
-    overflow-x: hidden;
-
-    padding: 24px;
-}
-
-
-/* =====================================================
-   FORM
-===================================================== */
-
-.data-form {
-    display: flex;
-    flex-direction: column;
-
+    justify-content: space-between;
     gap: 20px;
 }
 
+.demo-card-title-row h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+}
 
-.data-form-field {
+.demo-card-title-row p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.reset-demo {
+    height: 32px;
+    padding: 0 11px;
+    border: 1px solid #dfe3e8;
+    border-radius: 7px;
+    background: #fff;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.reset-demo:hover {
+    background: #f9fafb;
+    border-color: #cdd2d9;
+}
+
+
+/* =========================
+   DEMO EMPTY
+========================= */
+
+.empty-demo {
+    border: 1px dashed #d5d9df;
+    border-radius: 10px;
+    padding: 30px 20px;
+    text-align: center;
     display: flex;
     flex-direction: column;
-
-    gap: 7px;
+    gap: 6px;
 }
 
-
-.data-form-field label {
-    font-size: 13px;
-    font-weight: 600;
-
+.empty-demo strong {
     color: #374151;
-}
-
-
-.required {
-    margin-left: 3px;
-
-    color: #dc2626;
-}
-
-
-.data-form-field input,
-.data-form-field textarea,
-.data-form-field select {
-    width: 100%;
-
-    min-height: 42px;
-
-    padding: 10px 12px;
-
-    border: 1px solid #d1d5db;
-
-    border-radius: 7px;
-
-    outline: none;
-
-    background: #ffffff;
-
-    color: #111827;
-
-    font-family: inherit;
-
     font-size: 13px;
+}
 
-    transition:
-        border-color 0.15s ease,
-        box-shadow 0.15s ease;
+.empty-demo span {
+    color: #9ca3af;
+    font-size: 11px;
 }
 
 
-.data-form-field textarea {
-    min-height: 95px;
+/* =========================
+   DEMO TEXTAREA
+========================= */
 
+.demo-textarea {
+    height: auto;
+    min-height: 85px;
+    padding-top: 11px;
+    padding-bottom: 11px;
     resize: vertical;
 }
 
 
-.data-form-field input:focus,
-.data-form-field textarea:focus,
-.data-form-field select:focus {
-    border-color: var(--primary, #2563eb);
+/* =========================
+   PHOTO UPLOAD
+========================= */
 
-    box-shadow:
-        0 0 0 3px
-        rgba(37, 99, 235, 0.10);
-}
-
-
-/* =====================================================
-   IMAGE UPLOAD
-===================================================== */
-
-.image-upload-box {
-    padding: 14px;
-
-    border: 1px dashed #cbd5e1;
-
+.demo-upload {
+    width: 100%;
+    min-height: 105px;
+    border: 1px dashed #d4d9df;
     border-radius: 8px;
-
-    background: #f8fafc;
-}
-
-
-.image-upload-box input[type="file"] {
-    min-height: auto;
-
-    padding: 0;
-
-    border: 0;
-
-    background: transparent;
-
-    box-shadow: none;
-}
-
-
-.uploaded-preview {
-    display: block;
-
-    width: 90px;
-    height: 90px;
-
-    margin-top: 12px;
-
-    object-fit: cover;
-
-    border-radius: 7px;
-
-    border: 1px solid #d1d5db;
-}
-
-
-/* =====================================================
-   FORM FOOTER
-===================================================== */
-
-.data-form-footer {
-    flex-shrink: 0;
-
+    background: #fafafa;
     display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    transition: .2s ease;
+}
 
+.demo-upload:hover {
+    border-color: var(--primary);
+    background: #f8faff;
+}
+
+.demo-upload input {
+    display: none;
+}
+
+.upload-icon {
+    width: 27px;
+    height: 27px;
+    border-radius: 7px;
+    display: grid;
+    place-items: center;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.demo-upload span:not(.upload-icon) {
+    font-size: 11px;
+    font-weight: 650;
+    color: #4b5563;
+}
+
+.demo-upload small {
+    color: #9ca3af;
+    font-size: 9px;
+}
+
+
+/* =========================
+   PHOTO PREVIEW
+========================= */
+
+.demo-photo-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border: 1px solid #e2e5e9;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.demo-photo-preview img {
+    width: 55px ;
+    height: 65px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #dfe3e8;
+}
+
+.demo-photo-preview button {
+    border: 0;
+    background: transparent;
+    color: #ef4444;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+
+/* =========================
+   PREVIEW CARD
+========================= */
+
+.demo-preview-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+
+/* =========================
+   PREVIEW HEADER
+========================= */
+
+.demo-preview-header {
+    padding: 17px 18px;
+    border-bottom: 1px solid #edf0f3;
+    display: flex;
     align-items: center;
     justify-content: space-between;
-
     gap: 12px;
+}
 
-    padding: 15px 20px;
+.demo-preview-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+}
 
-    border-top: 1px solid var(--border);
-
-    background: #ffffff;
+.demo-preview-header span {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 10px;
 }
 
 
-.secondary-btn,
-.primary-btn {
-    min-height: 40px;
+/* =========================
+   FRONT / BACK
+========================= */
 
-    padding: 0 17px;
-
+.side-switch {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid #e1e4e8;
     border-radius: 7px;
-
-    font-family: inherit;
-
-    font-size: 13px;
-    font-weight: 600;
-
-    cursor: pointer;
-
-    transition:
-        background 0.15s ease,
-        border-color 0.15s ease,
-        transform 0.15s ease;
+    background: #fafafa;
 }
 
-
-.secondary-btn {
-    background: #ffffff;
-
-    border: 1px solid #d1d5db;
-
-    color: #374151;
-}
-
-
-.secondary-btn:hover {
-    background: #f9fafb;
-}
-
-
-.primary-btn {
-    border: 1px solid var(--primary, #2563eb);
-
-    background: var(--primary, #2563eb);
-
-    color: #ffffff;
-}
-
-
-.primary-btn:hover {
-    filter: brightness(0.96);
-}
-
-
-/* =====================================================
-   EMPTY STATE
-===================================================== */
-
-.empty-form {
-    padding: 50px 20px;
-
-    text-align: center;
-}
-
-
-.empty-form h3 {
-    margin: 0 0 8px;
-
-    font-size: 16px;
-
-    color: #111827;
-}
-
-
-.empty-form p {
-    margin: 0 0 20px;
-
-    font-size: 13px;
-
-    line-height: 1.6;
-
-    color: #6b7280;
-}
-
-
-.empty-form button {
-    min-height: 40px;
-
-    padding: 0 16px;
-
+.side-switch button {
+    height: 27px;
+    padding: 0 10px;
     border: 0;
-
-    border-radius: 7px;
-
-    background: #2563eb;
-
-    color: #ffffff;
-
-    font-weight: 600;
-
+    border-radius: 5px;
+    background: transparent;
+    color: #6b7280;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 650;
     cursor: pointer;
 }
 
+.side-switch button.active {
+    background: var(--primary);
+    color: #fff;
+}
 
-/* =====================================================
+
+/* =========================
+   CARD AREA
+========================= */
+
+.demo-card-area {
+    min-height: 500px;
+    padding: 35px 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fafafa;
+    background-image:
+        linear-gradient(
+            45deg,
+            #f3f4f6 25%,
+            transparent 25%
+        ),
+        linear-gradient(
+            -45deg,
+            #f3f4f6 25%,
+            transparent 25%
+        ),
+        linear-gradient(
+            45deg,
+            transparent 75%,
+            #f3f4f6 75%
+        ),
+        linear-gradient(
+            -45deg,
+            transparent 75%,
+            #f3f4f6 75%
+        );
+    background-size: 18px 18px;
+    background-position:
+        0 0,
+        0 9px,
+        9px -9px,
+        -9px 0;
+    overflow: auto;
+}
+
+.demo-card-scale {
+    transform: scale(.9);
+    transform-origin: center center;
+    flex-shrink: 0;
+}
+
+
+/* =========================
+   ID CARD
+========================= */
+
+.demo-id-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 11px;
+    box-shadow:
+        0 14px 35px
+        rgba(15, 23, 42, .16);
+    font-family:
+        Inter,
+        Arial,
+        sans-serif;
+}
+
+
+/* =========================
+   BACKGROUND
+========================= */
+
+.demo-card-background {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    pointer-events: none;
+}
+
+
+/* =========================
+   COLOR BAR
+========================= */
+
+.demo-card-color {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 7px;
+    z-index: 3;
+}
+
+
+/* =========================
+   LOGO
+========================= */
+
+.demo-card-logo {
+    position: absolute;
+    object-fit: contain;
+    z-index: 5;
+}
+
+
+/* =========================
+   ORGANIZATION
+========================= */
+
+.demo-card-organization {
+    position: absolute;
+    z-index: 5;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .6px;
+    white-space: nowrap;
+}
+
+
+/* =========================
+   BACK TITLE
+========================= */
+
+.demo-back-title {
+    position: absolute;
+    top: 62px;
+    left: 18px;
+    right: 18px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    z-index: 5;
+}
+
+
+/* =========================
+   CARD FIELDS
+========================= */
+
+.demo-card-fields {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 78px;
+    bottom: 32px;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr);
+
+    grid-auto-rows:
+        minmax(24px, auto);
+
+    column-gap: 10px;
+    row-gap: 7px;
+
+    align-content: start;
+
+    z-index: 4;
+}
+
+
+/* =========================
+   NORMAL FIELD
+========================= */
+
+.demo-card-normal-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.demo-card-normal-field span {
+    color: #9ca3af;
+    font-size: 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.demo-card-normal-field strong {
+    color: #111827;
+    font-size: 8.5px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* =========================
+   CARD PHOTO
+========================= */
+
+.demo-card-photo {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #f3f4f6;
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #9ca3af;
+    font-size: 7px;
+    font-weight: 700;
+}
+
+.demo-card-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+
+/* =========================
+   CARD FOOTER
+========================= */
+
+.demo-card-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    height: 25px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #fff;
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: .8px;
+
+    z-index: 6;
+}
+
+
+/* =========================
+   PREVIEW INFORMATION
+========================= */
+
+.demo-preview-info {
+    padding: 14px 17px;
+    border-top: 1px solid #edf0f3;
+
+    display: grid;
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 10px;
+}
+
+.demo-preview-info div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.demo-preview-info span {
+    color: #9ca3af;
+    font-size: 9px;
+}
+
+.demo-preview-info strong {
+    color: #374151;
+    font-size: 11px;
+}
+
+
+/* =========================
+   DEMO FOOTER
+========================= */
+
+.demo-page-footer {
+    margin-top: 20px;
+}
+
+
+/* =========================
+   STEP COMPLETED
+========================= */
+
+.step.completed .step-number {
+    background: var(--primary);
+    color: #fff;
+}
+
+.step.completed .step-label {
+    color: var(--text);
+}
+
+
+/* =========================
    RESPONSIVE
-===================================================== */
+========================= */
 
 @media (max-width: 1100px) {
 
-    .data-entry-workspace {
+    .demo-layout {
         grid-template-columns: 1fr;
-
-        height: auto;
-
-        min-height: auto;
     }
 
-
-    .live-preview-panel,
-    .data-form-panel {
-        min-height: 600px;
+    .demo-preview-card {
+        max-width: 760px;
     }
 
 }
 
 
-@media (max-width: 700px) {
+@media (max-width: 760px) {
 
-    .live-preview-scroll {
-        padding: 30px 20px;
+    .demo-card-title-row {
+        flex-direction: column;
     }
 
-
-    .data-form-scroll {
-        padding: 18px;
+    .demo-preview-header {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
-
-    .data-form-footer {
-        flex-direction: column-reverse;
-
-        align-items: stretch;
+    .demo-card-area {
+        min-height: 450px;
+        padding: 25px 15px;
     }
 
+}
 
-    .secondary-btn,
-    .primary-btn {
-        width: 100%;
+
+@media (max-width: 500px) {
+
+    .demo-preview-info {
+        grid-template-columns:
+            1fr 1fr;
     }
 
 }

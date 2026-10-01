@@ -12,7 +12,8 @@ import StoredData from "./pages/StoredData";
 import DataMenuSettings from "./pages/DataMenuSettings";
 import CreateForm from "./pages/CreateForm";
 import Design from "./pages/Design";
-import DataEntry from "./pages/DataEntry";
+import Demo from "./pages/Demo";
+import  IdCardPreview  from "./pages/IdCardPreview";
 
 function App() {
     const path = window.location.pathname;
@@ -39,12 +40,18 @@ function App() {
         return <Design />;
     }
     if (
-        path.endsWith("/dataentry") ||
-        path.endsWith("/dataentry.html")
+        path.endsWith("/demo") ||
+        path.endsWith("/demo.html")
     ) {
-        return <DataEntry />;
+        return <Demo />;
     }
 
+    if (
+        path.endsWith("/idcardpreview") ||
+        path.endsWith("/idcardpreview.html")
+    ) {
+        return <IdCardPreview />;
+    }
     // Details
     if (
         path.endsWith("/details") ||
