@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 
 function Sidebar({ activePage = "dashboard" }) {
     const [storedLists, setStoredLists] = useState([]);
+    const [studentLists, setStudentLists] = useState([]);
+
     const [selectedId, setSelectedId] = useState(null);
+    const [selectedStudentListId, setSelectedStudentListId] =
+        useState(null);
 
     const currentPath = window.location.pathname;
 
@@ -13,17 +17,21 @@ function Sidebar({ activePage = "dashboard" }) {
             : currentPath.endsWith("/stored-data") ||
               currentPath.endsWith("/stored-data.html")
             ? "stored-data"
+            : currentPath.startsWith("/student-data")
+            ? "student-data"
+            : currentPath.startsWith("/studentform/")
+            ? "student-form"
             : currentPath.endsWith("/listform") ||
               currentPath.endsWith("/listform.html") ||
               currentPath.endsWith("/importdata") ||
               currentPath.endsWith("/importdata.html")
             ? "import"
             : currentPath.endsWith("/add-single-record") ||
-            currentPath.endsWith("/single-record") ||
-            currentPath.endsWith("/single-record-review")
+              currentPath.endsWith("/single-record") ||
+              currentPath.endsWith("/single-record-review")
             ? "single-record"
-            : currentPath.endsWith("/card") ||
-              currentPath.endsWith("/card.html")
+            : currentPath.endsWith("/idlistform") ||
+              currentPath.endsWith("/idlistform.html")
             ? "cards"
             : currentPath.endsWith("/create-form") ||
               currentPath.endsWith("/create-form.html")
@@ -38,22 +46,32 @@ function Sidebar({ activePage = "dashboard" }) {
         currentPage === "stored-data"
     );
 
+    const [isStudentApplicationsOpen, setIsStudentApplicationsOpen] =
+        useState(
+            currentPage === "student-data" ||
+            currentPage === "student-form"
+        );
+
     /* =====================================================
-       GET STORED LISTS
+       INITIAL LOAD
     ===================================================== */
 
     useEffect(() => {
         loadStoredLists();
+        loadStudentLists();
 
         const params = new URLSearchParams(
             window.location.search
         );
 
         setSelectedId(params.get("id"));
+        setSelectedStudentListId(
+            params.get("listId")
+        );
     }, []);
 
     /* =====================================================
-       LOAD STORED LISTS + CUSTOM ORDER
+       LOAD STORED DATA LISTS
     ===================================================== */
 
     const loadStoredLists = () => {
@@ -113,6 +131,34 @@ function Sidebar({ activePage = "dashboard" }) {
     };
 
     /* =====================================================
+       LOAD STUDENT APPLICATION LISTS
+    ===================================================== */
+
+    const loadStudentLists = () => {
+        try {
+            const stored =
+                JSON.parse(
+                    localStorage.getItem(
+                        "idCardLists"
+                    )
+                ) || [];
+
+            setStudentLists(
+                Array.isArray(stored)
+                    ? stored
+                    : []
+            );
+        } catch (error) {
+            console.error(
+                "Failed to load student lists:",
+                error
+            );
+
+            setStudentLists([]);
+        }
+    };
+
+    /* =====================================================
        NAVIGATION
     ===================================================== */
 
@@ -124,8 +170,6 @@ function Sidebar({ activePage = "dashboard" }) {
         window.location.href = "/listform";
     };
 
-    
-
     const handleCreate = () => {
         window.location.href = "/create-form";
     };
@@ -136,12 +180,22 @@ function Sidebar({ activePage = "dashboard" }) {
             encodeURIComponent(id);
     };
 
+    const handleStudentList = (list) => {
+        window.location.href =
+            "/student-data?listId=" +
+            encodeURIComponent(list.id);
+    };
+
     const handleCards = () => {
-        window.location.href = "/card";
+        window.location.href = "/idlistform";
     };
 
     const handleSettings = () => {
         window.location.href = "/settings";
+    };
+
+    const handleTemplates = () => {
+        window.location.href = "/templates";
     };
 
     /* =====================================================
@@ -150,6 +204,16 @@ function Sidebar({ activePage = "dashboard" }) {
 
     const handleDataToggle = () => {
         setIsDataOpen((prev) => !prev);
+    };
+
+    /* =====================================================
+       STUDENT APPLICATIONS TOGGLE
+    ===================================================== */
+
+    const handleStudentApplicationsToggle = () => {
+        setIsStudentApplicationsOpen(
+            (prev) => !prev
+        );
     };
 
     /* =====================================================
@@ -185,6 +249,7 @@ function Sidebar({ activePage = "dashboard" }) {
             ================================================= */}
 
             <div className="logo">
+
                 <div className="logo-icon">
                     ID
                 </div>
@@ -196,6 +261,7 @@ function Sidebar({ activePage = "dashboard" }) {
                         Digital ID Management
                     </span>
                 </div>
+
             </div>
 
 
@@ -210,7 +276,9 @@ function Sidebar({ activePage = "dashboard" }) {
 
             <nav className="nav">
 
-                {/* DASHBOARD */}
+                {/* =================================================
+                    DASHBOARD
+                ================================================= */}
 
                 <button
                     className={`nav-item ${
@@ -277,6 +345,7 @@ function Sidebar({ activePage = "dashboard" }) {
                         id="storedList"
                         className="stored-list"
                     >
+
                         {!storedLists.length ? (
                             <div
                                 style={{
@@ -303,6 +372,7 @@ function Sidebar({ activePage = "dashboard" }) {
                                         )
                                     }
                                 >
+
                                     <span className="stored-letter">
                                         {getInitials(
                                             list.tabName ||
@@ -314,9 +384,112 @@ function Sidebar({ activePage = "dashboard" }) {
                                         {list.tabName ||
                                             "Untitled"}
                                     </span>
+
                                 </button>
                             ))
                         )}
+
+                    </div>
+                )}
+
+
+                {/* =================================================
+                    STUDENT APPLICATIONS
+                ================================================= */}
+
+                <button
+                    className={`nav-item ${
+                        currentPage === "student-data" ||
+                        currentPage === "student-form"
+                            ? "active"
+                            : ""
+                    }`}
+                    onClick={
+                        handleStudentApplicationsToggle
+                    }
+                >
+
+                    <span className="nav-icon">
+                        ◉
+                    </span>
+
+                    <span>
+                        Student Applications
+                    </span>
+
+                    <span
+                        style={{
+                            marginLeft: "auto",
+                            fontSize: "11px",
+                            color: "#9ca3af",
+                            transition:
+                                "transform 0.2s ease",
+                            transform:
+                                isStudentApplicationsOpen
+                                    ? "rotate(180deg)"
+                                    : "rotate(0deg)"
+                        }}
+                    >
+                        ⌄
+                    </span>
+
+                </button>
+
+
+                {/* =================================================
+                    STUDENT APPLICATION LISTS
+                ================================================= */}
+
+                {isStudentApplicationsOpen && (
+                    <div
+                        className="stored-list"
+                    >
+
+                        {!studentLists.length ? (
+                            <div
+                                style={{
+                                    color: "#777b82",
+                                    fontSize: "12px",
+                                    padding: "8px 10px"
+                                }}
+                            >
+                                No student lists
+                            </div>
+                        ) : (
+                            studentLists.map((list) => (
+                                <button
+                                    key={list.id}
+                                    className={`stored-item ${
+                                        list.id ===
+                                        selectedStudentListId
+                                            ? "active"
+                                            : ""
+                                    }`}
+                                    onClick={() =>
+                                        handleStudentList(
+                                            list
+                                        )
+                                    }
+                                >
+
+                                    <span className="stored-letter">
+                                        {getInitials(
+                                            list.tabName ||
+                                                list.listName ||
+                                                "List"
+                                        )}
+                                    </span>
+
+                                    <span className="stored-name">
+                                        {list.tabName ||
+                                            list.listName ||
+                                            "Untitled"}
+                                    </span>
+
+                                </button>
+                            ))
+                        )}
+
                     </div>
                 )}
 
@@ -353,6 +526,7 @@ function Sidebar({ activePage = "dashboard" }) {
                             ? "active"
                             : ""
                     }`}
+                    onClick={handleTemplates}
                 >
                     <span className="nav-icon">
                         ▤

@@ -352,54 +352,81 @@ function CreateForm() {
        SAVE FORM
     ===================================================== */
 
-    const handleContinue = () => {
-        if (!validateForm()) {
-            return;
-        }
+    /* =====================================================
+   SAVE FORM
+===================================================== */
+
+const handleContinue = () => {
+    // First run your existing validation
+    if (!validateForm()) {
+        return;
+    }
+
+    const trimmedName = formName.trim();
+
+    try {
+        // Get all saved templates
+        const existingTemplates =
+            JSON.parse(
+                localStorage.getItem("idCardTemplates")
+            ) || [];
+
+        // Find an existing template with the same name
+        // Matching is case-insensitive and ignores extra spaces
+        const existingTemplate =
+            existingTemplates.find(
+                (template) =>
+                    template.name?.trim().toLowerCase() ===
+                    trimmedName.toLowerCase()
+            );
+
+        /*
+         * If the form name already exists:
+         *      reuse its existing formId
+         *
+         * If the form name is new:
+         *      create a new formId
+         */
+        const formId =
+            existingTemplate?.formId ||
+            "form_" + Date.now();
 
         const formData = {
-            id:
-                localStorage.getItem(
-                    "idCardFormId"
-                ) ||
-                "form_" + Date.now(),
+            id: formId,
 
-            name: formName.trim(),
+            name: trimmedName,
 
-            fields: fields.map(
-                (field) => ({
-                    ...field,
-                    label:
-                        field.label.trim(),
-                    name:
-                        field.name.trim()
-                })
-            ),
-
-            updatedAt:
-                new Date().toISOString()
+            fields: fields.map((field) => ({
+                ...field
+            }))
         };
 
+        // Save current form
         localStorage.setItem(
             "idCardForm",
             JSON.stringify(formData)
         );
 
+        // Save current form ID
         localStorage.setItem(
             "idCardFormId",
-            formData.id
+            formId
+        );
+
+        // Go to Design step
+        window.location.href = "/design";
+
+    } catch (error) {
+        console.error(
+            "Unable to save form:",
+            error
         );
 
         showToast(
-            "Form saved successfully."
+            "Unable to save form. Please try again."
         );
-
-        setTimeout(() => {
-            window.location.href =
-                "/design";
-        }, 400);
-    };
-
+    }
+};
     /* =====================================================
        CANCEL
     ===================================================== */
@@ -421,37 +448,37 @@ function CreateForm() {
        LOAD EXISTING FORM
     ===================================================== */
 
-    useEffect(() => {
-        try {
-            const savedForm =
-                JSON.parse(
-                    localStorage.getItem(
-                        "idCardForm"
-                    )
-                );
+    // useEffect(() => {
+    //     try {
+    //         const savedForm =
+    //             JSON.parse(
+    //                 localStorage.getItem(
+    //                     "idCardForm"
+    //                 )
+    //             );
 
-            if (
-                savedForm &&
-                Array.isArray(
-                    savedForm.fields
-                )
-            ) {
-                setFormName(
-                    savedForm.name ||
-                        "Student ID Card Form"
-                );
+    //         if (
+    //             savedForm &&
+    //             Array.isArray(
+    //                 savedForm.fields
+    //             )
+    //         ) {
+    //             setFormName(
+    //                 savedForm.name ||
+    //                     "Student ID Card Form"
+    //             );
 
-                setFields(
-                    savedForm.fields
-                );
-            }
-        } catch (error) {
-            console.error(
-                "Unable to load saved form:",
-                error
-            );
-        }
-    }, []);
+    //             setFields(
+    //                 savedForm.fields
+    //             );
+    //         }
+    //     } catch (error) {
+    //         console.error(
+    //             "Unable to load saved form:",
+    //             error
+    //         );
+    //     }
+    // }, []);
 
     /* =====================================================
        NAVIGATION

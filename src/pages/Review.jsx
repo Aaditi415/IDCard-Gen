@@ -247,142 +247,209 @@ function Review() {
     ===================================================== */
 
     const saveStudentList = () => {
-        if (!students.length) {
-            showToast(
-                "There are no student records to save."
-            );
 
-            return;
-        }
-
-
-        /* =========================================
-           GET EXISTING STORED LISTS
-        ========================================== */
-
-        let storedLists = [];
-
-        try {
-            storedLists =
-                JSON.parse(
-                    localStorage.getItem(
-                        "idCardStoredLists"
-                    )
-                ) || [];
-        } catch {
-            storedLists = [];
-        }
-
-
-        /* =========================================
-           GENERATE NEXT LETTER
-        ========================================== */
-
-        const shortName =
-            String.fromCharCode(
-                65 + storedLists.length
-            );
-
-
-        /* =========================================
-           CREATE STORED LIST
-        ========================================== */
-
-        const storedList = {
-
-            id:
-                "list_" +
-                Date.now(),
-
-            shortName:
-                shortName,
-
-            listName:
-                savedList
-                    ? savedList.listName
-                    : "Untitled List",
-
-            tabName:
-                savedList
-                    ? savedList.tabName
-                    : "List " + shortName,
-
-            headers:
-                [...headers],
-
-            students:
-                students.map(
-                    (row) => [...row]
-                ),
-
-            totalRecords:
-                students.length,
-
-            validRecords:
-                students.length,
-
-            removedRecords:
-                removedCount,
-
-            createdAt:
-                new Date().toISOString(),
-
-            updatedAt:
-                new Date().toISOString()
-        };
-
-
-        /* =========================================
-           ADD TO STORED LISTS
-        ========================================== */
-
-        storedLists.push(
-            storedList
-        );
-
-
-        /* =========================================
-           SAVE
-        ========================================== */
-
-        localStorage.setItem(
-            "idCardStoredLists",
-            JSON.stringify(
-                storedLists
-            )
-        );
-
-
-        /* =========================================
-           ALSO KEEP FINAL LIST
-        ========================================== */
-
-        localStorage.setItem(
-            "idCardFinalList",
-            JSON.stringify(
-                storedList
-            )
-        );
-
+    if (!students.length) {
 
         showToast(
-            "Student list saved successfully."
+            "There are no student records to save."
+        );
+
+        return;
+    }
+
+
+    /* =====================================================
+       GET EXISTING STORED LISTS
+    ===================================================== */
+
+    let storedLists = [];
+
+    try {
+
+        storedLists =
+            JSON.parse(
+                localStorage.getItem(
+                    "idCardStoredLists"
+                )
+            ) || [];
+
+    } catch {
+
+        storedLists = [];
+
+    }
+
+
+    if (!Array.isArray(storedLists)) {
+        storedLists = [];
+    }
+
+
+    /* =====================================================
+       GENERATE NEXT LETTER
+    ===================================================== */
+
+    const shortName =
+        String.fromCharCode(
+            65 + storedLists.length
         );
 
 
-        /* =========================================
-           GO TO STORED DATA
-        ========================================== */
+    /* =====================================================
+       CREATE MASTER LIST
+    ===================================================== */
 
-        setTimeout(() => {
+    const masterListId =
+        "master_" + Date.now();
 
-            window.location.href =
-                "stored-data.html?id=" +
-                storedList.id;
 
-        }, 800);
+    const storedList = {
+
+        id:
+            masterListId,
+
+        shortName:
+            shortName,
+
+        listName:
+            savedList
+                ? savedList.listName
+                : "Untitled List",
+
+        tabName:
+            savedList
+                ? savedList.tabName
+                : "List " + shortName,
+
+        headers:
+            [...headers],
+
+        students:
+            students.map(
+                row => [...row]
+            ),
+
+        totalRecords:
+            students.length,
+
+        validRecords:
+            students.length,
+
+        removedRecords:
+            removedCount,
+
+        createdAt:
+            new Date().toISOString(),
+
+        updatedAt:
+            new Date().toISOString()
+
     };
 
+
+    /* =====================================================
+       SAVE TO EXISTING STORED LISTS
+    ===================================================== */
+
+    const updatedStoredLists = [
+        ...storedLists,
+        storedList
+    ];
+
+
+    localStorage.setItem(
+        "idCardStoredLists",
+        JSON.stringify(
+            updatedStoredLists
+        )
+    );
+
+
+    /* =====================================================
+       SAVE AS MASTER LIST
+       ---------------------------------------------
+       This is what StudentForm verification uses.
+    ===================================================== */
+
+    let masterLists = [];
+
+    try {
+
+        masterLists =
+            JSON.parse(
+                localStorage.getItem(
+                    "idCardMasterLists"
+                )
+            ) || [];
+
+    } catch {
+
+        masterLists = [];
+
+    }
+
+
+    if (!Array.isArray(masterLists)) {
+        masterLists = [];
+    }
+
+
+    /* =====================================================
+       REMOVE OLD VERSION OF SAME MASTER LIST
+    ===================================================== */
+
+    const updatedMasterLists = [
+        ...masterLists.filter(
+            master =>
+                master.id !==
+                masterListId
+        ),
+        storedList
+    ];
+
+
+    localStorage.setItem(
+        "idCardMasterLists",
+        JSON.stringify(
+            updatedMasterLists
+        )
+    );
+
+
+    /* =====================================================
+       KEEP OLD FINAL LIST
+    ===================================================== */
+
+    localStorage.setItem(
+        "idCardFinalList",
+        JSON.stringify(
+            storedList
+        )
+    );
+
+
+    /* =====================================================
+       TOAST
+    ===================================================== */
+
+    showToast(
+        "Student list saved successfully."
+    );
+
+
+    /* =====================================================
+       GO TO STORED DATA
+    ===================================================== */
+
+    setTimeout(() => {
+
+        window.location.href =
+            "/stored-data?id=" +
+            storedList.id;
+
+    }, 800);
+
+};
 
     /* =====================================================
        NAVIGATION

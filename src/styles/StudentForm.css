@@ -705,3 +705,135 @@ textarea.student-input {
     }
 
 }
+
+/* =========================================
+   PREVIEW ACTIONS
+========================================= */
+
+.student-preview-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px 24px;
+    border-top: 1px solid #e5e7eb;
+}
+
+
+/* =========================================
+   SECONDARY BUTTON
+========================================= */
+
+.student-submit.secondary {
+    background: #fff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.student-submit.secondary:hover {
+    background: #f9fafb;
+}
+
+
+/* =========================================
+   SUBMIT MODAL
+========================================= */
+
+.submit-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+}
+
+
+.submit-modal {
+    width: 100%;
+    max-width: 460px;
+
+    background: #fff;
+    border-radius: 18px;
+
+    padding: 32px;
+
+    text-align: center;
+
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.18);
+
+    animation: submitModalIn 0.2s ease;
+}
+
+
+.submit-modal-icon {
+    width: 54px;
+    height: 54px;
+
+    margin: 0 auto 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #eff6ff;
+    color: #2563eb;
+
+    font-size: 24px;
+    font-weight: 700;
+}
+
+
+.submit-modal h2 {
+    margin: 0 0 10px;
+
+    font-size: 22px;
+    color: #111827;
+}
+
+
+.submit-modal p {
+    margin: 0;
+
+    color: #6b7280;
+
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+
+.submit-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+
+    margin-top: 26px;
+}
+
+
+.submit-modal-actions .student-submit {
+    min-width: 130px;
+}
+
+
+@keyframes submitModalIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+}

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 
+
+
 /* =========================================================
    STORAGE KEYS
 ========================================================= */
@@ -9,6 +11,8 @@ import Topbar from "../components/Topbar";
 const DESIGN_STORAGE_KEY = "idCardDesign";
 const FORM_STORAGE_KEY = "idCardForm";
 const DEMO_STORAGE_KEY = "idCardDemoData";
+const TEMPLATES_STORAGE_KEY = "idCardTemplates";
+
 
 /* =========================================================
    DEFAULT DESIGN
@@ -732,22 +736,205 @@ function IdCardPreview() {
     /* =====================================================
        GENERATE ACTION
     ===================================================== */
-
     function handleGenerate() {
+    try {
+        const savedForm = JSON.parse(
+            localStorage.getItem(FORM_STORAGE_KEY)
+        );
+
+        const savedDesign = JSON.parse(
+            localStorage.getItem(DESIGN_STORAGE_KEY)
+        );
+
+        const savedDemoData = JSON.parse(
+            localStorage.getItem("idCardDemoData")
+        ) || {};
+
+        if (!savedForm) {
+            setToast("Form not found.");
+
+            setTimeout(() => {
+                setToast("");
+            }, 2500);
+
+            return;
+        }
+
+        if (!savedDesign) {
+            setToast("Design not found.");
+
+            setTimeout(() => {
+                setToast("");
+            }, 2500);
+
+            return;
+        }
+
+        const existingTemplates =
+            JSON.parse(
+                localStorage.getItem(
+                    TEMPLATES_STORAGE_KEY
+                )
+            ) || [];
+
+        const now =
+            new Date().toISOString();
+
+        const existingTemplateIndex =
+            existingTemplates.findIndex(
+                (template) =>
+                    template.formId ===
+                    savedForm.id
+            );
+
+        const template = {
+            id:
+                existingTemplateIndex !== -1
+                    ? existingTemplates[
+                          existingTemplateIndex
+                      ].id
+                    : "template_" +
+                      Date.now(),
+
+            name: savedForm.name,
+
+            formId: savedForm.id,
+
+            /*
+             * SAVE THE FORM SNAPSHOT
+             */
+            form: {
+                ...savedForm,
+
+                fields: savedForm.fields.map(
+                    (field) => ({
+                        ...field
+                    })
+                )
+            },
+
+            /*
+             * SAVE THE DESIGN SNAPSHOT
+             */
+            design: {
+                ...savedDesign,
+
+                photo: savedDesign.photo
+                    ? {
+                          ...savedDesign.photo
+                      }
+                    : undefined,
+
+                logo: savedDesign.logo
+                    ? {
+                          ...savedDesign.logo
+                      }
+                    : undefined,
+
+                organization:
+                    savedDesign.organization
+                        ? {
+                              ...savedDesign.organization
+                          }
+                        : undefined,
+
+                backgroundImage:
+                    savedDesign.backgroundImage
+                        ? {
+                              ...savedDesign.backgroundImage
+                          }
+                        : undefined,
+
+                fieldLayout:
+                    savedDesign.fieldLayout
+                        ? {
+                              ...savedDesign.fieldLayout
+                          }
+                        : {},
+
+                frontFieldLayout:
+                    savedDesign.frontFieldLayout
+                        ? {
+                              ...savedDesign.frontFieldLayout
+                          }
+                        : {},
+
+                backFieldLayout:
+                    savedDesign.backFieldLayout
+                        ? {
+                              ...savedDesign.backFieldLayout
+                          }
+                        : {},
+
+                fieldSides:
+                    savedDesign.fieldSides
+                        ? {
+                              ...savedDesign.fieldSides
+                          }
+                        : {}
+            },
+
+            /*
+             * SAVE DEMO DATA
+             */
+            demoData: {
+                ...savedDemoData
+            },
+
+            createdAt:
+                existingTemplateIndex !== -1
+                    ? existingTemplates[
+                          existingTemplateIndex
+                      ].createdAt
+                    : now,
+
+            updatedAt: now
+        };
+
+        if (
+            existingTemplateIndex !== -1
+        ) {
+            existingTemplates[
+                existingTemplateIndex
+            ] = template;
+        } else {
+            existingTemplates.push(
+                template
+            );
+        }
+
+        localStorage.setItem(
+            TEMPLATES_STORAGE_KEY,
+            JSON.stringify(
+                existingTemplates
+            )
+        );
 
         setToast(
-            "ID card is ready for generation."
+            existingTemplateIndex !== -1
+                ? "Template updated successfully."
+                : "Template saved successfully."
         );
 
-        setTimeout(
-            () => {
-                setToast("");
-            },
-            2500
+        setTimeout(() => {
+            window.location.href = "/templates";
+        }, 1000);
+
+    } catch (error) {
+        console.error(
+            "Unable to save template:",
+            error
         );
 
+        setToast(
+            "Unable to save template."
+        );
+
+        setTimeout(() => {
+            setToast("");
+        }, 2500);
     }
-
+}
 
     /* =====================================================
        RENDER
@@ -1838,7 +2025,7 @@ function IdCardPreview() {
                                 handleGenerate
                             }
                         >
-                            Generate ID Card
+                            Save Template
                         </button>
 
                     </div>

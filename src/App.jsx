@@ -14,9 +14,11 @@ import DataMenuSettings from "./pages/DataMenuSettings";
 import CreateForm from "./pages/CreateForm";
 import Design from "./pages/Design";
 import Demo from "./pages/Demo";
-import  IdCardPreview  from "./pages/IdCardPreview";
+import IdCardPreview  from "./pages/IdCardPreview";
 import StudentForm from "./pages/StudentForm";
-
+import Templates from "./pages/Templates";
+import IDListForm from "./pages/IDListForm";
+import StudentData from "./pages/StudentData";
 
 function App() {
     const path = window.location.pathname;
@@ -56,9 +58,22 @@ function App() {
         return <IdCardPreview />;
     }
 
+    if (
+        path.endsWith("/templates") ||
+        path.endsWith("/templates.html")
+    ) {
+        return <Templates />;
+    }
     
     if (
-        path.endsWith("/studentform") ||
+        path.endsWith("/idlistform") ||
+        path.endsWith("/idlistform.html")
+    ) {
+        return <IDListForm />;
+    }
+
+    if (
+        path.startsWith("/studentform/") ||
         path.endsWith("/studentform.html")
     ) {
         return <StudentForm />;
@@ -130,6 +145,12 @@ function App() {
         path.startsWith("/stored-data.html")
     ) {
         return <StoredData />;
+    }
+
+    if (
+        path.startsWith("/student-data")
+    ) {
+        return <StudentData />;
     }
 
     if (

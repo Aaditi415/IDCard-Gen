@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 
 const DESIGN_STORAGE_KEY = "idCardDesign";
 const FORM_STORAGE_KEY = "idCardForm";
+const LISTs_STORAGE_KEY = "idCardLists";
 const SUBMISSIONS_STORAGE_KEY = "idCardSubmissions";
 
 
@@ -124,8 +125,8 @@ function normalizeField(field, index) {
         allowedTypes:
             Array.isArray(field?.allowedTypes)
                 ? field.allowedTypes.map(type =>
-                      String(type).toLowerCase()
-                  )
+                    String(type).toLowerCase()
+                )
                 : [],
 
         options:
@@ -173,19 +174,26 @@ function isDateField(field) {
 
 }
 
+
 function isSelectField(field) {
+
     return [
         "select",
         "dropdown"
     ].includes(field.type);
+
 }
 
+
 function isCheckboxField(field) {
+
     return [
         "checkbox",
         "check"
     ].includes(field.type);
+
 }
+
 
 function getCardDimensions(design) {
 
@@ -227,20 +235,26 @@ function getCardDimensions(design) {
 
 
 /* =========================================================
-   INITIAL FORM VALUE
+   INITIAL VALUE
 ========================================================= */
 
 function getInitialValue(field) {
+
     if (isCheckboxField(field)) {
-        return field.options?.length ? [] : false;
+
+        return field.options?.length
+            ? []
+            : false;
+
     }
 
     return "";
+
 }
 
 
 /* =========================================================
-   FILE TO DATA URL
+   FILE → DATA URL
 ========================================================= */
 
 function readFileAsDataURL(file) {
@@ -273,6 +287,801 @@ function readFileAsDataURL(file) {
 
 
 /* =========================================================
+   VERIFICATION HELPERS
+========================================================= */
+
+const normalizeValue = (value) => {
+    if (
+        value === undefined ||
+        value === null
+    ) {
+        return "";
+    }
+
+    return String(value)
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ");
+};
+
+
+/* =========================================================
+   FIND FIELD BY LABEL / NAME
+========================================================= */
+
+const findFormField = (
+    formFields,
+    keywords
+) => {
+
+    return formFields.find(field => {
+
+        const text = normalizeValue(
+            field.label ||
+            field.name ||
+            ""
+        );
+
+        return keywords.some(
+            keyword =>
+                text === keyword ||
+                text.includes(keyword)
+        );
+
+    });
+
+};
+
+
+/* =========================================================
+   FIND MASTER COLUMN
+========================================================= */
+
+const findMasterColumn = (
+    headers,
+    keywords
+) => {
+
+    if (!Array.isArray(headers)) {
+        return -1;
+    }
+
+    return headers.findIndex(header => {
+
+        const text =
+            normalizeValue(header);
+
+        return keywords.some(
+            keyword =>
+                text === keyword ||
+                text.includes(keyword)
+        );
+
+    });
+
+};
+
+
+/* =========================================================
+   GET MASTER LIST RECORDS
+========================================================= */
+
+const getMasterRecords = (
+    masterList
+) => {
+
+    if (!masterList) {
+        return [];
+    }
+
+    /*
+     * Your imported lists use:
+     *
+     * headers: [...]
+     * students: [...]
+     *
+     */
+
+    if (
+        Array.isArray(
+            masterList.students
+        )
+    ) {
+        return masterList.students;
+    }
+
+    /*
+     * Extra compatibility in case
+     * another version uses records.
+     */
+
+    if (
+        Array.isArray(
+            masterList.records
+        )
+    ) {
+        return masterList.records;
+    }
+
+    return [];
+
+};
+
+
+/* =========================================================
+   VERIFY STUDENT SUBMISSION
+========================================================= */
+
+const verifyStudentSubmission = ({
+    submissionData,
+    formFields,
+    listData
+}) => {
+
+    /* ---------------------------------------------
+       BASIC CHECK
+    --------------------------------------------- */
+
+    if (!listData) {
+
+        return {
+            status: "pending",
+            verification: {
+                status: "pending",
+                matched: false,
+                issues: [
+                    "Class list could not be found."
+                ],
+                checkedFields: {},
+                masterRecordIndex: null,
+                checkedAt:
+                    new Date().toISOString()
+            }
+        };
+
+    }
+
+
+    /* =====================================================
+    LOAD MASTER LISTS
+    ===================================================== */
+
+    let masterLists = [];
+
+    /*
+    * Primary master-list storage
+    */
+    try {
+
+        const savedMasterLists =
+            JSON.parse(
+                localStorage.getItem(
+                    "idCardMasterLists"
+                )
+            );
+
+        if (Array.isArray(savedMasterLists)) {
+            masterLists = savedMasterLists;
+        }
+
+    } catch {
+        masterLists = [];
+    }
+
+
+    /*
+    * Existing imported/stored lists
+    *
+    * Your Data.jsx uses this storage.
+    */
+    if (!masterLists.length) {
+
+        try {
+
+            const storedLists =
+                JSON.parse(
+                    localStorage.getItem(
+                        "idCardStoredLists"
+                    )
+                );
+
+            if (Array.isArray(storedLists)) {
+                masterLists = storedLists;
+            }
+
+        } catch {
+            masterLists = [];
+        }
+
+    }
+
+
+    /*
+    * Old compatibility storage
+    */
+    if (!masterLists.length) {
+
+        try {
+
+            const oldMaster =
+                JSON.parse(
+                    localStorage.getItem(
+                        "idCardFinalList"
+                    )
+                );
+
+            if (Array.isArray(oldMaster)) {
+                masterLists = oldMaster;
+            } else if (oldMaster) {
+                masterLists = [oldMaster];
+            }
+
+        } catch {
+            masterLists = [];
+        }
+
+    }
+
+    /*
+     * Backward compatibility:
+     * if idCardMasterLists does not exist,
+     * try old idCardFinalList.
+     */
+
+    if (
+        !Array.isArray(masterLists) ||
+        !masterLists.length
+    ) {
+
+        try {
+
+            const oldMaster =
+                JSON.parse(
+                    localStorage.getItem(
+                        "idCardFinalList"
+                    )
+                );
+
+            if (oldMaster) {
+                masterLists = [oldMaster];
+            }
+
+        } catch {
+
+            masterLists = [];
+
+        }
+
+    }
+
+
+    /* ---------------------------------------------
+       FIND ASSIGNED MASTER LIST
+    --------------------------------------------- */
+
+    const masterList =
+        masterLists.find(
+            list =>
+                list.id ===
+                listData.masterListId
+        );
+
+
+    if (!masterList) {
+
+        return {
+            status: "pending",
+
+            verification: {
+                status: "pending",
+                matched: false,
+
+                issues: [
+                    "Assigned master list could not be found."
+                ],
+
+                checkedFields: {
+                    studentId: false,
+                    name: false,
+                    dob: false
+                },
+
+                masterRecordIndex: null,
+
+                checkedAt:
+                    new Date().toISOString()
+            }
+        };
+
+    }
+
+
+    /* ---------------------------------------------
+       MASTER DATA
+    --------------------------------------------- */
+
+    const headers =
+        masterList.headers || [];
+
+    const masterRecords =
+        getMasterRecords(
+            masterList
+        );
+
+
+    if (!masterRecords.length) {
+
+        return {
+            status: "pending",
+
+            verification: {
+                status: "pending",
+                matched: false,
+
+                issues: [
+                    "Master list contains no student records."
+                ],
+
+                checkedFields: {
+                    studentId: false,
+                    name: false,
+                    dob: false
+                },
+
+                masterRecordIndex: null,
+
+                checkedAt:
+                    new Date().toISOString()
+            }
+        };
+
+    }
+
+
+    /* ---------------------------------------------
+       FIND FORM FIELDS
+    --------------------------------------------- */
+
+    const studentIdField =
+        findFormField(
+            formFields,
+            [
+                "student id",
+                "student id number",
+                "id number",
+                "id",
+                "studentid"
+            ]
+        );
+
+    const nameField =
+        findFormField(
+            formFields,
+            [
+                "name",
+                "student name",
+                "full name",
+                "student full name"
+            ]
+        );
+
+    const dobField =
+        findFormField(
+            formFields,
+            [
+                "dob",
+                "date of birth",
+                "birth date",
+                "birthdate"
+            ]
+        );
+
+
+    /* ---------------------------------------------
+       REQUIRED FIELDS CHECK
+    --------------------------------------------- */
+
+    const missingFormFields = [];
+
+    if (!studentIdField) {
+        missingFormFields.push(
+            "Student ID field is not configured."
+        );
+    }
+
+    if (!nameField) {
+        missingFormFields.push(
+            "Student Name field is not configured."
+        );
+    }
+
+    if (!dobField) {
+        missingFormFields.push(
+            "Date of Birth field is not configured."
+        );
+    }
+
+
+    if (missingFormFields.length) {
+
+        return {
+            status: "pending",
+
+            verification: {
+                status: "pending",
+                matched: false,
+
+                issues:
+                    missingFormFields,
+
+                checkedFields: {
+                    studentId: false,
+                    name: false,
+                    dob: false
+                },
+
+                masterRecordIndex: null,
+
+                checkedAt:
+                    new Date().toISOString()
+            }
+        };
+
+    }
+
+
+    /* ---------------------------------------------
+       FIND MASTER COLUMNS
+    --------------------------------------------- */
+
+    const studentIdColumn =
+        findMasterColumn(
+            headers,
+            [
+                "student id",
+                "student id number",
+                "id number",
+                "id",
+                "studentid"
+            ]
+        );
+
+    const nameColumn =
+        findMasterColumn(
+            headers,
+            [
+                "name",
+                "student name",
+                "full name",
+                "student full name"
+            ]
+        );
+
+    const dobColumn =
+        findMasterColumn(
+            headers,
+            [
+                "dob",
+                "date of birth",
+                "birth date",
+                "birthdate"
+            ]
+        );
+
+
+    /* ---------------------------------------------
+       MASTER COLUMN CHECK
+    --------------------------------------------- */
+
+    const missingMasterColumns = [];
+
+    if (studentIdColumn === -1) {
+        missingMasterColumns.push(
+            "Student ID column is missing from master list."
+        );
+    }
+
+    if (nameColumn === -1) {
+        missingMasterColumns.push(
+            "Name column is missing from master list."
+        );
+    }
+
+    if (dobColumn === -1) {
+        missingMasterColumns.push(
+            "Date of Birth column is missing from master list."
+        );
+    }
+
+
+    if (missingMasterColumns.length) {
+
+        return {
+            status: "pending",
+
+            verification: {
+                status: "pending",
+                matched: false,
+
+                issues:
+                    missingMasterColumns,
+
+                checkedFields: {
+                    studentId: false,
+                    name: false,
+                    dob: false
+                },
+
+                masterRecordIndex: null,
+
+                checkedAt:
+                    new Date().toISOString()
+            }
+        };
+
+    }
+
+
+    /* ---------------------------------------------
+       STUDENT VALUES
+    --------------------------------------------- */
+
+    const submittedStudentId =
+        normalizeValue(
+            submissionData[
+                studentIdField.id
+            ]
+        );
+
+    const submittedName =
+        normalizeValue(
+            submissionData[
+                nameField.id
+            ]
+        );
+
+    const submittedDob =
+        normalizeValue(
+            submissionData[
+                dobField.id
+            ]
+        );
+
+
+    /* ---------------------------------------------
+       STUDENT ID MUST EXIST
+    --------------------------------------------- */
+
+    if (!submittedStudentId) {
+
+        return {
+            status: "pending",
+
+            verification: {
+                status: "pending",
+                matched: false,
+
+                issues: [
+                    "Student ID was not provided."
+                ],
+
+                checkedFields: {
+                    studentId: false,
+                    name: false,
+                    dob: false
+                },
+
+                masterRecordIndex: null,
+
+                checkedAt:
+                    new Date().toISOString()
+            }
+        };
+
+    }
+
+
+    /* ---------------------------------------------
+       FIND STUDENT BY ID
+    --------------------------------------------- */
+
+    const masterRecordIndex =
+        masterRecords.findIndex(
+            row => {
+
+                const masterStudentId =
+                    normalizeValue(
+                        row?.[
+                            studentIdColumn
+                        ]
+                    );
+
+                return (
+                    masterStudentId ===
+                    submittedStudentId
+                );
+
+            }
+        );
+
+
+    /* ---------------------------------------------
+       NO STUDENT FOUND
+    --------------------------------------------- */
+
+    if (masterRecordIndex === -1) {
+
+        return {
+            status: "pending",
+
+            verification: {
+                status: "pending",
+                matched: false,
+
+                issues: [
+                    "Student ID was not found in the assigned master list."
+                ],
+
+                checkedFields: {
+                    studentId: false,
+                    name: false,
+                    dob: false
+                },
+
+                masterRecordIndex: null,
+
+                checkedAt:
+                    new Date().toISOString()
+            }
+        };
+
+    }
+
+
+    /* ---------------------------------------------
+       MASTER STUDENT
+    --------------------------------------------- */
+
+    const masterStudent =
+        masterRecords[
+            masterRecordIndex
+        ];
+
+
+    /* ---------------------------------------------
+       COMPARE
+    --------------------------------------------- */
+
+    const masterStudentId =
+        normalizeValue(
+            masterStudent[
+                studentIdColumn
+            ]
+        );
+
+    const masterName =
+        normalizeValue(
+            masterStudent[
+                nameColumn
+            ]
+        );
+
+    const masterDob =
+        normalizeValue(
+            masterStudent[
+                dobColumn
+            ]
+        );
+
+
+    const studentIdMatches =
+        submittedStudentId ===
+        masterStudentId;
+
+    const nameMatches =
+        submittedName ===
+        masterName;
+
+    const dobMatches =
+        submittedDob ===
+        masterDob;
+
+
+    /* ---------------------------------------------
+       ISSUES
+    --------------------------------------------- */
+
+    const issues = [];
+
+    if (!studentIdMatches) {
+        issues.push(
+            "Student ID does not match."
+        );
+    }
+
+    if (!nameMatches) {
+        issues.push(
+            "Name does not match."
+        );
+    }
+
+    if (!dobMatches) {
+        issues.push(
+            "Date of Birth does not match."
+        );
+    }
+
+
+    /* ---------------------------------------------
+       APPROVED
+    --------------------------------------------- */
+
+    if (
+        studentIdMatches &&
+        nameMatches &&
+        dobMatches
+    ) {
+
+        return {
+            status: "approved",
+
+            verification: {
+                status: "approved",
+                matched: true,
+
+                issues: [],
+
+                checkedFields: {
+                    studentId: true,
+                    name: true,
+                    dob: true
+                },
+
+                masterRecordIndex,
+
+                checkedAt:
+                    new Date().toISOString()
+            }
+        };
+
+    }
+
+
+    /* ---------------------------------------------
+       REJECTED
+    --------------------------------------------- */
+
+    return {
+        status: "rejected",
+
+        verification: {
+            status: "rejected",
+            matched: false,
+
+            issues,
+
+            checkedFields: {
+                studentId:
+                    studentIdMatches,
+
+                name:
+                    nameMatches,
+
+                dob:
+                    dobMatches
+            },
+
+            masterRecordIndex,
+
+            checkedAt:
+                new Date().toISOString()
+        }
+    };
+
+};
+
+
+/* =========================================================
    MAIN COMPONENT
 ========================================================= */
 
@@ -280,6 +1089,9 @@ function StudentForm() {
 
     const [formFields, setFormFields] =
         useState([]);
+
+    const [formId, setFormId] =
+        useState("");
 
     const [formName, setFormName] =
         useState("Student ID Card Form");
@@ -299,11 +1111,17 @@ function StudentForm() {
     const [submitting, setSubmitting] =
         useState(false);
 
+    const [previewMode, setPreviewMode] =
+    useState(false);
+
     const [submitted, setSubmitted] =
         useState(false);
 
     const [submission, setSubmission] =
         useState(null);
+
+    const [showSubmitPopup, setShowSubmitPopup] =
+        useState(false);
 
     const [toast, setToast] =
         useState("");
@@ -311,187 +1129,283 @@ function StudentForm() {
     const [previewSide, setPreviewSide] =
         useState("front");
 
+    /*
+     * The list created by IDListForm.
+     *
+     * Example:
+     *
+     * {
+     *   id: "list_123",
+     *   listName: "1st student - A",
+     *   tabName: "1st A",
+     *   templateId: "...",
+     *   masterListId: "..."
+     * }
+     */
+    const [listData, setListData] =
+        useState(null);
+
+    const [listLoading, setListLoading] =
+        useState(true);
+
+    const [invalidLink, setInvalidLink] =
+        useState(false);
+
 
     /* =====================================================
-       LOAD FORM + DESIGN
+       LOAD FORM + DESIGN + CREATED LIST
     ===================================================== */
 
     useEffect(() => {
 
-        try {
+    try {
 
-            const savedForm =
-                JSON.parse(
-                    localStorage.getItem(
-                        FORM_STORAGE_KEY
-                    )
-                );
+        /* =============================================
+           GET CLASS SLUG FROM URL
 
-            const savedDesign =
-                JSON.parse(
-                    localStorage.getItem(
-                        DESIGN_STORAGE_KEY
-                    )
-                );
+           Example:
+           /student-form/1st-a
+
+           slug = "1st-a"
+        ============================================= */
+
+        const pathParts =
+            window.location.pathname
+                .split("/")
+                .filter(Boolean);
+
+        const slug =
+            pathParts[1] || "";
 
 
-            /* =============================================
-               FORM
-            ============================================= */
+        /* =============================================
+           LOAD ALL CREATED CLASS LISTS
+        ============================================= */
 
-            if (
-                savedForm &&
-                Array.isArray(
-                    savedForm.fields
+        const savedLists =
+            JSON.parse(
+                localStorage.getItem(
+                    "idCardLists"
                 )
-            ) {
+            ) || [];
 
-                /*
-                 * IMPORTANT:
-                 *
-                 * Keep the exact form field order.
-                 *
-                 * This order is used by the student input form.
-                 * Card layout is handled separately below.
-                 */
 
-                const fields =
-                    savedForm.fields.map(
-                        (
+        /* =============================================
+           FIND CURRENT CLASS USING URL SLUG
+        ============================================= */
+
+        const currentList =
+            Array.isArray(savedLists)
+                ? savedLists.find(
+                    list =>
+                        list.slug === slug
+                )
+                : null;
+
+
+        /* =============================================
+           INVALID / UNKNOWN LINK
+        ============================================= */
+
+        if (!currentList) {
+
+            console.warn(
+                "Student form list not found for slug:",
+                slug
+            );
+
+            setInvalidLink(true);
+            setListLoading(false);
+
+            return;
+
+        }
+
+
+        /* =============================================
+           SAVE CURRENT LIST
+        ============================================= */
+
+        setListData(
+            currentList
+        );
+
+
+        /* =============================================
+           LOAD FORM
+        ============================================= */
+
+        const savedForm =
+            JSON.parse(
+                localStorage.getItem(
+                    FORM_STORAGE_KEY
+                )
+            );
+
+
+        if (
+            savedForm &&
+            Array.isArray(
+                savedForm.fields
+            )
+        ) {
+
+            const fields =
+                savedForm.fields.map(
+                    (
+                        field,
+                        index
+                    ) =>
+                        normalizeField(
                             field,
                             index
-                        ) =>
-                            normalizeField(
-                                field,
-                                index
-                            )
-                    );
-
-
-                setFormFields(
-                    fields
-                );
-
-
-                setFormName(
-                    savedForm.name ||
-                    "Student ID Card Form"
-                );
-
-
-                const initialValues = {};
-
-
-                fields.forEach(
-                    field => {
-
-                        initialValues[
-                            field.id
-                        ] =
-                            getInitialValue(
-                                field
-                            );
-
-                    }
-                );
-
-
-                setValues(
-                    initialValues
-                );
-
-            }
-
-
-            /* =============================================
-               DESIGN
-            ============================================= */
-
-            if (
-                savedDesign &&
-                typeof savedDesign ===
-                    "object"
-            ) {
-
-                const mergedDesign = {
-
-                    ...DEFAULT_DESIGN,
-
-                    ...savedDesign,
-
-                    logo: {
-                        ...DEFAULT_DESIGN.logo,
-                        ...(savedDesign.logo || {})
-                    },
-
-                    backgroundImage: {
-                        ...DEFAULT_DESIGN.backgroundImage,
-                        ...(savedDesign.backgroundImage || {})
-                    },
-
-                    organization: {
-                        ...DEFAULT_DESIGN.organization,
-                        ...(savedDesign.organization || {})
-                    },
-
-                    photo: {
-                        ...DEFAULT_DESIGN.photo,
-                        ...(savedDesign.photo || {})
-                    },
-
-                    fieldLayout: {
-                        ...(savedDesign.fieldLayout || {})
-                    },
-
-                    frontFieldLayout: {
-                        ...(savedDesign.frontFieldLayout || {})
-                    },
-
-                    backFieldLayout: {
-                        ...(savedDesign.backFieldLayout || {})
-                    },
-
-                    fieldSides: {
-                        ...(savedDesign.fieldSides || {})
-                    }
-
-                };
-
-
-                setDesign(
-                    mergedDesign
-                );
-
-
-                setOrganization(
-                    mergedDesign
-                        .organization
-                        ?.text ||
-                    "ORGANIZATION"
-                );
-
-
-                setPreviewSide(
-                    mergedDesign.sides === 2
-                        ? (
-                            mergedDesign.previewSide ||
-                            "front"
                         )
-                        : "front"
                 );
 
-            }
 
-        } catch (error) {
+            setFormFields(
+                fields
+            );
 
-            console.error(
-                "Unable to load student form:",
-                error
+
+            setFormId(
+                savedForm.id || ""
+            );
+
+
+            setFormName(
+                savedForm.name ||
+                "Student ID Card Form"
+            );
+
+
+            const initialValues = {};
+
+
+            fields.forEach(
+                field => {
+
+                    initialValues[
+                        field.id
+                    ] =
+                        getInitialValue(
+                            field
+                        );
+
+                }
+            );
+
+
+            setValues(
+                initialValues
             );
 
         }
 
-    }, []);
+
+        /* =============================================
+           LOAD DESIGN
+        ============================================= */
+
+        const savedDesign =
+            JSON.parse(
+                localStorage.getItem(
+                    DESIGN_STORAGE_KEY
+                )
+            );
+
+
+        if (
+            savedDesign &&
+            typeof savedDesign ===
+                "object"
+        ) {
+
+            const mergedDesign = {
+
+                ...DEFAULT_DESIGN,
+
+                ...savedDesign,
+
+                logo: {
+                    ...DEFAULT_DESIGN.logo,
+                    ...(savedDesign.logo || {})
+                },
+
+                backgroundImage: {
+                    ...DEFAULT_DESIGN.backgroundImage,
+                    ...(savedDesign.backgroundImage || {})
+                },
+
+                organization: {
+                    ...DEFAULT_DESIGN.organization,
+                    ...(savedDesign.organization || {})
+                },
+
+                photo: {
+                    ...DEFAULT_DESIGN.photo,
+                    ...(savedDesign.photo || {})
+                },
+
+                fieldLayout: {
+                    ...(savedDesign.fieldLayout || {})
+                },
+
+                frontFieldLayout: {
+                    ...(savedDesign.frontFieldLayout || {})
+                },
+
+                backFieldLayout: {
+                    ...(savedDesign.backFieldLayout || {})
+                },
+
+                fieldSides: {
+                    ...(savedDesign.fieldSides || {})
+                }
+
+            };
+
+
+            setDesign(
+                mergedDesign
+            );
+
+
+            setOrganization(
+                mergedDesign
+                    .organization
+                    ?.text ||
+                "ORGANIZATION"
+            );
+
+
+            setPreviewSide(
+                mergedDesign.sides === 2
+                    ? (
+                        mergedDesign.previewSide ||
+                        "front"
+                    )
+                    : "front"
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load student form:",
+            error
+        );
+
+        setInvalidLink(true);
+
+    } finally {
+
+        setListLoading(false);
+
+    }
+
+}, []);
 
 
     /* =====================================================
@@ -636,17 +1550,21 @@ function StudentForm() {
        VALIDATION
     ===================================================== */
 
-
     function validateForm() {
 
         const nextErrors = {};
 
+
         formFields.forEach(field => {
 
-            const value = values[field.id];
+            const value =
+                values[
+                    field.id
+                ];
+
 
             /* =============================================
-            REQUIRED
+               REQUIRED
             ============================================= */
 
             if (field.required) {
@@ -664,18 +1582,21 @@ function StudentForm() {
                             String(value).trim() === ""
                         );
 
+
                 if (isEmpty) {
 
                     nextErrors[field.id] =
                         `${field.label} is required.`;
 
                     return;
+
                 }
+
             }
 
 
             /* =============================================
-            OPTIONAL EMPTY FIELD
+               OPTIONAL EMPTY FIELD
             ============================================= */
 
             if (
@@ -689,11 +1610,12 @@ function StudentForm() {
             ) {
 
                 return;
+
             }
 
 
             /* =============================================
-            TEXT LENGTH
+               TEXT LENGTH
             ============================================= */
 
             if (
@@ -708,6 +1630,7 @@ function StudentForm() {
                     `${field.label} must be at least ${field.minLength} characters.`;
 
                 return;
+
             }
 
 
@@ -723,17 +1646,19 @@ function StudentForm() {
                     `${field.label} must not exceed ${field.maxLength} characters.`;
 
                 return;
+
             }
 
 
             /* =============================================
-            EMAIL
+               EMAIL
             ============================================= */
 
             if (field.type === "email") {
 
                 const emailRegex =
                     /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 
                 if (
                     !emailRegex.test(
@@ -745,18 +1670,21 @@ function StudentForm() {
                         "Please enter a valid email address.";
 
                     return;
+
                 }
+
             }
 
 
             /* =============================================
-            PHONE
+               PHONE
             ============================================= */
 
             if (field.type === "phone") {
 
                 const phoneRegex =
                     /^[0-9+\-\s()]{7,20}$/;
+
 
                 if (
                     !phoneRegex.test(
@@ -768,26 +1696,35 @@ function StudentForm() {
                         "Please enter a valid phone number.";
 
                     return;
+
                 }
+
             }
 
         });
 
 
-        setErrors(nextErrors);
+        setErrors(
+            nextErrors
+        );
+
 
         return (
-            Object.keys(nextErrors).length === 0
+            Object.keys(
+                nextErrors
+            ).length === 0
         );
+
     }
 
 
-    /* =====================================================
-       SUBMIT
-    ===================================================== */
+    function handlePreview(event) {
 
-    const handleSubmit = (event) => {
     event.preventDefault();
+
+    if (submitting) {
+        return;
+    }
 
     const isValid = validateForm();
 
@@ -795,69 +1732,211 @@ function StudentForm() {
         return;
     }
 
-    const submission = {
-        id: `submission_${Date.now()}`,
+    if (!listData) {
 
-        formId:
-            formConfig?.id ||
-            "student-form",
+        setToast(
+            "Student list information could not be found."
+        );
 
-        submittedAt:
-            new Date().toISOString(),
+        setTimeout(() => {
+            setToast("");
+        }, 3000);
+
+        return;
+    }
+
+    setPreviewMode(true);
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+}
+    /* =====================================================
+       SUBMIT
+    ===================================================== */
+const saveSubmission = () => {
+
+    if (!listData) {
+        return;
+    }
+
+
+    /* =====================================================
+       VERIFY STUDENT
+    ===================================================== */
+
+    const verificationResult =
+        verifyStudentSubmission({
+            submissionData: values,
+            formFields,
+            listData
+        });
+
+
+    /* =====================================================
+       CREATE SUBMISSION
+    ===================================================== */
+
+    const newSubmission = {
+
+        id:
+            `submission_${Date.now()}`,
+
+        /* ---------------------------------------------
+           CLASS / LIST
+        --------------------------------------------- */
+
+        listId:
+            listData.id || "",
+
+        listName:
+            listData.listName || "",
+
+        tabName:
+            listData.tabName || "",
+
+        slug:
+            listData.slug || "",
+
+        studentLink:
+            listData.studentLink || "",
+
+
+        /* ---------------------------------------------
+           TEMPLATE
+        --------------------------------------------- */
+
+        templateId:
+            listData.templateId || "",
+
+        templateName:
+            listData.templateName || "",
+
+
+        /* ---------------------------------------------
+           MASTER LIST
+        --------------------------------------------- */
+
+        masterListId:
+            listData.masterListId || "",
+
+        masterListName:
+            listData.masterListName || "",
+
+
+        /* ---------------------------------------------
+           FORM
+        --------------------------------------------- */
+
+        formId,
+
+        formName,
 
         data: {
             ...values
-        }
+        },
+
+
+        /* ---------------------------------------------
+           VERIFICATION RESULT
+        --------------------------------------------- */
+
+        status:
+            verificationResult.status,
+
+        verification:
+            verificationResult.verification,
+
+
+        /* ---------------------------------------------
+           TIMESTAMP
+        --------------------------------------------- */
+
+        submittedAt:
+            new Date().toISOString()
+
     };
+
+
+    /* =====================================================
+       SAVE
+    ===================================================== */
+
+    let existingSubmissions = [];
 
     try {
 
-        const existingSubmissions =
+        existingSubmissions =
             JSON.parse(
                 localStorage.getItem(
                     "idCardSubmissions"
                 )
             ) || [];
 
-        existingSubmissions.push(
-            submission
-        );
+    } catch {
 
-        localStorage.setItem(
-            "idCardSubmissions",
-            JSON.stringify(
-                existingSubmissions
-            )
-        );
-
-        /*
-         * Keep the latest submitted
-         * student available for the
-         * existing ID preview.
-         */
-        localStorage.setItem(
-            "idCardLatestSubmission",
-            JSON.stringify(
-                submission
-            )
-        );
-
-        /*
-         * Existing submitted state
-         */
-        setSubmitted(true);
-
-    } catch (error) {
-
-        console.error(
-            "Failed to save submission:",
-            error
-        );
+        existingSubmissions = [];
 
     }
+
+
+    if (
+        !Array.isArray(
+            existingSubmissions
+        )
+    ) {
+
+        existingSubmissions = [];
+
+    }
+
+
+    const updatedSubmissions = [
+        ...existingSubmissions,
+        newSubmission
+    ];
+
+
+    localStorage.setItem(
+        "idCardSubmissions",
+        JSON.stringify(
+            updatedSubmissions
+        )
+    );
+
+
+    /* =====================================================
+       LATEST SUBMISSION
+    ===================================================== */
+
+    localStorage.setItem(
+        "idCardLatestSubmission",
+        JSON.stringify(
+            newSubmission
+        )
+    );
+
+
+    /* =====================================================
+       UPDATE STATE
+    ===================================================== */
+
+    setSubmission(
+        newSubmission
+    );
+
+    setShowSubmitPopup(
+        false
+    );
+
+    setPreviewMode(
+        false
+    );
+
+    setSubmitted(true);
+
 };
-
-
     /* =====================================================
        RESET
     ===================================================== */
@@ -872,7 +1951,10 @@ function StudentForm() {
 
                 emptyValues[
                     field.id
-                ] = "";
+                ] =
+                    getInitialValue(
+                        field
+                    );
 
             }
         );
@@ -920,12 +2002,15 @@ function StudentForm() {
     ) {
 
         const value =
-            submission?.data?.[
-                field.id
-            ];
+            submission?.data?.[field.id] ??
+            values?.[field.id];
 
 
-        if (!value) {
+        if (
+            value === undefined ||
+            value === null ||
+            value === ""
+        ) {
 
             return "—";
 
@@ -985,7 +2070,7 @@ function StudentForm() {
 
 
     /* =====================================================
-       CARD FIELD HELPERS
+       CARD HELPERS
     ===================================================== */
 
     const visibleFields =
@@ -1009,12 +2094,6 @@ function StudentForm() {
             ]
         );
 
-
-    /*
-     * PHOTO
-     *
-     * Explicitly find Photo first.
-     */
 
     const photoField =
         visibleFields.find(
@@ -1045,23 +2124,12 @@ function StudentForm() {
         );
 
 
-    /*
-     * INFORMATION FIELDS
-     */
-
     const informationFields =
         visibleFields.filter(
             field =>
                 !isMediaField(field)
         );
 
-
-    /*
-     * STUDENT NAME
-     *
-     * Only use a field whose actual name/label
-     * is "name" or starts with "name".
-     */
 
     const studentNameField =
         informationFields.find(
@@ -1091,7 +2159,7 @@ function StudentForm() {
 
 
     /* =====================================================
-       GET FIELD LAYOUT
+       FIELD LAYOUT
     ===================================================== */
 
     function getFieldLayout(
@@ -1119,17 +2187,12 @@ function StudentForm() {
 
 
     /* =====================================================
-       GET FIELD SIDE
+       FIELD SIDE
     ===================================================== */
 
     function getFieldSide(
         field
     ) {
-
-        /*
-         * If fieldSides exists and has the field,
-         * use that value.
-         */
 
         if (
             design.fieldSides &&
@@ -1148,11 +2211,6 @@ function StudentForm() {
         }
 
 
-        /*
-         * Old designs without fieldSides:
-         * keep everything on front.
-         */
-
         return "front";
 
     }
@@ -1170,19 +2228,11 @@ function StudentForm() {
             );
 
 
-        /*
-         * If one side only, always show front.
-         */
-
         const activeSide =
             design.sides === 2
                 ? previewSide
                 : "front";
 
-
-        /* =================================================
-           ACTIVE LAYOUT
-        ================================================= */
 
         const activeFieldLayout =
             activeSide === "front"
@@ -1210,10 +2260,6 @@ function StudentForm() {
                 );
 
 
-        /* =================================================
-           ACTIVE SIDE FIELDS
-        ================================================= */
-
         const sideFields =
             formFields.filter(
                 field =>
@@ -1223,10 +2269,6 @@ function StudentForm() {
                     activeSide
             );
 
-
-        /* =================================================
-           CURRENT PHOTO
-        ================================================= */
 
         const currentPhotoField =
             activeSide === "front"
@@ -1253,10 +2295,6 @@ function StudentForm() {
                 : null;
 
 
-        /* =================================================
-           CURRENT INFORMATION FIELDS
-        ================================================= */
-
         const currentInformationFields =
             sideFields.filter(
                 field =>
@@ -1264,23 +2302,15 @@ function StudentForm() {
             );
 
 
-        /* =================================================
-           CURRENT STUDENT NAME
-        ================================================= */
-
         const currentStudentNameField =
             activeSide === "front"
                 ? currentInformationFields.find(
-                      field =>
-                          studentNameField?.id ===
-                          field.id
-                  )
+                    field =>
+                        studentNameField?.id ===
+                        field.id
+                )
                 : null;
 
-
-        /* =================================================
-           ROW COUNTS
-        ================================================= */
 
         const rowCounts = {};
 
@@ -1290,11 +2320,6 @@ function StudentForm() {
                 field,
                 index
             ) => {
-
-                /*
-                 * Student name is already displayed
-                 * in identity section.
-                 */
 
                 if (
                     currentStudentNameField?.id ===
@@ -1333,13 +2358,18 @@ function StudentForm() {
 
             <div>
 
-                {/* =================================================
+                {/* =========================================
                     FRONT / BACK SWITCH
-                ================================================= */}
+                ========================================= */}
 
                 {design.sides === 2 && (
 
-                    <div className="side-switch" style={{margin:"10px"}}>
+                    <div
+                        className="side-switch"
+                        style={{
+                            margin: "10px"
+                        }}
+                    >
 
                         <button
                             type="button"
@@ -1381,9 +2411,9 @@ function StudentForm() {
                 )}
 
 
-                {/* =================================================
+                {/* =========================================
                     CARD
-                ================================================= */}
+                ========================================= */}
 
                 <div
                     className={[
@@ -1419,9 +2449,9 @@ function StudentForm() {
                     }}
                 >
 
-                    {/* =================================================
+                    {/* =====================================
                         BACKGROUND
-                    ================================================= */}
+                    ===================================== */}
 
                     {design.backgroundImage?.data &&
                         design.backgroundImage
@@ -1448,9 +2478,9 @@ function StudentForm() {
                     )}
 
 
-                    {/* =================================================
+                    {/* =====================================
                         HEADER
-                    ================================================= */}
+                    ===================================== */}
 
                     <div className="premium-card-header">
 
@@ -1487,13 +2517,8 @@ function StudentForm() {
                             <div className="premium-card-heading">
 
                                 <div className="premium-org-name">
-
-                                    {
-                                        organization
-                                    }
-
+                                    {organization}
                                 </div>
-
 
                                 <div className="premium-org-subtitle">
                                     STUDENT IDENTITY CARD
@@ -1509,18 +2534,14 @@ function StudentForm() {
                     </div>
 
 
-                    {/* =================================================
+                    {/* =====================================
                         FRONT
-                    ================================================= */}
+                    ===================================== */}
 
                     {activeSide ===
                         "front" && (
 
                         <div className="premium-card-front">
-
-                            {/* =====================================
-                                IDENTITY AREA
-                            ===================================== */}
 
                             <div
                                 className={[
@@ -1555,18 +2576,15 @@ function StudentForm() {
                                         }}
                                     >
 
-                                        {submission?.data?.[
-                                            currentPhotoField
-                                                .id
-                                        ] ? (
+                                        {(
+                                            submission?.data?.[currentPhotoField.id] ??
+                                            values?.[currentPhotoField.id]
+                                        ) ? (
 
                                             <img
                                                 src={
-                                                    submission
-                                                        .data[
-                                                        currentPhotoField
-                                                            .id
-                                                    ]
+                                                    submission?.data?.[currentPhotoField.id] ??
+                                                    values?.[currentPhotoField.id]
                                                 }
                                                 alt="Student"
                                             />
@@ -1590,8 +2608,8 @@ function StudentForm() {
 
                                         {currentStudentNameField
                                             ? getDisplayValue(
-                                                  currentStudentNameField
-                                              )
+                                                currentStudentNameField
+                                            )
                                             : "Student Name"}
 
                                     </div>
@@ -1605,10 +2623,6 @@ function StudentForm() {
 
                             </div>
 
-
-                            {/* =====================================
-                                INFORMATION
-                            ===================================== */}
 
                             <div className="premium-information-area">
 
@@ -1624,11 +2638,6 @@ function StudentForm() {
                                             field,
                                             index
                                         ) => {
-
-                                            /*
-                                             * Student name is already
-                                             * displayed above.
-                                             */
 
                                             if (
                                                 currentStudentNameField?.id ===
@@ -1673,16 +2682,6 @@ function StudentForm() {
                                                     }
                                                     className="premium-info-item"
                                                     style={{
-                                                        /*
-                                                         * IMPORTANT:
-                                                         *
-                                                         * The grid itself stays
-                                                         * two-column.
-                                                         *
-                                                         * A single field spans
-                                                         * both columns.
-                                                         */
-
                                                         gridColumn:
                                                             layout.width ===
                                                                 2 ||
@@ -1696,22 +2695,18 @@ function StudentForm() {
                                                 >
 
                                                     <span className="premium-info-label">
-
                                                         {
                                                             field.label
                                                         }
-
                                                     </span>
 
 
                                                     <strong className="premium-info-value">
-
                                                         {
                                                             getDisplayValue(
                                                                 field
                                                             )
                                                         }
-
                                                     </strong>
 
                                                 </div>
@@ -1725,10 +2720,6 @@ function StudentForm() {
 
                             </div>
 
-
-                            {/* =====================================
-                                FOOTER
-                            ===================================== */}
 
                             <div className="premium-card-footer">
 
@@ -1745,9 +2736,9 @@ function StudentForm() {
                     )}
 
 
-                    {/* =================================================
+                    {/* =====================================
                         BACK
-                    ================================================= */}
+                    ===================================== */}
 
                     {activeSide ===
                         "back" && (
@@ -1782,12 +2773,6 @@ function StudentForm() {
                                                 index + 1;
 
 
-                                            /*
-                                             * Count only normal
-                                             * information fields
-                                             * in this row.
-                                             */
-
                                             const fieldsInRow =
                                                 rowCounts[
                                                     row
@@ -1821,22 +2806,18 @@ function StudentForm() {
                                                 >
 
                                                     <span className="premium-info-label">
-
                                                         {
                                                             field.label
                                                         }
-
                                                     </span>
 
 
                                                     <strong className="premium-info-value">
-
                                                         {
                                                             getDisplayValue(
                                                                 field
                                                             )
                                                         }
-
                                                     </strong>
 
                                                 </div>
@@ -1846,10 +2827,6 @@ function StudentForm() {
                                         }
                                     )}
 
-
-                                    {/* =================================
-                                        BACK MEDIA FIELDS
-                                    ================================= */}
 
                                     {sideFields
                                         .filter(
@@ -1889,11 +2866,9 @@ function StudentForm() {
                                                     >
 
                                                         <span className="premium-info-label">
-
                                                             {
                                                                 field.label
                                                             }
-
                                                         </span>
 
 
@@ -1973,7 +2948,7 @@ function StudentForm() {
         const value =
             values[
                 field.id
-            ] || "";
+            ] ?? "";
 
 
         const error =
@@ -2010,9 +2985,9 @@ function StudentForm() {
         };
 
 
-        /* =================================================
+        /* =============================================
            MEDIA
-        ================================================= */
+        ============================================= */
 
         if (
             isMediaField(
@@ -2041,11 +3016,9 @@ function StudentForm() {
 
 
                         <strong>
-
                             {value
                                 ? "Change file"
                                 : "Upload file"}
-
                         </strong>
 
 
@@ -2055,13 +3028,13 @@ function StudentForm() {
                                 field.allowedTypes
                                     ?.length
                                     ? field.allowedTypes
-                                          .map(
-                                              type =>
-                                                  type.toUpperCase()
-                                          )
-                                          .join(
-                                              ", "
-                                          )
+                                        .map(
+                                            type =>
+                                                type.toUpperCase()
+                                        )
+                                        .join(
+                                            ", "
+                                        )
                                     : "Image"
                             }
 
@@ -2109,7 +3082,9 @@ function StudentForm() {
                         <div className="upload-preview">
 
                             <img
-                                src={value}
+                                src={
+                                    value
+                                }
                                 alt={
                                     field.label
                                 }
@@ -2131,9 +3106,9 @@ function StudentForm() {
         }
 
 
-        /* =================================================
+        /* =============================================
            TEXTAREA
-        ================================================= */
+        ============================================= */
 
         if (
             isTextareaField(
@@ -2153,171 +3128,253 @@ function StudentForm() {
         }
 
 
-        /* =================================================
-   SELECT / DROPDOWN
-================================================= */
+        /* =============================================
+           SELECT
+        ============================================= */
 
-if (isSelectField(field)) {
-    return (
-        <select
-            id={field.id}
-            name={field.name}
-            value={value}
-            onChange={event =>
-                handleChange(
-                    field,
-                    event.target.value
-                )
-            }
-            className={
-                error
-                    ? "student-input input-error"
-                    : "student-input"
-            }
-        >
-            <option value="">
-                {field.placeholder || "Select an option"}
-            </option>
+        if (
+            isSelectField(
+                field
+            )
+        ) {
 
-            {field.options?.map((option, index) => {
-                const optionValue =
-                    typeof option === "object"
-                        ? option.value
-                        : option;
+            return (
 
-                const optionLabel =
-                    typeof option === "object"
-                        ? option.label
-                        : option;
+                <select
+                    id={
+                        field.id
+                    }
+                    name={
+                        field.name
+                    }
+                    value={
+                        value
+                    }
+                    onChange={
+                        event =>
+                            handleChange(
+                                field,
+                                event.target.value
+                            )
+                    }
+                    className={
+                        error
+                            ? "student-input input-error"
+                            : "student-input"
+                    }
+                >
 
-                return (
-                    <option
-                        key={`${field.id}_${index}`}
-                        value={optionValue}
-                    >
-                        {optionLabel}
+                    <option value="">
+                        {
+                            field.placeholder ||
+                            "Select an option"
+                        }
                     </option>
-                );
-            })}
-        </select>
-    );
-}
 
 
-/* =================================================
-   CHECKBOX
-================================================= */
+                    {field.options?.map(
+                        (
+                            option,
+                            index
+                        ) => {
 
-if (isCheckboxField(field)) {
+                            const optionValue =
+                                typeof option ===
+                                "object"
+                                    ? option.value
+                                    : option;
 
-    const hasMultipleOptions =
-        Array.isArray(field.options) &&
-        field.options.length > 0;
 
-    /* ---------------------------------------------
-       MULTIPLE CHECKBOX OPTIONS
-    --------------------------------------------- */
+                            const optionLabel =
+                                typeof option ===
+                                "object"
+                                    ? option.label
+                                    : option;
 
-    if (hasMultipleOptions) {
 
-        const selectedValues =
-            Array.isArray(value)
-                ? value
-                : [];
+                            return (
 
-        return (
-            <div className="student-checkbox-group">
+                                <option
+                                    key={`${field.id}_${index}`}
+                                    value={
+                                        optionValue
+                                    }
+                                >
+                                    {
+                                        optionLabel
+                                    }
+                                </option>
 
-                {field.options.map(
-                    (option, index) => {
-
-                        const optionValue =
-                            typeof option === "object"
-                                ? option.value
-                                : option;
-
-                        const optionLabel =
-                            typeof option === "object"
-                                ? option.label
-                                : option;
-
-                        const checked =
-                            selectedValues.includes(
-                                optionValue
                             );
 
-                        return (
-                            <label
-                                key={`${field.id}_${index}`}
-                                className="student-checkbox-item"
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    onChange={event => {
+                        }
+                    )}
 
-                                        const nextValues =
-                                            event.target.checked
-                                                ? [
-                                                    ...selectedValues,
-                                                    optionValue
-                                                ]
-                                                : selectedValues.filter(
-                                                    item =>
-                                                        item !==
-                                                        optionValue
-                                                );
+                </select>
 
-                                        handleChange(
-                                            field,
-                                            nextValues
-                                        );
-                                    }}
-                                />
+            );
 
-                                <span>
-                                    {optionLabel}
-                                </span>
-                            </label>
-                        );
-                    }
-                )}
-
-            </div>
-        );
-    }
+        }
 
 
-    /* ---------------------------------------------
-       SINGLE CHECKBOX
-    --------------------------------------------- */
+        /* =============================================
+           CHECKBOX
+        ============================================= */
 
-    return (
-            <label className="student-checkbox-item">
+        if (
+            isCheckboxField(
+                field
+            )
+        ) {
 
-                <input
-                    type="checkbox"
-                    checked={Boolean(value)}
-                    onChange={event =>
-                        handleChange(
-                            field,
-                            event.target.checked
-                        )
-                    }
-                />
+            const hasMultipleOptions =
+                Array.isArray(
+                    field.options
+                ) &&
+                field.options.length >
+                    0;
 
-                <span>
-                    {field.placeholder ||
-                        field.label}
-                </span>
 
-            </label>
-        );
-    }
+            if (
+                hasMultipleOptions
+            ) {
 
-        /* =================================================
-           INPUT TYPE
-        ================================================= */
+                const selectedValues =
+                    Array.isArray(
+                        value
+                    )
+                        ? value
+                        : [];
+
+
+                return (
+
+                    <div className="student-checkbox-group">
+
+                        {field.options.map(
+                            (
+                                option,
+                                index
+                            ) => {
+
+                                const optionValue =
+                                    typeof option ===
+                                    "object"
+                                        ? option.value
+                                        : option;
+
+
+                                const optionLabel =
+                                    typeof option ===
+                                    "object"
+                                        ? option.label
+                                        : option;
+
+
+                                const checked =
+                                    selectedValues.includes(
+                                        optionValue
+                                    );
+
+
+                                return (
+
+                                    <label
+                                        key={`${field.id}_${index}`}
+                                        className="student-checkbox-item"
+                                    >
+
+                                        <input
+                                            type="checkbox"
+                                            checked={
+                                                checked
+                                            }
+                                            onChange={
+                                                event => {
+
+                                                    const nextValues =
+                                                        event
+                                                            .target
+                                                            .checked
+                                                            ? [
+                                                                ...selectedValues,
+                                                                optionValue
+                                                            ]
+                                                            : selectedValues.filter(
+                                                                item =>
+                                                                    item !==
+                                                                    optionValue
+                                                            );
+
+
+                                                    handleChange(
+                                                        field,
+                                                        nextValues
+                                                    );
+
+                                                }
+                                            }
+                                        />
+
+
+                                        <span>
+                                            {
+                                                optionLabel
+                                            }
+                                        </span>
+
+                                    </label>
+
+                                );
+
+                            }
+                        )}
+
+                    </div>
+
+                );
+
+            }
+
+
+            return (
+
+                <label className="student-checkbox-item">
+
+                    <input
+                        type="checkbox"
+                        checked={
+                            Boolean(
+                                value
+                            )
+                        }
+                        onChange={
+                            event =>
+                                handleChange(
+                                    field,
+                                    event.target.checked
+                                )
+                        }
+                    />
+
+
+                    <span>
+                        {
+                            field.placeholder ||
+                            field.label
+                        }
+                    </span>
+
+                </label>
+
+            );
+
+        }
+
+
+        /* =============================================
+           INPUT
+        ============================================= */
 
         let inputType =
             "text";
@@ -2376,6 +3433,281 @@ if (isCheckboxField(field)) {
 
     }
 
+    if (listLoading) {
+
+    return (
+        <div className="student-form-page">
+
+            <div className="student-form-container">
+
+                <div className="student-form-card">
+
+                    <div className="student-form-title">
+
+                        <div>
+
+                            <h2>
+                                Loading Registration Form...
+                            </h2>
+
+                            <p>
+                                Please wait.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    );
+
+}
+
+
+if (invalidLink) {
+
+    return (
+        <div className="student-form-page">
+
+            <div className="student-form-container">
+
+                <div className="student-success">
+
+                    <div className="success-icon">
+                        !
+                    </div>
+
+                    <h1>
+                        Registration Link Not Found
+                    </h1>
+
+                    <p>
+                        This student registration link is
+                        invalid or no longer available.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+    );
+
+}
+
+    /* =====================================================
+   PREVIEW SCREEN
+===================================================== */
+
+if (previewMode) {
+
+    return (
+
+        <div className="student-form-page">
+
+            <div className="student-form-container">
+
+                <header className="student-form-header">
+
+                    {design.logo?.data ? (
+
+                        <img
+                            src={design.logo.data}
+                            alt={organization}
+                            className="student-org-logo"
+                        />
+
+                    ) : (
+
+                        <div className="student-org-logo-placeholder">
+                            LOGO
+                        </div>
+
+                    )}
+
+                    <div>
+
+                        <h1>
+                            {organization}
+                        </h1>
+
+                        <p>
+                            Student ID Card Registration
+                        </p>
+
+                    </div>
+
+                </header>
+
+
+                {listData && (
+
+                    <div className="student-list-info">
+
+                        <strong>
+                            {listData.listName}
+                        </strong>
+
+                        <span>
+                            {listData.tabName}
+                        </span>
+
+                    </div>
+
+                )}
+
+
+                <div className="student-card-preview">
+
+                    <div className="student-card-preview-header">
+
+                        <div>
+
+                            <span className="form-step">
+                                02
+                            </span>
+
+                            <div>
+
+                                <h2>
+                                    Preview Your ID Card
+                                </h2>
+
+                                <p>
+                                    Please check your information
+                                    before submitting.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div className="student-card-preview-body">
+
+                        {renderCard()}
+
+                    </div>
+
+
+                    <div className="student-preview-actions">
+
+                        <button
+                            type="button"
+                            className="student-submit secondary"
+                            onClick={() => {
+
+                                setPreviewMode(false);
+
+                                window.scrollTo({
+                                    top: 0,
+                                    behavior: "smooth"
+                                });
+
+                            }}
+                        >
+                            ← Edit Information
+                        </button>
+
+
+                        <button
+                            type="button"
+                            className="student-submit"
+                            onClick={() =>
+                                setShowSubmitPopup(true)
+                            }
+                        >
+                            Submit Application
+                            <span>→</span>
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <footer className="student-page-footer">
+
+                    <span>
+                        {listData?.tabName ||
+                            "ID Card System"}
+                    </span>
+
+                    <span>
+                        Secure Student Registration
+                    </span>
+
+                </footer>
+
+            </div>
+
+
+            {showSubmitPopup && (
+
+                <div className="submit-modal-overlay">
+
+                    <div className="submit-modal">
+
+                        <div className="submit-modal-icon">
+                            ✓
+                        </div>
+
+                        <h2>
+                            Submit Application?
+                        </h2>
+
+                        <p>
+                            Please make sure all your information
+                            is correct. Once submitted, your
+                            application will be sent for verification.
+                        </p>
+
+
+                        <div className="submit-modal-actions">
+
+                            <button
+                                type="button"
+                                className="student-submit secondary"
+                                onClick={() =>
+                                    setShowSubmitPopup(false)
+                                }
+                            >
+                                Review Again
+                            </button>
+
+
+                            <button
+                                type="button"
+                                className="student-submit"
+                                onClick={saveSubmission}
+                                disabled={submitting}
+                            >
+
+                                {submitting
+                                    ? "Submitting..."
+                                    : "Yes, Submit"}
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )}
+
+        </div>
+
+    );
+
+}
 
     /* =====================================================
        SUBMITTED SCREEN
@@ -2534,6 +3866,27 @@ if (isCheckboxField(field)) {
 
 
                 {/* =========================================
+                    LIST INFORMATION
+                ========================================= */}
+
+                {listData && (
+
+                    <div className="student-list-info">
+
+                        <strong>
+                            {listData.listName}
+                        </strong>
+
+                        <span>
+                            {listData.tabName}
+                        </span>
+
+                    </div>
+
+                )}
+
+
+                {/* =========================================
                     FORM CARD
                 ========================================= */}
 
@@ -2567,22 +3920,12 @@ if (isCheckboxField(field)) {
 
                     <form
                         onSubmit={
-                            handleSubmit
+                            handlePreview
                         }
                         noValidate
                     >
 
                         <div className="student-fields">
-
-                            {/*
-                             * IMPORTANT:
-                             *
-                             * Form input order is ALWAYS
-                             * savedForm.fields order.
-                             *
-                             * We DO NOT sort this using
-                             * card row/column layout.
-                             */}
 
                             {formFields.map(
                                 field => (
@@ -2651,7 +3994,7 @@ if (isCheckboxField(field)) {
 
 
                         {/* =================================
-                            FORM FOOTER
+                            FOOTER
                         ================================= */}
 
                         <div className="student-form-footer">
@@ -2672,8 +4015,8 @@ if (isCheckboxField(field)) {
                             >
 
                                 {submitting
-                                    ? "Submitting..."
-                                    : "Submit & Preview ID Card"}
+                                    ? "Loading..."
+                                    : "Preview ID Card"}
 
 
                                 {!submitting && (
@@ -2696,7 +4039,8 @@ if (isCheckboxField(field)) {
                 <footer className="student-page-footer">
 
                     <span>
-                        Powered by ID Card System
+                        {listData?.tabName ||
+                            "ID Card System"}
                     </span>
 
 
