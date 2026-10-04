@@ -1299,76 +1299,70 @@ function IdCardPreview() {
 
                                                     <div className="premium-information-grid">
 
-                                                        {informationFields.map(
-                                                            (
-                                                                field,
-                                                                index
-                                                            ) => {
+                                                        {informationFields.map((field, index) => {
 
-                                                                const layout =
-                                                                    getFieldLayout(
-                                                                        field,
-                                                                        index
-                                                                    );
+                                                            const layout =
+                                                                activeFieldLayout[field.id] || {
+                                                                    row: index + 1,
+                                                                    column: 1,
+                                                                    width: 1
+                                                                };
 
+                                                            const isStudentName =
+                                                                studentNameField?.id === field.id;
 
-                                                                const isStudentName =
-                                                                    studentNameField?.id ===
-                                                                    field.id;
-
-
-                                                                if (
-                                                                    isStudentName
-                                                                ) {
-
-                                                                    return null;
-
-                                                                }
-
-
-                                                                return (
-
-                                                                    <div
-                                                                        key={
-                                                                            field.id
-                                                                        }
-                                                                        className="premium-info-item"
-                                                                        style={{
-                                                                            gridColumn:
-                                                                                layout.width ===
-                                                                                2
-                                                                                    ? "1 / -1"
-                                                                                    : layout.column,
-
-                                                                            gridRow:
-                                                                                layout.row
-                                                                        }}
-                                                                    >
-
-                                                                        <span className="premium-info-label">
-                                                                            {
-                                                                                field.label
-                                                                            }
-                                                                        </span>
-
-
-                                                                        <strong className="premium-info-value">
-
-                                                                            {
-                                                                                getDisplayValue(
-                                                                                    field
-                                                                                ) ||
-                                                                                "—"
-                                                                            }
-
-                                                                        </strong>
-
-                                                                    </div>
-
-                                                                );
-
+                                                            if (isStudentName) {
+                                                                return null;
                                                             }
-                                                        )}
+
+                                                            // Count how many fields exist in this row
+                                                            const fieldsInSameRow = informationFields.filter(
+                                                                (rowField) => {
+
+                                                                    if (studentNameField?.id === rowField.id) {
+                                                                        return false;
+                                                                    }
+
+                                                                    const rowLayout =
+                                                                        activeFieldLayout[rowField.id] || {
+                                                                            row:
+                                                                                informationFields.indexOf(rowField) +
+                                                                                1,
+                                                                            column: 1,
+                                                                            width: 1
+                                                                        };
+
+                                                                    return rowLayout.row === layout.row;
+                                                                }
+                                                            ).length;
+
+                                                            // Only one field in this row = full width
+                                                            const isSingleFieldRow = fieldsInSameRow === 1;
+
+                                                            return (
+                                                                <div
+                                                                    key={field.id}
+                                                                    className="premium-info-item"
+                                                                    style={{
+                                                                        gridColumn:
+                                                                            layout.width === 2 || isSingleFieldRow
+                                                                                ? "1 / -1"
+                                                                                : layout.column,
+
+                                                                        gridRow: layout.row
+                                                                    }}
+                                                                >
+                                                                    <span className="premium-info-label">
+                                                                        {field.label}
+                                                                    </span>
+
+                                                                    <strong className="premium-info-value">
+                                                                        {getDisplayValue(field)}
+                                                                    </strong>
+                                                                </div>
+                                                            );
+
+                                                        })}
 
                                                     </div>
 

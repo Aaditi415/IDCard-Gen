@@ -2092,12 +2092,13 @@ function Design() {
                                                                 >
 
                                                                     <option value="1">
+                                                                        Full
+                                                                    </option>
+                                                                    
+                                                                    <option value="2">
                                                                         Half
                                                                     </option>
 
-                                                                    <option value="2">
-                                                                        Full
-                                                                    </option>
 
                                                                 </select>
 

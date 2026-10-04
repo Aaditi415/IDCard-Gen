@@ -9,11 +9,14 @@ import SingleRecordReview from "./pages/SingleRecordReview";
 import Preview from "./pages/Preview";
 import Review from "./pages/Review";
 import StoredData from "./pages/StoredData";
+import Data from "./pages/Data";
 import DataMenuSettings from "./pages/DataMenuSettings";
 import CreateForm from "./pages/CreateForm";
 import Design from "./pages/Design";
 import Demo from "./pages/Demo";
 import  IdCardPreview  from "./pages/IdCardPreview";
+import StudentForm from "./pages/StudentForm";
+
 
 function App() {
     const path = window.location.pathname;
@@ -52,6 +55,15 @@ function App() {
     ) {
         return <IdCardPreview />;
     }
+
+    
+    if (
+        path.endsWith("/studentform") ||
+        path.endsWith("/studentform.html")
+    ) {
+        return <StudentForm />;
+    }
+
     // Details
     if (
         path.endsWith("/details") ||
@@ -120,6 +132,12 @@ function App() {
         return <StoredData />;
     }
 
+    if (
+        path.startsWith("/data") ||
+        path.startsWith("/data.html")
+    ) {
+        return <Data />;
+    }
 
     // Settings
     if (

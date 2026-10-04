@@ -19,6 +19,8 @@ import "./styles/dataentry.css";
 import "./styles/IdCardPreview.css"
 import "./styles/data-menu-settings.css";
 import "./styles/create-form.css";
+import "./styles/StudentForm.css";
+import "./styles/data.css";
 
 
 ReactDOM.createRoot(document.getElementById("root")).render(
