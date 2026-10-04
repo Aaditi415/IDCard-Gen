@@ -409,7 +409,7 @@
 
 .success-state {
   display: none;
-  max-width: 760px;
+  max-width: 1500px;
   background: #fff;
   border: 1px solid var(--border);
   border-radius: 14px;

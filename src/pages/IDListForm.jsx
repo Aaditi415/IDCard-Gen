@@ -339,7 +339,7 @@ function IDListForm() {
         ========================== */
 
         const studentLink =
-            `/studentform/${slug}`;
+            `/student-form/${slug}`;
 
 
         /* =========================
@@ -770,12 +770,18 @@ function IDListForm() {
                         STEPS
                     ========================== */}
 
+                   
+
                     <div className="steps">
 
-                        <div className="step active">
+                        <div
+                            className={`step ${
+                                showSuccess ? "completed" : "active"
+                            }`}
+                        >
 
                             <div className="step-number">
-                                1
+                                {showSuccess ? "✓" : "1"}
                             </div>
 
                             <div className="step-label">
@@ -785,33 +791,25 @@ function IDListForm() {
                         </div>
 
 
-                        <div className="step-line"></div>
+                        <div
+                            className={`step-line ${
+                                showSuccess ? "completed" : ""
+                            }`}
+                        ></div>
 
 
-                        <div className="step">
+                        <div
+                            className={`step ${
+                                showSuccess ? "active" : ""
+                            }`}
+                        >
 
                             <div className="step-number">
                                 2
                             </div>
 
                             <div className="step-label">
-                                Import Data
-                            </div>
-
-                        </div>
-
-
-                        <div className="step-line"></div>
-
-
-                        <div className="step">
-
-                            <div className="step-number">
-                                3
-                            </div>
-
-                            <div className="step-label">
-                                Review
+                                Copy Link
                             </div>
 
                         </div>
@@ -1411,6 +1409,7 @@ function IDListForm() {
                                     <button
                                         type="button"
                                         className="btn btn-primary"
+                                        style={{marginTop: "10px"}}
                                         onClick={() => {
 
                                             const fullLink =

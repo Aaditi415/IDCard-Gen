@@ -1192,7 +1192,7 @@ function Data() {
                                                             <td>
 
                                                                 <button
-                                                                    className="view-id-btn"
+                                                                    className="view-btn"
                                                                     onClick={() =>
                                                                         handleViewID(
                                                                             submission

@@ -591,3 +591,37 @@ body {
 .danger-text {
     color: var(--danger);
 }
+
+.success-text-status,
+.danger-text-status,
+.pending-text-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    text-transform: capitalize;
+}
+
+/* Approved */
+.success-text-status {
+    color: #15803d;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+}
+
+/* Rejected */
+.danger-text-status {
+    color: #dc2626;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+}
+
+/* Pending */
+.pending-text-status {
+    color: #b45309;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+}

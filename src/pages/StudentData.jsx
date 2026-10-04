@@ -239,20 +239,49 @@ function StudentData() {
 
     };
 
+    const handleEditSubmission = (submission) => {
+        localStorage.setItem(
+            "idCardEditSubmission",
+            JSON.stringify(submission)
+        );
+
+        window.location.href = `/studentform/${submission.slug}?edit=${submission.id}`;
+    };
+
+    const handleDeleteSubmission = (submissionId) => {
+        const confirmed = window.confirm(
+            "Are you sure you want to delete this student application?"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        const updatedSubmissions = submissions.filter(
+            submission => submission.id !== submissionId
+        );
+
+        localStorage.setItem(
+            "idCardSubmissions",
+            JSON.stringify(updatedSubmissions)
+        );
+
+        setSubmissions(updatedSubmissions);
+    };
+
     /* =====================================================
        VIEW ID
     ===================================================== */
 
-    const handleViewID = (
-        submission
-    ) => {
+    const handleViewID = (submission) => {
+        console.log("VIEW ID CLICKED:", submission);
 
-        setSelectedSubmission(
-            submission
-        );
+        setSelectedSubmission({
+            ...submission,
+            data: submission.data || {}
+        });
 
         setShowPreview(true);
-
     };
 
     /* =====================================================
@@ -710,9 +739,9 @@ const handleDeleteList = () => {
                                                         <span
                                                             className={
                                                                 submission.status === "approved"
-                                                                    ? "success-text"
+                                                                    ? "success-text-status"
                                                                     : submission.status === "rejected"
-                                                                    ? "danger-text"
+                                                                    ? "danger-text-status"
                                                                     : ""
                                                             }
                                                         >
@@ -723,17 +752,32 @@ const handleDeleteList = () => {
 
 
                                                     <td>
+                                                        <div className="submission-actions">
 
-                                                        <button
-                                                            className="view-id-btn"
-                                                            onClick={() =>
-                                                                handleViewID(
-                                                                    submission
-                                                                )
-                                                            }
-                                                        >
-                                                            View ID
-                                                        </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleViewID(submission)}
+                                                                className="view-btn"
+                                                            >
+                                                                View ID
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleEditSubmission(submission)}
+                                                                className="edit-btn"
+                                                            >
+                                                                Edit
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDeleteSubmission(submission.id)}
+                                                                className="delete-btn"
+                                                            >
+                                                                Delete
+                                                            </button>
+
+                                                        </div>
 
                                                     </td>
 
@@ -811,20 +855,10 @@ const handleDeleteList = () => {
                                 <div className="stored-id-card">
 
                                     <IDCardRenderer
-                                        formFields={
-                                            formFields
-                                        }
-                                        data={
-                                            selectedSubmission.data ||
-                                            {}
-                                        }
-                                        design={
-                                            design
-                                        }
-                                        activeSide={
-                                            design?.previewSide ||
-                                            "front"
-                                        }
+                                        formFields={formFields}
+                                        data={selectedSubmission?.data || {}}
+                                        design={design}
+                                        activeSide="front"
                                     />
 
                                 </div>

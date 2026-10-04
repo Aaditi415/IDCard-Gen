@@ -285,12 +285,15 @@ function readFileAsDataURL(file) {
 
 }
 
+/* =====================================================
+   STUDENT VERIFICATION ENGINE
+===================================================== */
 
-/* =========================================================
-   VERIFICATION HELPERS
-========================================================= */
+/* -----------------------------------------------------
+   NORMALIZE TEXT
+----------------------------------------------------- */
 
-const normalizeValue = (value) => {
+const normalizeText = (value) => {
     if (
         value === undefined ||
         value === null
@@ -305,66 +308,302 @@ const normalizeValue = (value) => {
 };
 
 
-/* =========================================================
-   FIND FIELD BY LABEL / NAME
-========================================================= */
+/* -----------------------------------------------------
+   NORMALIZE DATE
+----------------------------------------------------- */
 
-const findFormField = (
-    formFields,
-    keywords
-) => {
+const normalizeDate = (value) => {
 
-    return formFields.find(field => {
+    if (
+        value === undefined ||
+        value === null ||
+        value === ""
+    ) {
+        return "";
+    }
 
-        const text = normalizeValue(
-            field.label ||
-            field.name ||
-            ""
-        );
+    const text = String(value).trim();
 
-        return keywords.some(
-            keyword =>
-                text === keyword ||
-                text.includes(keyword)
-        );
+    /* YYYY-MM-DD */
 
-    });
+    let match = text.match(
+        /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/
+    );
+
+    if (match) {
+
+        return `${match[1]}-${match[2].padStart(2, "0")}-${match[3].padStart(2, "0")}`;
+
+    }
+
+
+    /* DD/MM/YYYY */
+
+    match = text.match(
+        /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/
+    );
+
+    if (match) {
+
+        return `${match[3]}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`;
+
+    }
+
+    return normalizeText(text);
+};
+
+
+/* =====================================================
+   FIELD ALIASES
+===================================================== */
+
+const FIELD_ALIASES = {
+
+    name: [
+        "name",
+        "student name",
+        "full name",
+        "student full name",
+        "candidate name"
+    ],
+
+    studentId: [
+        "id",
+        "id number",
+        "student id",
+        "student id number",
+        "student number",
+        "student no",
+        "member id",
+        "member number",
+        "member no",
+        "membership id",
+        "membership number",
+        "enrollment number",
+        "enrolment number",
+        "registration number",
+        "registration no",
+        "admission number",
+        "admission no"
+    ],
+
+    dob: [
+        "dob",
+        "date of birth",
+        "birth date",
+        "birthdate"
+    ]
 
 };
 
 
-/* =========================================================
+/* =====================================================
+   FIND LOGICAL FIELD TYPE
+===================================================== */
+
+const getLogicalFieldType = (
+    label
+) => {
+
+    const normalized =
+        normalizeText(label);
+
+    for (
+        const [type, aliases]
+        of Object.entries(FIELD_ALIASES)
+    ) {
+
+        if (
+            aliases.some(
+                alias =>
+                    normalized ===
+                    normalizeText(alias)
+            )
+        ) {
+            return type;
+        }
+
+    }
+
+    return null;
+};
+
+
+/* =====================================================
    FIND MASTER COLUMN
-========================================================= */
+===================================================== */
 
 const findMasterColumn = (
     headers,
-    keywords
+    logicalType
 ) => {
 
     if (!Array.isArray(headers)) {
         return -1;
     }
 
-    return headers.findIndex(header => {
+    const aliases =
+        FIELD_ALIASES[logicalType] || [];
 
-        const text =
-            normalizeValue(header);
+    return headers.findIndex(
+        header => {
 
-        return keywords.some(
-            keyword =>
-                text === keyword ||
-                text.includes(keyword)
-        );
+            const normalizedHeader =
+                normalizeText(header);
 
-    });
+            return aliases.some(
+                alias =>
+                    normalizedHeader ===
+                    normalizeText(alias)
+            );
 
+        }
+    );
 };
 
 
-/* =========================================================
-   GET MASTER LIST RECORDS
-========================================================= */
+/* =====================================================
+   FIND STUDENT FORM FIELD
+===================================================== */
+
+const findStudentFormField = (
+    formFields,
+    logicalType
+) => {
+
+    if (!Array.isArray(formFields)) {
+        return null;
+    }
+
+    return (
+        formFields.find(
+            field => {
+
+                const label =
+                    field?.label ||
+                    field?.name ||
+                    "";
+
+                return (
+                    getLogicalFieldType(
+                        label
+                    ) === logicalType
+                );
+
+            }
+        ) || null
+    );
+};
+
+
+/* =====================================================
+   GET MASTER LIST
+===================================================== */
+
+const getMasterList = (
+    masterListId
+) => {
+
+    if (!masterListId) {
+        return null;
+    }
+
+    try {
+
+        /* ---------------------------------------------
+           MASTER LIST STORAGE
+        --------------------------------------------- */
+
+        const masterLists =
+            JSON.parse(
+                localStorage.getItem(
+                    "idCardMasterLists"
+                )
+            ) || [];
+
+        if (
+            Array.isArray(masterLists)
+        ) {
+
+            const master =
+                masterLists.find(
+                    list =>
+                        list.id ===
+                        masterListId
+                );
+
+            if (master) {
+                return master;
+            }
+
+        }
+
+
+        /* ---------------------------------------------
+           STORED LIST FALLBACK
+        --------------------------------------------- */
+
+        const storedLists =
+            JSON.parse(
+                localStorage.getItem(
+                    "idCardStoredLists"
+                )
+            ) || [];
+
+        if (
+            Array.isArray(storedLists)
+        ) {
+
+            const master =
+                storedLists.find(
+                    list =>
+                        list.id ===
+                        masterListId
+                );
+
+            if (master) {
+                return master;
+            }
+
+        }
+
+
+        /* ---------------------------------------------
+           OLD MASTER LIST
+        --------------------------------------------- */
+
+        const oldMaster =
+            JSON.parse(
+                localStorage.getItem(
+                    "idCardFinalList"
+                )
+            );
+
+        if (
+            oldMaster &&
+            oldMaster.id === masterListId
+        ) {
+
+            return oldMaster;
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Master list loading error:",
+            error
+        );
+
+    }
+
+    return null;
+};
+
+
+/* =====================================================
+   GET MASTER RECORDS
+===================================================== */
 
 const getMasterRecords = (
     masterList
@@ -374,43 +613,138 @@ const getMasterRecords = (
         return [];
     }
 
-    /*
-     * Your imported lists use:
-     *
-     * headers: [...]
-     * students: [...]
-     *
-     */
-
     if (
         Array.isArray(
             masterList.students
         )
     ) {
-        return masterList.students;
-    }
 
-    /*
-     * Extra compatibility in case
-     * another version uses records.
-     */
+        return masterList.students;
+
+    }
 
     if (
         Array.isArray(
             masterList.records
         )
     ) {
+
         return masterList.records;
+
     }
 
     return [];
-
 };
 
 
-/* =========================================================
-   VERIFY STUDENT SUBMISSION
-========================================================= */
+/* =====================================================
+   GET MASTER VALUE
+===================================================== */
+
+const getMasterValue = (
+    record,
+    headers,
+    columnIndex
+) => {
+
+    if (
+        !record ||
+        columnIndex < 0
+    ) {
+        return "";
+    }
+
+
+    /* ARRAY RECORD */
+
+    if (
+        Array.isArray(record)
+    ) {
+
+        return (
+            record[columnIndex] ?? ""
+        );
+
+    }
+
+
+    /* OBJECT RECORD */
+
+    if (
+        typeof record === "object"
+    ) {
+
+        const header =
+            headers[columnIndex];
+
+        if (
+            record[header] !== undefined
+        ) {
+
+            return record[header];
+
+        }
+
+        const matchingKey =
+            Object.keys(record).find(
+                key =>
+                    normalizeText(key) ===
+                    normalizeText(header)
+            );
+
+        if (matchingKey) {
+
+            return record[
+                matchingKey
+            ];
+
+        }
+
+    }
+
+    return "";
+};
+
+
+/* =====================================================
+   COMPARE VALUE
+===================================================== */
+
+const compareVerificationValue = (
+    logicalType,
+    masterValue,
+    studentValue
+) => {
+
+    if (
+        logicalType === "dob"
+    ) {
+
+        return (
+            normalizeDate(
+                masterValue
+            ) ===
+            normalizeDate(
+                studentValue
+            )
+        );
+
+    }
+
+    return (
+        normalizeText(
+            masterValue
+        ) ===
+        normalizeText(
+            studentValue
+        )
+    );
+};
+
+
+/* =====================================================
+   VERIFY STUDENT
+===================================================== */
 
 const verifyStudentSubmission = ({
     submissionData,
@@ -418,668 +752,232 @@ const verifyStudentSubmission = ({
     listData
 }) => {
 
-    /* ---------------------------------------------
-       BASIC CHECK
-    --------------------------------------------- */
-
-    if (!listData) {
-
-        return {
-            status: "pending",
-            verification: {
-                status: "pending",
-                matched: false,
-                issues: [
-                    "Class list could not be found."
-                ],
-                checkedFields: {},
-                masterRecordIndex: null,
-                checkedAt:
-                    new Date().toISOString()
-            }
-        };
-
-    }
-
-
-    /* =====================================================
-    LOAD MASTER LISTS
-    ===================================================== */
-
-    let masterLists = [];
-
-    /*
-    * Primary master-list storage
-    */
-    try {
-
-        const savedMasterLists =
-            JSON.parse(
-                localStorage.getItem(
-                    "idCardMasterLists"
-                )
-            );
-
-        if (Array.isArray(savedMasterLists)) {
-            masterLists = savedMasterLists;
-        }
-
-    } catch {
-        masterLists = [];
-    }
-
-
-    /*
-    * Existing imported/stored lists
-    *
-    * Your Data.jsx uses this storage.
-    */
-    if (!masterLists.length) {
-
-        try {
-
-            const storedLists =
-                JSON.parse(
-                    localStorage.getItem(
-                        "idCardStoredLists"
-                    )
-                );
-
-            if (Array.isArray(storedLists)) {
-                masterLists = storedLists;
-            }
-
-        } catch {
-            masterLists = [];
-        }
-
-    }
-
-
-    /*
-    * Old compatibility storage
-    */
-    if (!masterLists.length) {
-
-        try {
-
-            const oldMaster =
-                JSON.parse(
-                    localStorage.getItem(
-                        "idCardFinalList"
-                    )
-                );
-
-            if (Array.isArray(oldMaster)) {
-                masterLists = oldMaster;
-            } else if (oldMaster) {
-                masterLists = [oldMaster];
-            }
-
-        } catch {
-            masterLists = [];
-        }
-
-    }
-
-    /*
-     * Backward compatibility:
-     * if idCardMasterLists does not exist,
-     * try old idCardFinalList.
-     */
-
-    if (
-        !Array.isArray(masterLists) ||
-        !masterLists.length
-    ) {
-
-        try {
-
-            const oldMaster =
-                JSON.parse(
-                    localStorage.getItem(
-                        "idCardFinalList"
-                    )
-                );
-
-            if (oldMaster) {
-                masterLists = [oldMaster];
-            }
-
-        } catch {
-
-            masterLists = [];
-
-        }
-
-    }
-
-
-    /* ---------------------------------------------
-       FIND ASSIGNED MASTER LIST
-    --------------------------------------------- */
-
     const masterList =
-        masterLists.find(
-            list =>
-                list.id ===
-                listData.masterListId
+        getMasterList(
+            listData?.masterListId
         );
 
+
+    /* -------------------------------------------------
+       MASTER LIST NOT FOUND
+    ------------------------------------------------- */
 
     if (!masterList) {
 
         return {
+
             status: "pending",
 
-            verification: {
-                status: "pending",
-                matched: false,
+            matched: false,
 
-                issues: [
-                    "Assigned master list could not be found."
-                ],
+            checkedFields: {},
 
-                checkedFields: {
-                    studentId: false,
-                    name: false,
-                    dob: false
-                },
+            issues: [
+                "Assigned master list was not found."
+            ],
 
-                masterRecordIndex: null,
+            masterRecordIndex: null,
 
-                checkedAt:
-                    new Date().toISOString()
-            }
+            checkedAt:
+                new Date().toISOString()
+
         };
 
     }
 
 
-    /* ---------------------------------------------
-       MASTER DATA
-    --------------------------------------------- */
-
     const headers =
-        masterList.headers || [];
+        Array.isArray(
+            masterList.headers
+        )
+            ? masterList.headers
+            : [];
 
-    const masterRecords =
+
+    const records =
         getMasterRecords(
             masterList
         );
 
 
-    if (!masterRecords.length) {
-
-        return {
-            status: "pending",
-
-            verification: {
-                status: "pending",
-                matched: false,
-
-                issues: [
-                    "Master list contains no student records."
-                ],
-
-                checkedFields: {
-                    studentId: false,
-                    name: false,
-                    dob: false
-                },
-
-                masterRecordIndex: null,
-
-                checkedAt:
-                    new Date().toISOString()
-            }
-        };
-
-    }
-
-
-    /* ---------------------------------------------
-       FIND FORM FIELDS
-    --------------------------------------------- */
-
-    const studentIdField =
-        findFormField(
-            formFields,
-            [
-                "student id",
-                "student id number",
-                "id number",
-                "id",
-                "studentid"
-            ]
-        );
-
-    const nameField =
-        findFormField(
-            formFields,
-            [
-                "name",
-                "student name",
-                "full name",
-                "student full name"
-            ]
-        );
-
-    const dobField =
-        findFormField(
-            formFields,
-            [
-                "dob",
-                "date of birth",
-                "birth date",
-                "birthdate"
-            ]
-        );
-
-
-    /* ---------------------------------------------
-       REQUIRED FIELDS CHECK
-    --------------------------------------------- */
-
-    const missingFormFields = [];
-
-    if (!studentIdField) {
-        missingFormFields.push(
-            "Student ID field is not configured."
-        );
-    }
-
-    if (!nameField) {
-        missingFormFields.push(
-            "Student Name field is not configured."
-        );
-    }
-
-    if (!dobField) {
-        missingFormFields.push(
-            "Date of Birth field is not configured."
-        );
-    }
-
-
-    if (missingFormFields.length) {
-
-        return {
-            status: "pending",
-
-            verification: {
-                status: "pending",
-                matched: false,
-
-                issues:
-                    missingFormFields,
-
-                checkedFields: {
-                    studentId: false,
-                    name: false,
-                    dob: false
-                },
-
-                masterRecordIndex: null,
-
-                checkedAt:
-                    new Date().toISOString()
-            }
-        };
-
-    }
-
-
-    /* ---------------------------------------------
-       FIND MASTER COLUMNS
-    --------------------------------------------- */
-
-    const studentIdColumn =
-        findMasterColumn(
-            headers,
-            [
-                "student id",
-                "student id number",
-                "id number",
-                "id",
-                "studentid"
-            ]
-        );
-
-    const nameColumn =
-        findMasterColumn(
-            headers,
-            [
-                "name",
-                "student name",
-                "full name",
-                "student full name"
-            ]
-        );
-
-    const dobColumn =
-        findMasterColumn(
-            headers,
-            [
-                "dob",
-                "date of birth",
-                "birth date",
-                "birthdate"
-            ]
-        );
-
-
-    /* ---------------------------------------------
-       MASTER COLUMN CHECK
-    --------------------------------------------- */
-
-    const missingMasterColumns = [];
-
-    if (studentIdColumn === -1) {
-        missingMasterColumns.push(
-            "Student ID column is missing from master list."
-        );
-    }
-
-    if (nameColumn === -1) {
-        missingMasterColumns.push(
-            "Name column is missing from master list."
-        );
-    }
-
-    if (dobColumn === -1) {
-        missingMasterColumns.push(
-            "Date of Birth column is missing from master list."
-        );
-    }
-
-
-    if (missingMasterColumns.length) {
-
-        return {
-            status: "pending",
-
-            verification: {
-                status: "pending",
-                matched: false,
-
-                issues:
-                    missingMasterColumns,
-
-                checkedFields: {
-                    studentId: false,
-                    name: false,
-                    dob: false
-                },
-
-                masterRecordIndex: null,
-
-                checkedAt:
-                    new Date().toISOString()
-            }
-        };
-
-    }
-
-
-    /* ---------------------------------------------
-       STUDENT VALUES
-    --------------------------------------------- */
-
-    const submittedStudentId =
-        normalizeValue(
-            submissionData[
-                studentIdField.id
-            ]
-        );
-
-    const submittedName =
-        normalizeValue(
-            submissionData[
-                nameField.id
-            ]
-        );
-
-    const submittedDob =
-        normalizeValue(
-            submissionData[
-                dobField.id
-            ]
-        );
-
-
-    /* ---------------------------------------------
-       STUDENT ID MUST EXIST
-    --------------------------------------------- */
-
-    if (!submittedStudentId) {
-
-        return {
-            status: "pending",
-
-            verification: {
-                status: "pending",
-                matched: false,
-
-                issues: [
-                    "Student ID was not provided."
-                ],
-
-                checkedFields: {
-                    studentId: false,
-                    name: false,
-                    dob: false
-                },
-
-                masterRecordIndex: null,
-
-                checkedAt:
-                    new Date().toISOString()
-            }
-        };
-
-    }
-
-
-    /* ---------------------------------------------
-       FIND STUDENT BY ID
-    --------------------------------------------- */
-
-    const masterRecordIndex =
-        masterRecords.findIndex(
-            row => {
-
-                const masterStudentId =
-                    normalizeValue(
-                        row?.[
-                            studentIdColumn
-                        ]
-                    );
-
-                return (
-                    masterStudentId ===
-                    submittedStudentId
+    /* -------------------------------------------------
+       FIND COMMON FIELDS
+    ------------------------------------------------- */
+
+    const verificationFields = [];
+
+    Object.keys(
+        FIELD_ALIASES
+    ).forEach(
+        logicalType => {
+
+            const masterColumn =
+                findMasterColumn(
+                    headers,
+                    logicalType
                 );
 
+            const studentField =
+                findStudentFormField(
+                    formFields,
+                    logicalType
+                );
+
+            if (
+                masterColumn !== -1 &&
+                studentField
+            ) {
+
+                verificationFields.push({
+
+                    logicalType,
+
+                    masterColumn,
+
+                    studentField
+
+                });
+
             }
-        );
+
+        }
+    );
 
 
-    /* ---------------------------------------------
-       NO STUDENT FOUND
-    --------------------------------------------- */
-
-    if (masterRecordIndex === -1) {
-
-        return {
-            status: "pending",
-
-            verification: {
-                status: "pending",
-                matched: false,
-
-                issues: [
-                    "Student ID was not found in the assigned master list."
-                ],
-
-                checkedFields: {
-                    studentId: false,
-                    name: false,
-                    dob: false
-                },
-
-                masterRecordIndex: null,
-
-                checkedAt:
-                    new Date().toISOString()
-            }
-        };
-
-    }
-
-
-    /* ---------------------------------------------
-       MASTER STUDENT
-    --------------------------------------------- */
-
-    const masterStudent =
-        masterRecords[
-            masterRecordIndex
-        ];
-
-
-    /* ---------------------------------------------
-       COMPARE
-    --------------------------------------------- */
-
-    const masterStudentId =
-        normalizeValue(
-            masterStudent[
-                studentIdColumn
-            ]
-        );
-
-    const masterName =
-        normalizeValue(
-            masterStudent[
-                nameColumn
-            ]
-        );
-
-    const masterDob =
-        normalizeValue(
-            masterStudent[
-                dobColumn
-            ]
-        );
-
-
-    const studentIdMatches =
-        submittedStudentId ===
-        masterStudentId;
-
-    const nameMatches =
-        submittedName ===
-        masterName;
-
-    const dobMatches =
-        submittedDob ===
-        masterDob;
-
-
-    /* ---------------------------------------------
-       ISSUES
-    --------------------------------------------- */
-
-    const issues = [];
-
-    if (!studentIdMatches) {
-        issues.push(
-            "Student ID does not match."
-        );
-    }
-
-    if (!nameMatches) {
-        issues.push(
-            "Name does not match."
-        );
-    }
-
-    if (!dobMatches) {
-        issues.push(
-            "Date of Birth does not match."
-        );
-    }
-
-
-    /* ---------------------------------------------
-       APPROVED
-    --------------------------------------------- */
+    /* -------------------------------------------------
+       MINIMUM 2 FIELDS
+    ------------------------------------------------- */
 
     if (
-        studentIdMatches &&
-        nameMatches &&
-        dobMatches
+        verificationFields.length < 2
     ) {
 
         return {
-            status: "approved",
 
-            verification: {
-                status: "approved",
-                matched: true,
+            status: "pending",
 
-                issues: [],
+            matched: false,
 
-                checkedFields: {
-                    studentId: true,
-                    name: true,
-                    dob: true
-                },
+            checkedFields: {},
 
-                masterRecordIndex,
+            issues: [
+                "At least 2 matching verification fields are required."
+            ],
 
-                checkedAt:
-                    new Date().toISOString()
-            }
+            masterRecordIndex: null,
+
+            checkedAt:
+                new Date().toISOString()
+
         };
 
     }
 
 
-    /* ---------------------------------------------
-       REJECTED
-    --------------------------------------------- */
+    /* -------------------------------------------------
+       FIND MATCHING MASTER RECORD
+    ------------------------------------------------- */
+
+    for (
+        let index = 0;
+        index < records.length;
+        index++
+    ) {
+
+        const record =
+            records[index];
+
+        let allMatch = true;
+
+        const checkedFields = {};
+
+        verificationFields.forEach(
+            field => {
+
+                const masterValue =
+                    getMasterValue(
+                        record,
+                        headers,
+                        field.masterColumn
+                    );
+
+                const studentValue =
+                    submissionData?.[
+                        field.studentField.id
+                    ];
+
+                const matched =
+                    compareVerificationValue(
+                        field.logicalType,
+                        masterValue,
+                        studentValue
+                    );
+
+                checkedFields[
+                    field.logicalType
+                ] = matched;
+
+                if (!matched) {
+                    allMatch = false;
+                }
+
+            }
+        );
+
+
+        /* ---------------------------------------------
+           MATCH FOUND
+        --------------------------------------------- */
+
+        if (allMatch) {
+
+            return {
+
+                status: "approved",
+
+                matched: true,
+
+                checkedFields,
+
+                issues: [],
+
+                masterRecordIndex:
+                    index,
+
+                checkedAt:
+                    new Date().toISOString()
+
+            };
+
+        }
+
+    }
+
+
+    /* -------------------------------------------------
+       NO MASTER RECORD MATCHED
+    ------------------------------------------------- */
 
     return {
+
         status: "rejected",
 
-        verification: {
-            status: "rejected",
-            matched: false,
+        matched: false,
 
-            issues,
+        checkedFields: {},
 
-            checkedFields: {
-                studentId:
-                    studentIdMatches,
+        issues: [
+            "Student information does not match the master list."
+        ],
 
-                name:
-                    nameMatches,
+        masterRecordIndex: null,
 
-                dob:
-                    dobMatches
-            },
+        checkedAt:
+            new Date().toISOString()
 
-            masterRecordIndex,
-
-            checkedAt:
-                new Date().toISOString()
-        }
     };
 
 };
-
 
 /* =========================================================
    MAIN COMPONENT
@@ -1128,6 +1026,8 @@ function StudentForm() {
 
     const [previewSide, setPreviewSide] =
         useState("front");
+
+    const [editingSubmissionId, setEditingSubmissionId] = useState(null);
 
     /*
      * The list created by IDListForm.
@@ -1281,24 +1181,30 @@ function StudentForm() {
 
             const initialValues = {};
 
+            fields.forEach((field) => {
+                initialValues[field.id] =
+                    getInitialValue(field);
+            });
 
-            fields.forEach(
-                field => {
-
-                    initialValues[
-                        field.id
-                    ] =
-                        getInitialValue(
-                            field
-                        );
-
-                }
+            const editSubmission = JSON.parse(
+                localStorage.getItem("idCardEditSubmission")
             );
 
+            if (
+                editSubmission &&
+                editSubmission.listId === currentList.id
+            ) {
+                setEditingSubmissionId(
+                    editSubmission.id
+                );
 
-            setValues(
-                initialValues
-            );
+                setValues({
+                    ...initialValues,
+                    ...(editSubmission.data || {})
+                });
+            } else {
+                setValues(initialValues);
+            }
 
         }
 
@@ -1755,12 +1661,12 @@ function StudentForm() {
     /* =====================================================
        SUBMIT
     ===================================================== */
+
 const saveSubmission = () => {
 
     if (!listData) {
         return;
     }
-
 
     /* =====================================================
        VERIFY STUDENT
@@ -1770,18 +1676,65 @@ const saveSubmission = () => {
         verifyStudentSubmission({
             submissionData: values,
             formFields,
-            listData
+            listData,
         });
 
 
     /* =====================================================
-       CREATE SUBMISSION
+       LOAD EXISTING SUBMISSIONS
+    ===================================================== */
+
+    let existingSubmissions = [];
+
+    try {
+
+        existingSubmissions =
+            JSON.parse(
+                localStorage.getItem(
+                    SUBMISSIONS_STORAGE_KEY
+                )
+            ) || [];
+
+    } catch {
+
+        existingSubmissions = [];
+
+    }
+
+
+    if (!Array.isArray(existingSubmissions)) {
+        existingSubmissions = [];
+    }
+
+
+    /* =====================================================
+       GET OLD SUBMISSION WHEN EDITING
+    ===================================================== */
+
+    let oldSubmission = null;
+
+    if (editingSubmissionId) {
+
+        oldSubmission =
+            existingSubmissions.find(
+                item =>
+                    item.id ===
+                    editingSubmissionId
+            ) || null;
+
+    }
+
+
+    /* =====================================================
+       CREATE / UPDATE SUBMISSION
     ===================================================== */
 
     const newSubmission = {
 
         id:
+            editingSubmissionId ||
             `submission_${Date.now()}`,
+
 
         /* ---------------------------------------------
            CLASS / LIST
@@ -1833,20 +1786,25 @@ const saveSubmission = () => {
 
         formName,
 
+
+        /* ---------------------------------------------
+           STUDENT DATA
+        --------------------------------------------- */
+
         data: {
             ...values
         },
 
 
         /* ---------------------------------------------
-           VERIFICATION RESULT
+           VERIFICATION
         --------------------------------------------- */
 
         status:
             verificationResult.status,
 
         verification:
-            verificationResult.verification,
+            verificationResult,
 
 
         /* ---------------------------------------------
@@ -1854,52 +1812,49 @@ const saveSubmission = () => {
         --------------------------------------------- */
 
         submittedAt:
+            oldSubmission?.submittedAt ||
+            new Date().toISOString(),
+
+        updatedAt:
             new Date().toISOString()
 
     };
 
 
     /* =====================================================
-       SAVE
+       UPDATE OR ADD
     ===================================================== */
 
-    let existingSubmissions = [];
-
-    try {
-
-        existingSubmissions =
-            JSON.parse(
-                localStorage.getItem(
-                    "idCardSubmissions"
-                )
-            ) || [];
-
-    } catch {
-
-        existingSubmissions = [];
-
-    }
+    let updatedSubmissions;
 
 
-    if (
-        !Array.isArray(
-            existingSubmissions
-        )
-    ) {
+    if (editingSubmissionId) {
 
-        existingSubmissions = [];
+        updatedSubmissions =
+            existingSubmissions.map(
+                submission =>
+                    submission.id ===
+                    editingSubmissionId
+                        ? newSubmission
+                        : submission
+            );
+
+    } else {
+
+        updatedSubmissions = [
+            ...existingSubmissions,
+            newSubmission
+        ];
 
     }
 
 
-    const updatedSubmissions = [
-        ...existingSubmissions,
-        newSubmission
-    ];
-
+    /* =====================================================
+       SAVE SUBMISSIONS
+    ===================================================== */
 
     localStorage.setItem(
-        "idCardSubmissions",
+        SUBMISSIONS_STORAGE_KEY,
         JSON.stringify(
             updatedSubmissions
         )
@@ -1919,11 +1874,24 @@ const saveSubmission = () => {
 
 
     /* =====================================================
+       REMOVE EDIT MODE
+    ===================================================== */
+
+    localStorage.removeItem(
+        "idCardEditSubmission"
+    );
+
+
+    /* =====================================================
        UPDATE STATE
     ===================================================== */
 
     setSubmission(
         newSubmission
+    );
+
+    setEditingSubmissionId(
+        null
     );
 
     setShowSubmitPopup(
@@ -1934,9 +1902,17 @@ const saveSubmission = () => {
         false
     );
 
-    setSubmitted(true);
+    setSubmitted(
+        true
+    );
 
 };
+
+
+function handleBack(){
+    window.location.href = "/"
+}
+
     /* =====================================================
        RESET
     ===================================================== */
@@ -3623,7 +3599,9 @@ if (previewMode) {
                                 setShowSubmitPopup(true)
                             }
                         >
-                            Submit Application
+                            {editingSubmissionId
+                                ? "Update Application"
+                                : "Submit Application"}
                             <span>→</span>
                         </button>
 
@@ -3659,15 +3637,16 @@ if (previewMode) {
                         </div>
 
                         <h2>
-                            Submit Application?
+                            {editingSubmissionId
+                                ? "Update Application?"
+                                : "Submit Application?"}
                         </h2>
 
                         <p>
-                            Please make sure all your information
-                            is correct. Once submitted, your
-                            application will be sent for verification.
+                            {editingSubmissionId
+                                ? "Please make sure the updated information is correct."
+                                : "Please make sure all your information is correct. Once submitted, your application will be sent for verification."}
                         </p>
-
 
                         <div className="submit-modal-actions">
 
@@ -3781,6 +3760,15 @@ if (previewMode) {
 
                     </div>
 
+                    <button
+                        type="button"
+                        className="student-submit another"
+                        onClick={
+                            handleBack
+                        }
+                    >
+                        Return To Dashboard
+                    </button>
 
                     <button
                         type="button"

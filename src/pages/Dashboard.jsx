@@ -1,48 +1,313 @@
+import { useEffect, useMemo, useState } from "react";
+
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 
 function Dashboard() {
 
+    const [lists, setLists] = useState([]);
+    const [submissions, setSubmissions] = useState([]);
+    const [masterLists, setMasterLists] = useState([]);
+
     /* =====================================================
-       CREATE ID CARD
+       LOAD DATA
+    ===================================================== */
+
+    useEffect(() => {
+
+        try {
+
+            const savedLists =
+                JSON.parse(
+                    localStorage.getItem("idCardLists")
+                ) || [];
+
+            const savedSubmissions =
+                JSON.parse(
+                    localStorage.getItem("idCardSubmissions")
+                ) || [];
+
+            const savedMasterLists =
+                JSON.parse(
+                    localStorage.getItem("idCardMasterLists")
+                ) || [];
+
+            setLists(
+                Array.isArray(savedLists)
+                    ? savedLists
+                    : []
+            );
+
+            setSubmissions(
+                Array.isArray(savedSubmissions)
+                    ? savedSubmissions
+                    : []
+            );
+
+            setMasterLists(
+                Array.isArray(savedMasterLists)
+                    ? savedMasterLists
+                    : []
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load dashboard data:",
+                error
+            );
+
+        }
+
+    }, []);
+
+
+    /* =====================================================
+       STATISTICS
+    ===================================================== */
+
+    const totalStudents = useMemo(() => {
+
+        return masterLists.reduce(
+            (total, list) => {
+
+                if (Array.isArray(list.students)) {
+                    return total + list.students.length;
+                }
+
+                if (Array.isArray(list.records)) {
+                    return total + list.records.length;
+                }
+
+                return total;
+
+            },
+            0
+        );
+
+    }, [masterLists]);
+
+
+    const pendingApplications = useMemo(() => {
+
+        return submissions.filter(
+            submission =>
+                submission.status === "pending" ||
+                submission.verification?.status === "pending"
+        ).length;
+
+    }, [submissions]);
+
+
+    const approvedApplications = useMemo(() => {
+
+        return submissions.filter(
+            submission =>
+                submission.status === "approved"
+        ).length;
+
+    }, [submissions]);
+
+
+    /* =====================================================
+       RECENT SUBMISSIONS
+    ===================================================== */
+
+    const recentSubmissions = useMemo(() => {
+
+        return [...submissions]
+            .sort(
+                (a, b) =>
+                    new Date(
+                        b.updatedAt ||
+                        b.submittedAt ||
+                        0
+                    ) -
+                    new Date(
+                        a.updatedAt ||
+                        a.submittedAt ||
+                        0
+                    )
+            )
+            .slice(0, 5);
+
+    }, [submissions]);
+
+
+    /* =====================================================
+       CREATE
     ===================================================== */
 
     const handleCreate = () => {
+
         window.location.href = "/card";
+
+    };
+
+
+    /* =====================================================
+       IMPORT DATA
+    ===================================================== */
+
+    const handleImport = () => {
+
+        window.location.href = "/import-data";
+
+    };
+
+
+    /* =====================================================
+       APPLICATIONS
+    ===================================================== */
+
+    const handleApplications = () => {
+
+        if (lists.length > 0) {
+
+            window.location.href =
+                `/student-data?listId=${lists[0].id}`;
+
+        } else {
+
+            window.location.href =
+                "/dashboard";
+
+        }
+
+    };
+
+
+    /* =====================================================
+       FORMAT DATE
+    ===================================================== */
+
+    const formatDate = (date) => {
+
+        if (!date) {
+            return "—";
+        }
+
+        const value =
+            new Date(date);
+
+        const now =
+            new Date();
+
+        const diff =
+            Math.floor(
+                (now - value) / 1000
+            );
+
+        if (diff < 60) {
+            return "Just now";
+        }
+
+        if (diff < 3600) {
+            return `${Math.floor(diff / 60)} min ago`;
+        }
+
+        if (diff < 86400) {
+            return `${Math.floor(diff / 3600)} hour ago`;
+        }
+
+        return value.toLocaleDateString(
+            "en-IN",
+            {
+                day: "numeric",
+                month: "short"
+            }
+        );
+
+    };
+
+
+    /* =====================================================
+       STATUS
+    ===================================================== */
+
+    const getStatusClass = (status) => {
+
+        if (status === "approved") {
+            return "ready";
+        }
+
+        if (status === "rejected") {
+            return "rejected";
+        }
+
+        return "draft";
+
+    };
+
+
+    /* =====================================================
+       STUDENT NAME
+    ===================================================== */
+
+    const getStudentName = (submission) => {
+
+        const values =
+            submission?.data || {};
+
+        const form =
+            JSON.parse(
+                localStorage.getItem(
+                    "idCardForm"
+                )
+            ) || {};
+
+        const nameField =
+            form.fields?.find(
+                field => {
+
+                    const label =
+                        (
+                            field.label ||
+                            field.name ||
+                            ""
+                        ).toLowerCase();
+
+                    return (
+                        label === "name" ||
+                        label.includes(
+                            "student name"
+                        ) ||
+                        label.includes(
+                            "full name"
+                        )
+                    );
+
+                }
+            );
+
+        if (
+            nameField &&
+            values[nameField.id]
+        ) {
+            return values[nameField.id];
+        }
+
+        return "Student";
+
     };
 
 
     return (
-        <div className="app">
 
-            {/* =================================================
-                SIDEBAR
-            ================================================= */}
+        <div className="app">
 
             <Sidebar activePage="dashboard" />
 
-
-            {/* =================================================
-                MAIN
-            ================================================= */}
-
             <main className="main">
 
-                {/* =================================================
-                    TOPBAR
-                ================================================= */}
-
                 <Topbar />
-
-
-                {/* =================================================
-                    CONTENT
-                ================================================= */}
 
                 <section className="content">
 
 
-                    {/* PAGE HEADER */}
+                    {/* =================================================
+                        HEADER
+                    ================================================= */}
 
                     <div className="page-header">
 
@@ -53,21 +318,18 @@ function Dashboard() {
                             </h1>
 
                             <p className="page-subtitle">
-                                Manage your digital ID cards from one place.
+                                Manage student ID cards and
+                                verification from one place.
                             </p>
 
                         </div>
 
-
                         <button
                             className="primary-btn"
-                            id="headerCreate"
                             onClick={handleCreate}
                         >
 
-                            <span>
-                                ＋
-                            </span>
+                            <span>＋</span>
 
                             Create ID Card
 
@@ -80,39 +342,14 @@ function Dashboard() {
                         STATISTICS
                     ================================================= */}
 
-                    <div className="stats">
+                    <div className="dashboard-stats">
 
                         <div className="stat-card">
 
                             <div className="stat-top">
 
                                 <span className="stat-label">
-                                    Total ID Cards
-                                </span>
-
-                                <div className="stat-icon">
-                                    ▣
-                                </div>
-
-                            </div>
-
-                            <div className="stat-number">
-                                128
-                            </div>
-
-                            <div className="stat-description">
-                                All generated and saved ID cards
-                            </div>
-
-                        </div>
-
-
-                        <div className="stat-card">
-
-                            <div className="stat-top">
-
-                                <span className="stat-label">
-                                    Templates
+                                    Student Lists
                                 </span>
 
                                 <div className="stat-icon">
@@ -122,11 +359,11 @@ function Dashboard() {
                             </div>
 
                             <div className="stat-number">
-                                12
+                                {lists.length}
                             </div>
 
                             <div className="stat-description">
-                                Available card designs
+                                Classes and divisions
                             </div>
 
                         </div>
@@ -137,21 +374,71 @@ function Dashboard() {
                             <div className="stat-top">
 
                                 <span className="stat-label">
-                                    Drafts
+                                    Students
                                 </span>
 
                                 <div className="stat-icon">
-                                    ✎
+                                    ♙
                                 </div>
 
                             </div>
 
                             <div className="stat-number">
-                                05
+                                {totalStudents}
                             </div>
 
                             <div className="stat-description">
-                                ID cards waiting to be completed
+                                Students in master lists
+                            </div>
+
+                        </div>
+
+
+                        <div className="stat-card">
+
+                            <div className="stat-top">
+
+                                <span className="stat-label">
+                                    Pending
+                                </span>
+
+                                <div className="stat-icon">
+                                    ◷
+                                </div>
+
+                            </div>
+
+                            <div className="stat-number">
+                                {pendingApplications}
+                            </div>
+
+                            <div className="stat-description">
+                                Applications waiting for review
+                            </div>
+
+                        </div>
+
+
+                        <div className="stat-card">
+
+                            <div className="stat-top">
+
+                                <span className="stat-label">
+                                    Approved
+                                </span>
+
+                                <div className="stat-icon">
+                                    ✓
+                                </div>
+
+                            </div>
+
+                            <div className="stat-number">
+                                {approvedApplications}
+                            </div>
+
+                            <div className="stat-description">
+                                Verified student applications
                             </div>
 
                         </div>
@@ -160,17 +447,28 @@ function Dashboard() {
 
 
                     {/* =================================================
-                        RECENT ID CARDS
+                        RECENT ACTIVITY
                     ================================================= */}
 
                     <div className="section-header">
 
-                        <h2 className="section-title">
-                            Recent ID Cards
-                        </h2>
+                        <div>
 
-                        <button className="view-all">
-                            View all →
+                            <h2 className="section-title">
+                                Recent Activity
+                            </h2>
+
+                            <p className="section-description">
+                                Latest student applications
+                            </p>
+
+                        </div>
+
+                        <button
+                            className="view-all"
+                            onClick={handleApplications}
+                        >
+                            View applications →
                         </button>
 
                     </div>
@@ -178,265 +476,185 @@ function Dashboard() {
 
                     <div className="table-card">
 
-                        <table>
+                        {recentSubmissions.length === 0 ? (
 
-                            <thead>
+                            <div className="empty">
 
-                                <tr>
-                                    <th>PERSON</th>
-                                    <th>ID NUMBER</th>
-                                    <th>TEMPLATE</th>
-                                    <th>STATUS</th>
-                                    <th>UPDATED</th>
-                                    <th></th>
-                                </tr>
+                                <div className="empty-title">
+                                    No student applications yet
+                                </div>
 
-                            </thead>
+                                <div className="empty-description">
+                                    Once students submit their
+                                    information, their applications
+                                    will appear here.
+                                </div>
 
+                            </div>
 
-                            <tbody>
+                        ) : (
 
-                                <tr>
+                            <table>
 
-                                    <td>
+                                <thead>
 
-                                        <div className="id-person">
+                                    <tr>
 
-                                            <div className="person-photo">
-                                                RK
-                                            </div>
+                                        <th>
+                                            STUDENT
+                                        </th>
 
-                                            <div>
+                                        <th>
+                                            LIST
+                                        </th>
 
-                                                <div className="person-name">
-                                                    Rahul Kulkarni
-                                                </div>
+                                        <th>
+                                            STATUS
+                                        </th>
 
-                                                <div className="person-type">
-                                                    Student
-                                                </div>
+                                        <th>
+                                            UPDATED
+                                        </th>
 
-                                            </div>
+                                        <th></th>
 
-                                        </div>
+                                    </tr>
 
-                                    </td>
+                                </thead>
 
-                                    <td className="id-number">
-                                        STU-2026-001
-                                    </td>
 
-                                    <td className="template">
-                                        Student Classic
-                                    </td>
+                                <tbody>
 
-                                    <td>
+                                    {recentSubmissions.map(
+                                        submission => (
 
-                                        <span className="status ready">
+                                            <tr
+                                                key={
+                                                    submission.id
+                                                }
+                                            >
 
-                                            <span className="status-dot"></span>
+                                                <td>
 
-                                            Ready
+                                                    <div className="id-person">
 
-                                        </span>
+                                                        <div className="person-photo">
 
-                                    </td>
+                                                            {getStudentName(
+                                                                submission
+                                                            )
+                                                                .split(" ")
+                                                                .map(
+                                                                    word =>
+                                                                        word[0]
+                                                                )
+                                                                .slice(0, 2)
+                                                                .join("")
+                                                                .toUpperCase()}
 
-                                    <td>
-                                        2 min ago
-                                    </td>
+                                                        </div>
 
-                                    <td>
-                                        <button className="action-btn">
-                                            •••
-                                        </button>
-                                    </td>
+                                                        <div>
 
-                                </tr>
+                                                            <div className="person-name">
 
+                                                                {
+                                                                    getStudentName(
+                                                                        submission
+                                                                    )
+                                                                }
 
-                                <tr>
+                                                            </div>
 
-                                    <td>
+                                                            <div className="person-type">
 
-                                        <div className="id-person">
+                                                                Student
 
-                                            <div className="person-photo">
-                                                PS
-                                            </div>
+                                                            </div>
 
-                                            <div>
+                                                        </div>
 
-                                                <div className="person-name">
-                                                    Priya Shah
-                                                </div>
+                                                    </div>
 
-                                                <div className="person-type">
-                                                    Student
-                                                </div>
+                                                </td>
 
-                                            </div>
 
-                                        </div>
+                                                <td className="template">
 
-                                    </td>
+                                                    {
+                                                        submission.listName ||
+                                                        "—"
+                                                    }
 
-                                    <td className="id-number">
-                                        STU-2026-002
-                                    </td>
+                                                </td>
 
-                                    <td className="template">
-                                        Student Classic
-                                    </td>
 
-                                    <td>
+                                                <td>
 
-                                        <span className="status ready">
+                                                    <span
+                                                        className={
+                                                            submission.status === "approved"
+                                                                ? "success-text-status"
+                                                                : submission.status === "rejected"
+                                                                ? "danger-text-status"
+                                                                : ""
+                                                        }
+                                                    >
+                                                        {submission.status || "pending"}
+                                                    </span>
 
-                                            <span className="status-dot"></span>
+                                                </td>
 
-                                            Ready
 
-                                        </span>
+                                                <td>
 
-                                    </td>
+                                                    {
+                                                        formatDate(
+                                                            submission.updatedAt ||
+                                                            submission.submittedAt
+                                                        )
+                                                    }
 
-                                    <td>
-                                        18 min ago
-                                    </td>
+                                                </td>
 
-                                    <td>
-                                        <button className="action-btn">
-                                            •••
-                                        </button>
-                                    </td>
 
-                                </tr>
+                                                <td>
 
+                                                    <button
+                                                        className="action-btn"
+                                                        onClick={() => {
 
-                                <tr>
+                                                            if (
+                                                                submission.slug
+                                                            ) {
 
-                                    <td>
+                                                                window.location.href =
+                                                                    `/studentform/${submission.slug}`;
 
-                                        <div className="id-person">
+                                                            }
 
-                                            <div className="person-photo">
-                                                AM
-                                            </div>
+                                                        }}
+                                                    >
+                                                        •••
+                                                    </button>
 
-                                            <div>
+                                                </td>
 
-                                                <div className="person-name">
-                                                    Amit More
-                                                </div>
+                                            </tr>
 
-                                                <div className="person-type">
-                                                    Staff
-                                                </div>
+                                        )
+                                    )}
 
-                                            </div>
+                                </tbody>
 
-                                        </div>
+                            </table>
 
-                                    </td>
-
-                                    <td className="id-number">
-                                        STF-2026-014
-                                    </td>
-
-                                    <td className="template">
-                                        Staff Professional
-                                    </td>
-
-                                    <td>
-
-                                        <span className="status draft">
-
-                                            <span className="status-dot"></span>
-
-                                            Draft
-
-                                        </span>
-
-                                    </td>
-
-                                    <td>
-                                        1 hour ago
-                                    </td>
-
-                                    <td>
-                                        <button className="action-btn">
-                                            •••
-                                        </button>
-                                    </td>
-
-                                </tr>
-
-
-                                <tr>
-
-                                    <td>
-
-                                        <div className="id-person">
-
-                                            <div className="person-photo">
-                                                SN
-                                            </div>
-
-                                            <div>
-
-                                                <div className="person-name">
-                                                    Sneha Naik
-                                                </div>
-
-                                                <div className="person-type">
-                                                    Student
-                                                </div>
-
-                                            </div>
-
-                                        </div>
-
-                                    </td>
-
-                                    <td className="id-number">
-                                        STU-2026-003
-                                    </td>
-
-                                    <td className="template">
-                                        Student Classic
-                                    </td>
-
-                                    <td>
-
-                                        <span className="status ready">
-
-                                            <span className="status-dot"></span>
-
-                                            Ready
-
-                                        </span>
-
-                                    </td>
-
-                                    <td>
-                                        2 hours ago
-                                    </td>
-
-                                    <td>
-                                        <button className="action-btn">
-                                            •••
-                                        </button>
-                                    </td>
-
-                                </tr>
-
-                            </tbody>
-
-                        </table>
+                        )}
 
                     </div>
 
+
+                  
 
                     {/* =================================================
                         QUICK ACTIONS
@@ -444,9 +662,13 @@ function Dashboard() {
 
                     <div className="section-header">
 
-                        <h2 className="section-title">
-                            Quick Actions
-                        </h2>
+                        <div>
+
+                            <h2 className="section-title">
+                                Quick Actions
+                            </h2>
+
+                        </div>
 
                     </div>
 
@@ -455,7 +677,6 @@ function Dashboard() {
 
                         <div
                             className="quick-card"
-                            id="quickCreate"
                             onClick={handleCreate}
                         >
 
@@ -468,41 +689,47 @@ function Dashboard() {
                             </div>
 
                             <div className="quick-description">
-                                Create a new digital ID card from a template.
+                                Create a new student ID card.
                             </div>
 
                         </div>
 
 
-                        <div className="quick-card">
+                        <div
+                            className="quick-card"
+                            onClick={handleImport}
+                        >
 
                             <div className="quick-icon">
-                                ▤
+                                ↑
                             </div>
 
                             <div className="quick-title">
-                                Browse Templates
+                                Import Master Data
                             </div>
 
                             <div className="quick-description">
-                                Choose or customize an existing ID card design.
+                                Upload student records from CSV or Excel.
                             </div>
 
                         </div>
 
 
-                        <div className="quick-card">
+                        <div
+                            className="quick-card"
+                            onClick={handleApplications}
+                        >
 
                             <div className="quick-icon">
-                                ↓
+                                ✓
                             </div>
 
                             <div className="quick-title">
-                                Import Data
+                                Student Applications
                             </div>
 
                             <div className="quick-description">
-                                Import multiple students or employees at once.
+                                Review and verify submitted information.
                             </div>
 
                         </div>
@@ -514,7 +741,9 @@ function Dashboard() {
             </main>
 
         </div>
+
     );
+
 }
 
 export default Dashboard;

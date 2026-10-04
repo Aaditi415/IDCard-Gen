@@ -19,6 +19,7 @@ import StudentForm from "./pages/StudentForm";
 import Templates from "./pages/Templates";
 import IDListForm from "./pages/IDListForm";
 import StudentData from "./pages/StudentData";
+import AppTheme from "./pages/AppTheme";
 
 function App() {
     const path = window.location.pathname;
@@ -166,6 +167,14 @@ function App() {
         path.endsWith("/settings.html")
     ) {
         return <DataMenuSettings />;
+    }
+
+     // Settings
+    if (
+        path.endsWith("/apptheme") ||
+        path.endsWith("/apptheme.html")
+    ) {
+        return <AppTheme />;
     }
 
     // Default

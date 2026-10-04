@@ -22,7 +22,7 @@ import "./styles/create-form.css";
 import "./styles/StudentForm.css";
 import "./styles/data.css";
 import "./styles/Templates.css";
-
+import "./styles/theme.css"
 
 
 ReactDOM.createRoot(document.getElementById("root")).render(
