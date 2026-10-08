@@ -16,7 +16,6 @@ button {
 /* =========================================================
    DESIGN TOKENS
 ========================================================= */
-
 :root {
     --sidebar: #111827;
     --sidebar-hover: #1f2937;
@@ -624,4 +623,510 @@ body {
     color: #b45309;
     background: #fffbeb;
     border: 1px solid #fde68a;
+}
+
+/* =========================================================
+   APP THEME
+========================================================= */
+
+/* =========================
+   LIGHT THEME
+========================= */
+
+.theme-light {
+    --sidebar: #111827;
+    --sidebar-hover: #1f2937;
+    --sidebar-active: #312e81;
+
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+
+    --bg: #f5f6fa;
+    --card: #ffffff;
+    --border: #e5e7eb;
+
+    --text: #111827;
+    --muted: #6b7280;
+
+    --sidebar-text: #9ca3af;
+    --sidebar-muted: #6b7280;
+    --sidebar-border: #273244;
+
+    --stored-text: #d9dadd;
+    --stored-hover: #1e2024;
+    --stored-active: #292c31;
+    --stored-icon: #34373d;
+}
+
+
+/* =========================
+   DARK THEME
+========================= */
+
+.theme-dark {
+
+    --sidebar: #0b1120;
+    --sidebar-hover: #1f2937;
+    --sidebar-active: #312e81;
+
+    --primary: #6366f1;
+    --primary-hover: #818cf8;
+
+    --bg: #111827;
+    --card: #1f2937;
+    --border: #374151;
+
+    --text: #f9fafb;
+    --muted: #9ca3af;
+
+    --success: #4ade80;
+    --success-bg: #14532d;
+
+    --danger: #f87171;
+    --danger-bg: #450a0a;
+
+    --warning: #fbbf24;
+    --warning-bg: #451a03;
+
+    --sidebar-text: #9ca3af;
+    --sidebar-muted: #6b7280;
+    --sidebar-border: #374151;
+
+    --stored-text: #d1d5db;
+    --stored-hover: #1f2937;
+    --stored-active: #374151;
+    --stored-icon: #4b5563;
+
+    --dark-text: #fff; 
+}
+
+
+/* =========================
+   SYSTEM THEME
+========================= */
+
+@media (prefers-color-scheme: dark) {
+
+    .theme-light {
+        --sidebar: #111827;
+        --sidebar-hover: #1f2937;
+        --sidebar-active: #312e81;
+
+        --primary: #4f46e5;
+        --primary-hover: #4338ca;
+
+        --bg: #f5f6fa;
+        --card: #ffffff;
+        --border: #e5e7eb;
+
+        --text: #111827;
+        --muted: #6b7280;
+
+        --dark-text: #ffffff;
+
+    }
+
+}
+
+
+/* =========================================================
+   GLOBAL THEME TRANSITION
+========================================================= */
+
+html,
+body,
+.app,
+.main,
+.topbar,
+.sidebar,
+.card,
+.form-card,
+.info-card,
+.theme-card,
+.theme-preview-card,
+.table-card,
+.stat-card,
+.input,
+select,
+textarea {
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+
+/* =========================================================
+   DARK BACKGROUND
+========================================================= */
+
+.theme-dark body {
+    background: var(--bg);
+    color: var(--text);
+}
+
+.theme-dark .app {
+    background: var(--bg);
+}
+
+.theme-dark .main {
+    background: var(--bg);
+}
+
+
+/* =========================================================
+   DARK CARDS
+========================================================= */
+
+.theme-dark .card,
+.theme-dark .form-card,
+.theme-dark .info-card,
+.theme-dark .theme-card,
+.theme-dark .theme-preview-card,
+.theme-dark .stat-card,
+.theme-dark .table-card,
+.theme-dark .quick-card,
+.theme-dark .templates-summary,
+.theme-dark .template-preview,
+.theme-dark .template-card-content,
+.theme-dark .list-type-option,
+.theme-dark .list-type-option.active,
+.theme-dark .stored-list-option,
+.theme-dark .stored-list-option.selected,
+.theme-dark .list-info,
+.theme-dark .success-state,
+.theme-dark .drop-zone,
+.theme-dark .side-card,
+.theme-dark .sample-box,
+.theme-dark .uploaded-file,
+.theme-dark .preview-header,
+.theme-dark .summary,
+.theme-dark .summary-box,
+.theme-dark .preview-card,
+.theme-dark .review-card,
+.theme-dark .review-summary-item, 
+.theme-dark .settings-card,
+.theme-dark .drag-menu-item {
+ 
+    background: var(--card);
+    border-color: var(--border);
+}
+
+
+/* =========================================================
+   DARK TEXT
+========================================================= */
+
+.theme-dark h1,
+.theme-dark h2,
+.theme-dark h3,
+.theme-dark h4,
+.theme-dark h5,
+.theme-dark strong,
+.theme-dark label {
+    color: var(--dark-text) !important;
+}
+
+
+.theme-dark p,
+.theme-dark .page-subtitle,
+.theme-dark .field-hint,
+.theme-dark .footer-note {
+    color: var(--muted);
+}
+
+
+/* =========================================================
+   DARK INPUTS
+========================================================= */
+
+.theme-dark input,
+.theme-dark select,
+.theme-dark textarea {
+    background: #111827;
+    color: #f9fafb;
+    border-color: var(--border);
+}
+
+
+.theme-dark input::placeholder,
+.theme-dark textarea::placeholder {
+    color: #6b7280;
+}
+
+
+.theme-dark input:focus,
+.theme-dark select:focus,
+.theme-dark textarea:focus {
+    border-color: var(--primary);
+}
+
+
+/* =========================================================
+   DARK TOPBAR
+========================================================= */
+
+.theme-dark .topbar {
+    background: var(--card);
+    border-color: var(--border);
+}
+
+
+.theme-dark .top-icon {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--muted);
+}
+
+
+.theme-dark .top-icon:hover {
+    background: #374151;
+    border-color: #4b5563;
+}
+
+
+/* =========================================================
+   DARK PROFILE
+========================================================= */
+
+.theme-dark .profile-avatar {
+    background: #312e81;
+    color: #c7d2fe;
+}
+
+
+.theme-dark .profile-name {
+    color: var(--text);
+}
+
+
+/* =========================================================
+   DARK SIDEBAR
+========================================================= */
+
+.theme-dark .sidebar {
+    background: var(--sidebar);
+}
+
+
+.theme-dark .nav-item {
+    color: var(--sidebar-text);
+}
+
+
+.theme-dark .nav-item:hover {
+    background: var(--sidebar-hover);
+    color: #ffffff;
+}
+
+
+.theme-dark .nav-item.active {
+    background: var(--sidebar-active);
+    color: #ffffff;
+}
+
+
+.theme-dark .stored-item {
+    color: var(--stored-text);
+}
+
+
+.theme-dark .stored-item:hover {
+    background: var(--stored-hover);
+    color: #ffffff;
+}
+
+
+.theme-dark .stored-item.active {
+    background: var(--stored-active);
+    color: #ffffff;
+}
+
+
+.theme-dark .sidebar-user {
+    border-color: var(--sidebar-border);
+}
+
+
+/* =========================================================
+   DARK TABLE
+========================================================= */
+
+.theme-dark table {
+    color: var(--text);
+}
+
+
+.theme-dark th {
+    background: #111827;
+    color: var(--muted);
+    border-color: var(--border);
+}
+
+
+.theme-dark td {
+    color: var(--text);
+    border-color: var(--border);
+}
+
+
+.theme-dark tbody tr:hover {
+    background: #273449;
+}
+
+
+/* =========================================================
+   DARK BREADCRUMB
+========================================================= */
+
+.theme-dark .breadcrumb {
+    color: var(--muted);
+}
+
+
+.theme-dark .breadcrumb button {
+    color: #818cf8;
+}
+
+
+/* =========================================================
+   DARK PREVIEW BOX
+========================================================= */
+
+.theme-dark .preview-box {
+    background: #111827;
+    border-color: var(--border);
+}
+
+
+.theme-dark .tab-preview {
+    background: var(--card);
+    border-color: var(--border);
+}
+
+
+/* =========================================================
+   DARK FORM SECTIONS
+========================================================= */
+
+.theme-dark .form-card-header,
+.theme-dark .form-card-footer,
+.theme-dark .theme-card-header,
+.theme-dark .theme-card-footer {
+    border-color: var(--border);
+}
+
+
+.theme-dark .form-card-footer,
+.theme-dark .theme-card-footer {
+    background: var(--card);
+}
+
+
+/* =========================================================
+   DARK SECONDARY BUTTON
+========================================================= */
+
+.theme-dark .btn-secondary {
+    background: #1f2937;
+    color: #e5e7eb;
+    border-color: #374151;
+}
+
+
+.theme-dark .btn-secondary:hover {
+    background: #374151;
+}
+
+
+/* =========================================================
+   DARK INFO ITEMS
+========================================================= */
+
+.theme-dark .info-item {
+    border-color: var(--border);
+}
+
+
+.theme-dark .info-item span {
+    color: var(--muted);
+}
+
+
+/* =========================================================
+   DARK THEME OPTIONS
+========================================================= */
+
+.theme-dark .theme-option {
+    background: #111827;
+    border-color: var(--border);
+}
+
+
+.theme-dark .theme-option:hover {
+    background: #273449;
+    border-color: #4b5563;
+}
+
+
+.theme-dark .theme-option.selected {
+    background: #172554;
+    border-color: var(--primary);
+}
+
+
+.theme-dark .theme-option-content strong {
+    color: var(--text);
+}
+
+
+.theme-dark .theme-option-content span {
+    color: var(--muted);
+}
+
+
+.theme-dark .theme-option-icon {
+    background: #374151;
+    color: #d1d5db;
+}
+
+
+.theme-dark .theme-option.selected .theme-option-icon {
+    background: #1e3a8a;
+    color: #60a5fa;
+}
+
+
+/* =========================================================
+   DARK STATUS
+========================================================= */
+
+.theme-dark .success-text {
+    color: #4ade80;
+}
+
+
+.theme-dark .danger-text {
+    color: #f87171;
+}
+
+
+.theme-dark .success-text-status {
+    color: #86efac;
+    background: #14532d;
+    border-color: #166534;
+}
+
+
+.theme-dark .danger-text-status {
+    color: #fca5a5;
+    background: #450a0a;
+    border-color: #7f1d1d;
+}
+
+
+.theme-dark .pending-text-status {
+    color: #fcd34d;
+    background: #451a03;
+    border-color: #92400e;
 }

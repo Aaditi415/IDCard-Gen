@@ -21,7 +21,58 @@ import IDListForm from "./pages/IDListForm";
 import StudentData from "./pages/StudentData";
 import AppTheme from "./pages/AppTheme";
 
+
+import { useEffect } from "react";
+
 function App() {
+
+
+    useEffect(() => {
+
+    const savedTheme =
+        localStorage.getItem("idCardTheme") ||
+        "light";
+
+    const root =
+        document.documentElement;
+
+    root.classList.remove(
+        "theme-light",
+        "theme-dark"
+    );
+
+
+    if (savedTheme === "dark") {
+
+        root.classList.add(
+            "theme-dark"
+        );
+
+    } else if (
+        savedTheme === "system"
+    ) {
+
+        const prefersDark =
+            window.matchMedia(
+                "(prefers-color-scheme: dark)"
+            ).matches;
+
+        root.classList.add(
+            prefersDark
+                ? "theme-dark"
+                : "theme-light"
+        );
+
+    } else {
+
+        root.classList.add(
+            "theme-light"
+        );
+
+    }
+
+}, []);
+
     const path = window.location.pathname;
 
     // Card

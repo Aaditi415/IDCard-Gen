@@ -4,22 +4,130 @@ import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 
 function AppTheme() {
+
     const [theme, setTheme] = useState("light");
     const [savedTheme, setSavedTheme] = useState("light");
+
     const [toast, setToast] = useState("");
-    const [toastVisible, setToastVisible] = useState(false);
+    const [toastVisible, setToastVisible] =
+        useState(false);
+
 
     /* =========================
-       LOAD THEME
+       APPLY THEME
+    ========================== */
+
+    const applyTheme = (selectedTheme) => {
+
+        const root =
+            document.documentElement;
+
+
+        root.classList.remove(
+            "theme-light",
+            "theme-dark"
+        );
+
+
+        if (
+            selectedTheme === "dark"
+        ) {
+
+            root.classList.add(
+                "theme-dark"
+            );
+
+            return;
+        }
+
+
+        if (
+            selectedTheme === "system"
+        ) {
+
+            const prefersDark =
+                window.matchMedia(
+                    "(prefers-color-scheme: dark)"
+                ).matches;
+
+
+            root.classList.add(
+                prefersDark
+                    ? "theme-dark"
+                    : "theme-light"
+            );
+
+            return;
+        }
+
+
+        root.classList.add(
+            "theme-light"
+        );
+    };
+
+
+    /* =========================
+       LOAD SAVED THEME
     ========================== */
 
     useEffect(() => {
+
         const saved =
-            localStorage.getItem("idCardTheme") || "light";
+            localStorage.getItem(
+                "idCardTheme"
+            ) || "light";
+
 
         setTheme(saved);
+
         setSavedTheme(saved);
+
+        applyTheme(saved);
+
     }, []);
+
+
+    /* =========================
+       SYSTEM THEME LISTENER
+    ========================== */
+
+    useEffect(() => {
+
+        if (theme !== "system") {
+            return;
+        }
+
+
+        const mediaQuery =
+            window.matchMedia(
+                "(prefers-color-scheme: dark)"
+            );
+
+
+        const handleSystemTheme = () => {
+
+            applyTheme("system");
+
+        };
+
+
+        mediaQuery.addEventListener(
+            "change",
+            handleSystemTheme
+        );
+
+
+        return () => {
+
+            mediaQuery.removeEventListener(
+                "change",
+                handleSystemTheme
+            );
+
+        };
+
+    }, [theme]);
 
 
     /* =========================
@@ -27,12 +135,18 @@ function AppTheme() {
     ========================== */
 
     const showToast = (message) => {
+
         setToast(message);
+
         setToastVisible(true);
 
+
         setTimeout(() => {
+
             setToastVisible(false);
+
         }, 2500);
+
     };
 
 
@@ -41,32 +155,51 @@ function AppTheme() {
     ========================== */
 
     const handleSave = () => {
+
         localStorage.setItem(
             "idCardTheme",
             theme
         );
 
+
+        applyTheme(theme);
+
+
         setSavedTheme(theme);
 
-        showToast("Theme saved successfully.");
+
+        showToast(
+            "Theme saved successfully."
+        );
+
     };
 
 
     /* =========================
-       RESET
+       RESET THEME
     ========================== */
 
     const handleReset = () => {
+
         setTheme("light");
+
 
         localStorage.setItem(
             "idCardTheme",
             "light"
         );
 
+
+        applyTheme("light");
+
+
         setSavedTheme("light");
 
-        showToast("Theme reset to light.");
+
+        showToast(
+            "Theme reset to light."
+        );
+
     };
 
 
@@ -75,31 +208,80 @@ function AppTheme() {
     ========================== */
 
     const themes = [
+
         {
             id: "light",
+
             name: "Light",
+
             description:
                 "Clean and bright interface",
+
             icon: "☀"
         },
+
         {
             id: "dark",
+
             name: "Dark",
+
             description:
                 "Comfortable for low-light use",
+
             icon: "☾"
         },
+
         {
             id: "system",
+
             name: "System",
+
             description:
                 "Follow your device appearance",
+
             icon: "◐"
         }
+
     ];
 
 
+    /* =========================
+       PREVIEW THEME
+    ========================== */
+
+    const isDarkPreview =
+        theme === "dark" ||
+        (
+            theme === "system" &&
+            window.matchMedia(
+                "(prefers-color-scheme: dark)"
+            ).matches
+        );
+
+
+    /* =========================
+       THEME NAME
+    ========================== */
+
+    const getThemeName = () => {
+
+        if (theme === "dark") {
+            return "Dark theme";
+        }
+
+
+        if (theme === "system") {
+            return "System theme";
+        }
+
+
+        return "Light theme";
+
+    };
+
+
     return (
+
         <div className="app">
 
             {/* =========================
@@ -118,6 +300,7 @@ function AppTheme() {
 
                 <section className="content">
 
+
                     {/* =========================
                         BREADCRUMB
                     ========================== */}
@@ -128,9 +311,11 @@ function AppTheme() {
                             Settings
                         </span>
 
+
                         <span>
                             ›
                         </span>
+
 
                         <span>
                             Appearance
@@ -150,6 +335,7 @@ function AppTheme() {
                             <h1 className="page-title">
                                 App Theme
                             </h1>
+
 
                             <p className="page-subtitle">
                                 Customize how ID Card Gen
@@ -174,6 +360,9 @@ function AppTheme() {
 
                         <div className="theme-card">
 
+
+                            {/* HEADER */}
+
                             <div className="theme-card-header">
 
                                 <div>
@@ -181,6 +370,7 @@ function AppTheme() {
                                     <h2>
                                         Appearance
                                     </h2>
+
 
                                     <p>
                                         Choose your preferred
@@ -192,68 +382,93 @@ function AppTheme() {
                             </div>
 
 
+                            {/* OPTIONS */}
+
                             <div className="theme-options">
 
-                                {themes.map((item) => (
+                                {themes.map(
+                                    (item) => (
 
-                                    <button
-                                        type="button"
-                                        key={item.id}
-                                        className={`theme-option ${
-                                            theme === item.id
-                                                ? "selected"
-                                                : ""
-                                        }`}
-                                        onClick={() =>
-                                            setTheme(item.id)
-                                        }
-                                    >
-
-                                        <div className="theme-option-icon">
-                                            {item.icon}
-                                        </div>
-
-
-                                        <div className="theme-option-content">
-
-                                            <strong>
-                                                {item.name}
-                                            </strong>
-
-                                            <span>
-                                                {item.description}
-                                            </span>
-
-                                        </div>
+                                        <button
+                                            type="button"
+                                            key={
+                                                item.id
+                                            }
+                                            className={`theme-option ${
+                                                theme ===
+                                                item.id
+                                                    ? "selected"
+                                                    : ""
+                                            }`}
+                                            onClick={() =>
+                                                setTheme(
+                                                    item.id
+                                                )
+                                            }
+                                        >
 
 
-                                        <div className="theme-radio">
+                                            {/* ICON */}
 
-                                            {theme === item.id && (
+                                            <div className="theme-option-icon">
+
+                                                {item.icon}
+
+                                            </div>
+
+
+                                            {/* CONTENT */}
+
+                                            <div className="theme-option-content">
+
+                                                <strong>
+                                                    {
+                                                        item.name
+                                                    }
+                                                </strong>
+
+
                                                 <span>
-                                                    ✓
+                                                    {
+                                                        item.description
+                                                    }
                                                 </span>
-                                            )}
 
-                                        </div>
+                                            </div>
 
-                                    </button>
 
-                                ))}
+                                            {/* RADIO */}
+
+                                            <div className="theme-radio">
+
+                                                {theme ===
+                                                    item.id && (
+                                                    <span>
+                                                        ✓
+                                                    </span>
+                                                )}
+
+                                            </div>
+
+                                        </button>
+
+                                    )
+                                )}
 
                             </div>
 
 
-                            {/* =========================
-                                FOOTER
-                            ========================== */}
+                            {/* FOOTER */}
 
                             <div className="theme-card-footer">
+
 
                                 <button
                                     type="button"
                                     className="btn btn-secondary"
-                                    onClick={handleReset}
+                                    onClick={
+                                        handleReset
+                                    }
                                 >
                                     Reset
                                 </button>
@@ -262,9 +477,12 @@ function AppTheme() {
                                 <button
                                     type="button"
                                     className="btn btn-primary"
-                                    onClick={handleSave}
+                                    onClick={
+                                        handleSave
+                                    }
                                     disabled={
-                                        theme === savedTheme
+                                        theme ===
+                                        savedTheme
                                     }
                                 >
                                     Save Changes
@@ -281,6 +499,9 @@ function AppTheme() {
 
                         <aside className="theme-preview-card">
 
+
+                            {/* PREVIEW HEADER */}
+
                             <div className="theme-preview-header">
 
                                 <div>
@@ -289,12 +510,11 @@ function AppTheme() {
                                         Preview
                                     </h3>
 
+
                                     <span>
-                                        {theme === "light"
-                                            ? "Light theme"
-                                            : theme === "dark"
-                                            ? "Dark theme"
-                                            : "System theme"}
+                                        {
+                                            getThemeName()
+                                        }
                                     </span>
 
                                 </div>
@@ -302,64 +522,98 @@ function AppTheme() {
                             </div>
 
 
+                            {/* PREVIEW */}
+
                             <div
                                 className={`theme-preview ${
-                                    theme === "dark"
+                                    isDarkPreview
                                         ? "preview-dark"
                                         : ""
                                 }`}
                             >
 
+
+                                {/* PREVIEW SIDEBAR */}
+
                                 <div className="preview-sidebar">
+
 
                                     <div className="preview-logo">
                                         ID
                                     </div>
 
+
                                     <div className="preview-nav active">
                                         Dashboard
                                     </div>
+
 
                                     <div className="preview-nav">
                                         ID Cards
                                     </div>
 
+
                                     <div className="preview-nav">
                                         Import Data
+                                    </div>
+
+
+                                    <div className="preview-nav">
+                                        Settings
                                     </div>
 
                                 </div>
 
 
+                                {/* PREVIEW MAIN */}
+
                                 <div className="preview-main">
 
+
+                                    {/* TOPBAR */}
+
                                     <div className="preview-topbar">
+
                                         <span></span>
+
                                         <span></span>
+
                                     </div>
 
 
+                                    {/* CONTENT */}
+
                                     <div className="preview-content">
+
 
                                         <div className="preview-title">
                                             Dashboard
                                         </div>
 
 
+                                        {/* STATS */}
+
                                         <div className="preview-stats">
 
                                             <div></div>
+
                                             <div></div>
+
                                             <div></div>
 
                                         </div>
 
 
+                                        {/* TABLE */}
+
                                         <div className="preview-table">
 
                                             <div></div>
+
                                             <div></div>
+
                                             <div></div>
+
                                             <div></div>
 
                                         </div>
@@ -394,7 +648,9 @@ function AppTheme() {
             </div>
 
         </div>
+
     );
+
 }
 
 export default AppTheme;
