@@ -1497,7 +1497,7 @@ const handleContinue = () => {
 
                             <button
                                 type="button"
-                                className="btn btn-secondary"
+                                className="ui-btn ui-btn--secondary"
                                 onClick={
                                     handleCancel
                                 }
@@ -1507,7 +1507,7 @@ const handleContinue = () => {
 
                             <button
                                 type="button"
-                                className="btn btn-primary"
+                                className="ui-btn ui-btn--primary"
                                 onClick={
                                     handleContinue
                                 }

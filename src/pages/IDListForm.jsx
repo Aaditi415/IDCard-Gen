@@ -1311,7 +1311,7 @@ function IDListForm() {
 
                                             <button
                                                 type="button"
-                                                className="btn btn-secondary"
+                                                className="ui-btn ui-btn--secondary"
                                                 onClick={
                                                     handleCancel
                                                 }
@@ -1322,7 +1322,7 @@ function IDListForm() {
 
                                             <button
                                                 type="button"
-                                                className="btn btn-primary"
+                                                className="ui-btn ui-btn--primary"
                                                 onClick={
                                                     handleContinue
                                                 }
@@ -1408,7 +1408,7 @@ function IDListForm() {
 
                                     <button
                                         type="button"
-                                        className="btn btn-primary"
+                                        className="ui-btn ui-btn--primary"
                                         style={{marginTop: "10px"}}
                                         onClick={() => {
 

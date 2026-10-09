@@ -281,7 +281,7 @@ function Dashboard() {
             <main className="main">
                 <Topbar />
 
-                <section className="content dashboard-content">
+                <section className="dashboard-content">
                     <header className="dashboard-welcome">
                         <div>
                             <div className="dashboard-date">

@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
+import '../styles/review.css'
 function Review() {
+
+    const [deleteIndex, setDeleteIndex] = useState(null);
+
     /* =====================================================
        CURRENT LIST
     ===================================================== */
@@ -204,41 +208,39 @@ function Review() {
        DELETE STUDENT
     ===================================================== */
 
+
+
+    const [studentToDelete, setStudentToDelete] = useState(null);
+
     const deleteStudent = (index) => {
-        const student = students[index];
+        setStudentToDelete({
+            index,
+            name: students[index]?.[0] || "this student",
+        });
+    };
 
-        const studentName =
-            student[0] ||
-            "this student";
+    const cancelDelete = () => {
+        setStudentToDelete(null);
+    };
 
-        const confirmed = window.confirm(
-            `Are you sure you want to delete ${studentName}?`
-        );
+    const confirmDeleteStudent = () => {
+        if (studentToDelete === null) return;
 
-        if (!confirmed) {
-            return;
-        }
+        const { index, name } = studentToDelete;
 
         const updatedStudents = students.filter(
-            (_, studentIndex) =>
-                studentIndex !== index
+            (_, studentIndex) => studentIndex !== index
         );
 
-        const newRemovedCount =
-            removedCount + 1;
+        const newRemovedCount = removedCount + 1;
 
         setStudents(updatedStudents);
-
         setRemovedCount(newRemovedCount);
+        setStudentToDelete(null);
 
-        saveImportedData(
-            updatedStudents,
-            newRemovedCount
-        );
+        saveImportedData(updatedStudents, newRemovedCount);
 
-        showToast(
-            "Student record deleted."
-        );
+        showToast(`${name} deleted successfully.`);
     };
 
 
@@ -896,109 +898,81 @@ function Review() {
                             RIGHT COLUMN
                         ================================================= */}
 
-                        <div className="side-column">
-
+                        
 
                             {/* HOW IT WORKS */}
 
-                            <div className="side-card">
+                           
+                            <aside className="info-card">
+                                <div className="info-card-heading">
+                                    <div className="info-heading-icon">i</div>
 
-                                <h3>
-                                    How Review & Save Works
-                                </h3>
-
-
-                                <div className="step-item">
-
-                                    <div className="step-circle">
-                                        1
+                                    <div>
+                                        <h3>How Review &amp; Save Works</h3>
+                                        <p>Follow these steps before generating ID cards.</p>
                                     </div>
-
-                                    <div className="step-info">
-
-                                        <strong>
-                                            Review records
-                                        </strong>
-
-                                        <span>
-                                            Check all imported records and
-                                            make sure the information is correct.
-                                        </span>
-
-                                    </div>
-
                                 </div>
 
+                                <div className="info-divider" />
 
-                                <div className="step-item">
+                                <div className="info-item">
+                                    <div className="info-number">1</div>
 
-                                    <div className="step-circle">
-                                        2
-                                    </div>
-
-                                    <div className="step-info">
-
-                                        <strong>
-                                            Edit information
-                                        </strong>
-
+                                    <div>
+                                        <strong>Review Records</strong>
                                         <span>
-                                            Use Edit to update or correct any
-                                            student information before generating cards.
+                                            Check all imported student records and make sure
+                                            the information is correct.
                                         </span>
-
                                     </div>
-
                                 </div>
 
+                                <div className="info-item">
+                                    <div className="info-number">2</div>
 
-                                <div className="step-item">
-
-                                    <div className="step-circle">
-                                        3
-                                    </div>
-
-                                    <div className="step-info">
-
-                                        <strong>
-                                            Remove records
-                                        </strong>
-
+                                    <div>
+                                        <strong>Edit Information</strong>
                                         <span>
-                                            Use Delete to remove records you
-                                            don't want to include. Removed
-                                            records are tracked automatically.
+                                            Use the Edit action to update or correct student
+                                            information before generating ID cards.
                                         </span>
-
                                     </div>
-
                                 </div>
 
+                                <div className="info-item">
+                                    <div className="info-number">3</div>
 
-                                <div className="step-item">
-
-                                    <div className="step-circle">
-                                        4
-                                    </div>
-
-                                    <div className="step-info">
-
-                                        <strong>
-                                            Save your list
-                                        </strong>
-
+                                    <div>
+                                        <strong>Remove Records</strong>
                                         <span>
-                                            Save the final reviewed list and
-                                            continue to generate ID cards.
+                                            Delete student records you don't want to include.
+                                            Removed records are tracked automatically.
                                         </span>
-
                                     </div>
-
                                 </div>
 
-                            </div>
+                                <div className="info-item">
+                                    <div className="info-number">4</div>
 
-                        </div>
+                                    <div>
+                                        <strong>Save Your List</strong>
+                                        <span>
+                                            Save the final reviewed student list and continue
+                                            to the ID card generation process.
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="info-tip">
+                                    <strong>Tip</strong>
+                                    <p>
+                                        Double-check student names, roll numbers, and other
+                                        details before saving your final list.
+                                    </p>
+                                </div>
+                            </aside>
+
+
 
                     </div>
 
@@ -1133,6 +1107,63 @@ function Review() {
                 </div>
 
             </div>
+
+
+
+
+        {/* DELETE CONFIRMATION MODAL */}
+
+        <div
+            className={`delete-overlay ${
+                studentToDelete !== null ? "show" : ""
+            }`}
+            onClick={(event) => {
+                if (event.target === event.currentTarget) {
+                    cancelDelete();
+                }
+            }}
+            aria-hidden={studentToDelete === null}
+        >
+            <div
+                className="delete-modal"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="deleteModalTitle"
+                aria-describedby="deleteModalDescription"
+            >
+                <div className="delete-modal-icon">!</div>
+
+                <h3 id="deleteModalTitle">
+                    Delete student record?
+                </h3>
+
+                <p id="deleteModalDescription">
+                    Are you sure you want to delete{" "}
+                    <strong>
+                        {studentToDelete?.name || "this student"}
+                    </strong>
+                    ? This action cannot be undone.
+                </p>
+
+                <div className="delete-modal-actions">
+                    <button
+                        type="button"
+                        className="delete-cancel-btn"
+                        onClick={cancelDelete}
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        className="delete-confirm-btn"
+                        onClick={confirmDeleteStudent}
+                    >
+                        Delete Record
+                    </button>
+                </div>
+            </div>
+        </div>
 
 
             {/* TOAST */}

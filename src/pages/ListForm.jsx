@@ -1,7 +1,14 @@
 import { useState } from "react";
 
+import{
+   ArrowRight
+} from "lucide-react";
+
+
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
+
+
 
 function ListForm() {
     const [listName, setListName] = useState("");
@@ -183,7 +190,7 @@ function ListForm() {
                         <button
                             onClick={golistform}
                         >
-                            Import Data
+                            Master Data
                         </button>
 
                         <span>
@@ -199,14 +206,13 @@ function ListForm() {
 
                     {/* HEADER */}
 
-                    <h1 className="page-title">
-                        Create Student List
-                    </h1>
+                    <h1 className="page-title">Create a Student List</h1>
 
                     <p className="page-subtitle">
-                        Create a list for a specific class and division.
-                        You can import student records or add them manually in the next step.
+                        Organize your students by class or division. First create a list,
+                        then import student records and review them before saving.
                     </p>
+
 
 
                     {/* STEPS */}
@@ -220,7 +226,7 @@ function ListForm() {
                             </div>
 
                             <div className="step-label">
-                                Create List
+                                List Details
                             </div>
 
                         </div>
@@ -236,7 +242,7 @@ function ListForm() {
                             </div>
 
                             <div className="step-label">
-                                Import Data
+                                Import Records
                             </div>
 
                         </div>
@@ -252,7 +258,7 @@ function ListForm() {
                             </div>
 
                             <div className="step-label">
-                                Review
+                                Review Data
                             </div>
 
                         </div>
@@ -276,13 +282,10 @@ function ListForm() {
 
                                     <div className="form-card-header">
 
-                                        <h2>
-                                            List Information
-                                        </h2>
-
+                                        <h2>Master List Details</h2>
                                         <p>
-                                            Give this student list a name and a short tab name.
-                                            The tab name will be used to identify this list inside Student Data.
+                                            First, identify the group you want to manage. You will add
+                                            the actual student records in the next step.
                                         </p>
 
                                     </div>
@@ -302,10 +305,6 @@ function ListForm() {
                                                         *
                                                     </span>
                                                 </label>
-
-                                                <span className="field-hint">
-                                                    Full name
-                                                </span>
 
                                             </div>
 
@@ -334,6 +333,11 @@ function ListForm() {
                                                     }}
                                                     onKeyDown={handleKeyDown}
                                                 />
+
+                                                <p className="field-hint">
+                                                    Give the complete group a recognizable name. For example,
+                                                    use an academic year or a class name so you can find it later.
+                                                </p>
 
                                             </div>
 
@@ -365,9 +369,7 @@ function ListForm() {
                                                     </span>
                                                 </label>
 
-                                                <span className="field-hint">
-                                                    Short name
-                                                </span>
+                                               
 
                                             </div>
 
@@ -396,6 +398,11 @@ function ListForm() {
                                                     }}
                                                     onKeyDown={handleKeyDown}
                                                 />
+
+                                                <p className="field-hint">
+                                                    This is the short label used to identify this group in your
+                                                    student data view. Keep it brief, such as "10th A" or "5th B".
+                                                </p>
 
                                             </div>
 
@@ -454,7 +461,7 @@ function ListForm() {
 
                                             <button
                                                 type="button"
-                                                className="btn btn-secondary"
+                                                className="ui-btn ui-btn--secondary"
                                                 onClick={handleCancel}
                                             >
                                                 Cancel
@@ -463,17 +470,12 @@ function ListForm() {
 
                                             <button
                                                 type="button"
-                                                className="btn btn-primary"
+                                                className="ui-btn ui-btn--primary "
                                                 onClick={handleContinue}
                                             >
                                                 Continue
-                                                <span
-                                                    style={{
-                                                        marginLeft: "5px"
-                                                    }}
-                                                >
-                                                    →
-                                                </span>
+                                                <ArrowRight size={10} />
+                                                
                                             </button>
 
                                         </div>
@@ -521,69 +523,81 @@ function ListForm() {
 
                         {/* INFORMATION */}
 
-                        <aside className="info-card">
-
-                            <h3>
-                                How this works
-                            </h3>
-
-
-                            <div className="info-item">
-
-                                <div className="info-number">
-                                    1
-                                </div>
+                       <aside className="info-card">
+                            <div className="info-card-heading">
+                                <div className="info-heading-icon">i</div>
 
                                 <div>
-                                    <strong>
-                                        Create your list
-                                    </strong>
-
-                                    <span>
-                                        Example: 1st Standard - A Students
-                                    </span>
+                                    <h3>Before you continue</h3>
+                                    <p>Understand how your list will be organized.</p>
                                 </div>
-
                             </div>
 
+                            <div className="info-divider" />
 
                             <div className="info-item">
-
-                                <div className="info-number">
-                                    2
-                                </div>
+                                <div className="info-number">1</div>
 
                                 <div>
-                                    <strong>
-                                        Import students
-                                    </strong>
-
+                                    <strong>Master List Name</strong>
                                     <span>
-                                        Upload an Excel or CSV file containing the students.
+                                        The main name of your student record group.
+                                        Example: 2026–27 Student Records.
                                     </span>
                                 </div>
-
                             </div>
-
 
                             <div className="info-item">
-
-                                <div className="info-number">
-                                    3
-                                </div>
+                                <div className="info-number">2</div>
 
                                 <div>
-                                    <strong>
-                                        Review everything
-                                    </strong>
-
+                                    <strong>Tab Name</strong>
                                     <span>
-                                        Edit or remove records before saving the list.
+                                        A short label to recognize the group in your
+                                        student data view. Example: 10th A.
                                     </span>
                                 </div>
-
                             </div>
 
+                            <div className="info-item">
+                                <div className="info-number">3</div>
+
+                                <div>
+                                    <strong>Import Student Records</strong>
+                                    <span>
+                                        Continue to upload your CSV or Excel file
+                                        and review the records before saving.
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="info-example">
+                                <span className="info-example-label">EXAMPLE</span>
+
+                                <div className="example-row">
+                                    <span>Master List</span>
+                                    <strong>10th Standard - A</strong>
+                                </div>
+
+                                <div className="example-row">
+                                    <span>Tab Name</span>
+                                    <strong>10th A</strong>
+                                </div>
+
+                                <div className="example-tab">
+                                    <span className="example-tab-icon">1A</span>
+                                    <span>10th A</span>
+                                    <span className="example-tab-status">Preview</span>
+                                </div>
+                            </div>
+
+                            <div className="info-tip">
+                                <strong>Tip</strong>
+                                <p>
+                                    Use consistent class names and academic years to
+                                    keep your student records organized.
+                                </p>
+                            </div>
                         </aside>
 
                     </div>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 function ImportData() {
     /* =====================================================
@@ -37,6 +38,8 @@ function ImportData() {
 
     const fileInputRef = useRef(null);
 
+    const previewCardRef = useRef(null);
+
     /* =====================================================
        LOAD CURRENT LIST
     ===================================================== */
@@ -54,6 +57,19 @@ function ImportData() {
         }
     }, []);
 
+
+    useEffect(() => {
+        if (!showPreview || !previewCardRef.current) return;
+
+        previewCardRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        });
+
+        previewCardRef.current.focus({
+            preventScroll: true,
+        });
+    }, [showPreview]);
     /* =====================================================
        TOAST
     ===================================================== */
@@ -573,7 +589,7 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
                         <button
                             id="importdataBtn"
                         >
-                            Import Data
+                            Master Data
                         </button>
 
                         <span>
@@ -589,14 +605,12 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
 
                     {/* HEADER */}
 
-                    <h1 className="page-title">
-                        Import Data
-                    </h1>
-
+                    <h1 className="page-title">Import Student Records</h1>
 
                     <p className="page-subtitle">
-                        Upload the student records for this list.
-                        You can import a CSV or Excel file.
+                        Upload your student data using a CSV or Excel file.
+                        Review the records and resolve any issues before adding
+                        them to your master list.
                     </p>
 
 
@@ -611,7 +625,7 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
                             </div>
 
                             <div className="step-label">
-                                Create List
+                                List Details
                             </div>
 
                         </div>
@@ -627,7 +641,7 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
                             </div>
 
                             <div className="step-label">
-                                Import Data
+                                Import Records
                             </div>
 
                         </div>
@@ -643,7 +657,7 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
                             </div>
 
                             <div className="step-label">
-                                Review
+                                Review Data
                             </div>
 
                         </div>
@@ -703,12 +717,10 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
 
                                 <div className="card-header">
 
-                                    <h3>
-                                        Upload Data File
-                                    </h3>
-
+                                    <h3>Upload Your Student File</h3>
                                     <p>
-                                        Upload a CSV or Excel file containing your ID card data.
+                                        Choose a CSV or Excel file with a header row.
+                                        Your records will be previewed before import.
                                     </p>
 
                                 </div>
@@ -907,17 +919,13 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
 
                                         <div className="sample-text">
 
-                                            <strong>
-                                                Don't have a file ready?
-                                            </strong>
-
+                                            <strong>Need a starting point?</strong>
                                             <span>
-                                                Download our sample CSV and fill in your data.
+                                                Download the sample CSV to see the recommended column format.
                                             </span>
-
                                         </div>
 
-
+                                
                                         <button
                                             className="sample-btn"
                                             onClick={
@@ -937,13 +945,14 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
                             {/* DATA PREVIEW */}
 
                             <div
-                                className="preview-card"
+                                ref={previewCardRef}
+                                tabIndex={-1}
+                                className={`preview-card ${
+                                    showPreview ? "preview-card--focused" : ""
+                                }`}
                                 id="previewCard"
                                 style={{
-                                    display:
-                                        showPreview
-                                            ? "block"
-                                            : "none"
+                                    display: showPreview ? "block" : "none",
                                 }}
                             >
 
@@ -1149,16 +1158,16 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
                             <div className="bottom-actions">
 
                                 <button
-                                    className="back-btn"
+                                    className="ui-btn ui-btn--secondary"
                                     id="backBtn"
                                     onClick={goBack}
                                 >
-                                    ← Back
+                                    <ArrowLeft size={10} /> Back
                                 </button>
 
 
                                 <button
-                                    className={`import-btn ${
+                                    className={`ui-btn ui-btn--primary ${
                                         isReady
                                             ? "ready"
                                             : ""
@@ -1168,7 +1177,8 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
                                         importData
                                     }
                                 >
-                                    Import Data
+                                    Import Data 
+                                    <ArrowRight size={10} />
                                 </button>
 
                             </div>
@@ -1185,137 +1195,67 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
 
                             {/* HOW IT WORKS */}
 
-                            <div className="side-card">
+                            
+                            <aside className="info-card">
+                                <div className="info-card-heading">
+                                    <div className="info-heading-icon">i</div>
 
-                                <h3>
-                                    How Import Works
-                                </h3>
-
-
-                                <div className="step-item">
-
-                                    <div className="step-circle">
-                                        1
+                                    <div>
+                                        <h3>How Import Works</h3>
+                                        <p>Follow these steps to prepare your student records for ID generation.</p>
                                     </div>
+                                </div>
 
-                                    <div className="step-info">
+                                <div className="info-divider" />
 
-                                        <strong>
-                                            Upload your file
-                                        </strong>
+                                <div className="info-item">
+                                    <div className="info-number">1</div>
 
+                                    <div>
+                                        <strong>Upload Your File</strong>
                                         <span>
-                                            Upload CSV or Excel data containing your records.
+                                            Upload a CSV or Excel file containing your student records.
                                         </span>
-
                                     </div>
-
                                 </div>
 
+                                <div className="info-item">
+                                    <div className="info-number">2</div>
 
-                                <div className="step-item">
-
-                                    <div className="step-circle">
-                                        2
-                                    </div>
-
-                                    <div className="step-info">
-
-                                        <strong>
-                                            Review data
-                                        </strong>
-
+                                    <div>
+                                        <strong>Review Data</strong>
                                         <span>
-                                            Check your records before importing them.
+                                            Preview the imported records and check that the student
+                                            details are correct before proceeding.
                                         </span>
-
                                     </div>
-
                                 </div>
 
+                                <div className="info-item">
+                                    <div className="info-number">3</div>
 
-                                <div className="step-item">
-
-                                    <div className="step-circle">
-                                        3
-                                    </div>
-
-                                    <div className="step-info">
-
-                                        <strong>
-                                            Import records
-                                        </strong>
-
+                                    <div>
+                                        <strong>Import Records</strong>
                                         <span>
-                                            Your records become available for ID generation.
+                                            Import your verified student records into the selected
+                                            master list and tab.
                                         </span>
-
                                     </div>
-
                                 </div>
 
+                           
 
-                                <div className="step-item">
-
-                                    <div className="step-circle">
-                                        4
-                                    </div>
-
-                                    <div className="step-info">
-
-                                        <strong>
-                                            Generate cards
-                                        </strong>
-
-                                        <span>
-                                            Select a template and generate multiple ID cards.
-                                        </span>
-
-                                    </div>
-
+                                <div className="info-tip">
+                                    <strong>Tip</strong>
+                                    <p>
+                                        Make sure your column names and student details match the
+                                        required format to avoid import errors.
+                                    </p>
                                 </div>
-
-                            </div>
-
-
-                            {/* REQUIRED COLUMNS */}
-
-                            <div className="side-card">
-
-                                <h3>
-                                    Recommended Columns
-                                </h3>
+                            </aside>
 
 
-                                <div className="required-list">
-
-                                    <span className="required-tag">
-                                        Name
-                                    </span>
-
-                                    <span className="required-tag">
-                                        ID Number
-                                    </span>
-
-                                    <span className="required-tag">
-                                        Class
-                                    </span>
-
-                                    <span className="required-tag">
-                                        Roll Number
-                                    </span>
-
-                                    <span className="required-tag">
-                                        Photo
-                                    </span>
-
-                                    <span className="required-tag">
-                                        Department
-                                    </span>
-
-                                </div>
-
-                            </div>
+                         
 
 
                             {/* FILE REQUIREMENTS */}
