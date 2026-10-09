@@ -350,11 +350,7 @@
 ========================= */
 
 @media (max-width: 800px) {
-    .main {
-        margin-left: 70px;
-
-        width: calc(100% - 70px);
-    }
+   
 
     .type-grid {
         grid-template-columns: 1fr;

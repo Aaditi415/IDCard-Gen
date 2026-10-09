@@ -301,7 +301,7 @@
 }
 
 .org-name {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
 }
 
@@ -396,7 +396,7 @@
 
 .info-box h3 {
     margin: 0 0 16px;
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .detail-row {
@@ -449,7 +449,7 @@
 
 .action-box h3 {
     margin: 0 0 5px;
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .action-box p {
@@ -594,9 +594,7 @@
   
   
 
-    .main {
-        margin-left: 70px;
-    }
+   
 
   
 

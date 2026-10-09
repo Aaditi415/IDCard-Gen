@@ -359,7 +359,7 @@
 
 .choose-btn {
 
-    margin-top: 17px;
+    margin-top: 16px;
 
     height: 36px;
 
@@ -1216,11 +1216,7 @@ tr:last-child td {
 
 @media(max-width: 760px) {
 
-    
-    .main {
-
-        margin-left: 70px;
-    }
+  
 
    
 

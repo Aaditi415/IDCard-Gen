@@ -482,10 +482,7 @@ textarea.form-control {
 
 @media (max-width: 800px) {
 
-    .main {
-        width: calc(100% - 70px);
-        margin-left: 70px;
-    }
+ 
 
     .form-grid {
         grid-template-columns: 1fr;

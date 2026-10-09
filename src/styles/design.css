@@ -49,7 +49,7 @@ PAGE HEADER
 .page-subtitle {
     margin: 6px 0 0;
     color: var(--muted);
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
 }
 
@@ -845,7 +845,7 @@ CARD HEADER
     overflow: hidden;
 
     color: #0f172a;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 800;
     letter-spacing: 0.5px;
 
@@ -1255,7 +1255,7 @@ BACK
 
 .premium-back-title span {
     color: #0f172a;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 800;
     letter-spacing: 0.3px;
 }

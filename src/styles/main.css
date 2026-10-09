@@ -649,3 +649,11 @@ textarea {
     background: #451a03;
     border-color: #92400e;
 }
+
+
+@media (max-width: 480px) {
+    .main{
+        margin-left: 0;
+        width: 100%;
+    }
+}

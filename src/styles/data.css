@@ -37,7 +37,7 @@
     padding: 8px 12px;
     border-radius: 8px;
     background: #f3f4f6;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
 }
 
@@ -115,7 +115,7 @@
 .id-preview-modal-header p {
     margin: 5px 0 0;
     color: #6b7280;
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .id-preview-close {
@@ -164,7 +164,7 @@
 
     color: #6b7280;
 
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
 
     cursor: pointer;

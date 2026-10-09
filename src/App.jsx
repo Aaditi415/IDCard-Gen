@@ -1,3 +1,6 @@
+
+import { useEffect } from "react";
+
 import Dashboard from "./pages/Dashboard";
 import Card from "./pages/Card";
 import Details from "./pages/Details";
@@ -14,231 +17,169 @@ import DataMenuSettings from "./pages/DataMenuSettings";
 import CreateForm from "./pages/CreateForm";
 import Design from "./pages/Design";
 import Demo from "./pages/Demo";
-import IdCardPreview  from "./pages/IdCardPreview";
+import IdCardPreview from "./pages/IdCardPreview";
 import StudentForm from "./pages/StudentForm";
 import Templates from "./pages/Templates";
 import IDListForm from "./pages/IDListForm";
 import StudentData from "./pages/StudentData";
 import AppTheme from "./pages/AppTheme";
 
+import { TourProvider, useTour } from "./components/TourContext";
+import GuidedTour from "./components/GuidedTour";
 
-import { useEffect } from "react";
-
-function App() {
-
+function AppContent() {
+    const { tourOpen, closeTour } = useTour();
 
     useEffect(() => {
+        const savedTheme =
+            localStorage.getItem("idCardTheme") || "light";
 
-    const savedTheme =
-        localStorage.getItem("idCardTheme") ||
-        "light";
+        const root = document.documentElement;
 
-    const root =
-        document.documentElement;
+        root.classList.remove("theme-light", "theme-dark");
 
-    root.classList.remove(
-        "theme-light",
-        "theme-dark"
-    );
-
-
-    if (savedTheme === "dark") {
-
-        root.classList.add(
-            "theme-dark"
-        );
-
-    } else if (
-        savedTheme === "system"
-    ) {
-
-        const prefersDark =
-            window.matchMedia(
+        if (savedTheme === "dark") {
+            root.classList.add("theme-dark");
+        } else if (savedTheme === "system") {
+            const prefersDark = window.matchMedia(
                 "(prefers-color-scheme: dark)"
             ).matches;
 
-        root.classList.add(
-            prefersDark
-                ? "theme-dark"
-                : "theme-light"
-        );
-
-    } else {
-
-        root.classList.add(
-            "theme-light"
-        );
-
-    }
-
-}, []);
+            root.classList.add(
+                prefersDark ? "theme-dark" : "theme-light"
+            );
+        } else {
+            root.classList.add("theme-light");
+        }
+    }, []);
 
     const path = window.location.pathname;
 
-    // Card
-    if (
-        path.endsWith("/card") ||
-        path.endsWith("/card.html")
-    ) {
-        return <Card />;
-    }
+    let page;
 
-    if (
+    if (path.endsWith("/card") || path.endsWith("/card.html")) {
+        page = <Card />;
+    } else if (
         path.endsWith("/create-form") ||
         path.endsWith("/create-form.html")
     ) {
-        return <CreateForm />;
-    }
-
-    if (
+        page = <CreateForm />;
+    } else if (
         path.endsWith("/design") ||
         path.endsWith("/design.html")
     ) {
-        return <Design />;
-    }
-    if (
+        page = <Design />;
+    } else if (
         path.endsWith("/demo") ||
         path.endsWith("/demo.html")
     ) {
-        return <Demo />;
-    }
-
-    if (
+        page = <Demo />;
+    } else if (
         path.endsWith("/idcardpreview") ||
         path.endsWith("/idcardpreview.html")
     ) {
-        return <IdCardPreview />;
-    }
-
-    if (
+        page = <IdCardPreview />;
+    } else if (
         path.endsWith("/templates") ||
         path.endsWith("/templates.html")
     ) {
-        return <Templates />;
-    }
-    
-    if (
+        page = <Templates />;
+    } else if (
         path.endsWith("/idlistform") ||
         path.endsWith("/idlistform.html")
     ) {
-        return <IDListForm />;
-    }
-
-    if (
+        page = <IDListForm />;
+    } else if (
         path.startsWith("/studentform/") ||
         path.endsWith("/studentform.html")
     ) {
-        return <StudentForm />;
-    }
-
-    // Details
-    if (
+        page = <StudentForm />;
+    } else if (
         path.endsWith("/details") ||
         path.endsWith("/details.html")
     ) {
-        return <Details />;
-    }
-
-    // List Form
-    if (
+        page = <Details />;
+    } else if (
         path.endsWith("/listform") ||
         path.endsWith("/listform.html")
     ) {
-        return <ListForm />;
-    }
-
-    // Import Data
-    if (
+        page = <ListForm />;
+    } else if (
         path.endsWith("/importdata") ||
         path.endsWith("/importdata.html")
     ) {
-        return <ImportData />;
-    }
-
-    if (
+        page = <ImportData />;
+    } else if (
         path.endsWith("/add-single-record") ||
         path.endsWith("/add-single-record.html")
     ) {
-        return <AddSingleRecord />;
-    }
-
-    if (
+        page = <AddSingleRecord />;
+    } else if (
         path.endsWith("/single-record") ||
         path.endsWith("/single-record.html")
     ) {
-        return <SingleRecord />;
-    }
-
-    if (
+        page = <SingleRecord />;
+    } else if (
         path.endsWith("/single-record-review") ||
         path.endsWith("/single-record-review.html")
     ) {
-        return <SingleRecordReview />;
-    }
-    // Preview
-    if (
+        page = <SingleRecordReview />;
+    } else if (
         path.endsWith("/preview") ||
         path.endsWith("/preview.html")
     ) {
-        return <Preview />;
-    }
-
-    // Review
-    if (
+        page = <Preview />;
+    } else if (
         path.endsWith("/review") ||
         path.endsWith("/review.html")
     ) {
-        return <Review />;
-    }
-
-    
-    
-    if (
-        path.endsWith("/settings") ||
-        path.endsWith("/settings.html")
-    ) {
-        return <AppTheme />;
-    }
-
-    if (
+        page = <Review />;
+    } else if (
         path.endsWith("/data-menu-settings") ||
         path.endsWith("/data-menu-settings.html")
     ) {
-        return <DataMenuSettings />;
-    }
-
-    if (
+        page = <DataMenuSettings />;
+    } else if (
+        path.endsWith("/settings") ||
+        path.endsWith("/settings.html") ||
         path.endsWith("/apptheme") ||
         path.endsWith("/apptheme.html")
     ) {
-        return <AppTheme />;
-    }
-
-
-    // Stored Data
-    if (
-        path.startsWith("/stored-data") ||
-        path.startsWith("/stored-data.html")
+        page = <AppTheme />;
+    } else if (
+        path.startsWith("/stored-data")
     ) {
-        return <StoredData />;
-    }
-
-    if (
-        path.startsWith("/student-data")
+        page = <StoredData />;
+    } else if (path.startsWith("/student-data")) {
+        page = <StudentData />;
+    } else if (
+        path === "/data" ||
+        path === "/data.html" ||
+        path.startsWith("/data/")
     ) {
-        return <StudentData />;
+        page = <Data />;
+    } else {
+        page = <Dashboard />;
     }
 
-    if (
-        path.startsWith("/data") ||
-        path.startsWith("/data.html")
-    ) {
-        return <Data />;
-    }
+    return (
+        <>
+            {page}
 
+            <GuidedTour
+                open={tourOpen}
+                onClose={closeTour}
+            />
+        </>
+    );
+}
 
-    // Default
-    return <Dashboard />;
+function App() {
+    return (
+        <TourProvider>
+            <AppContent />
+        </TourProvider>
+    );
 }
 
 export default App;

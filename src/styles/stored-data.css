@@ -179,7 +179,7 @@
         }
 
         .stat-label {
-            font-size: 13px;
+            font-size: 14px;
             color: #777b82;
             margin-bottom: 8px;
         }
@@ -281,7 +281,7 @@
     padding: 10px 16px;
     background: #111827;
     color: #ffffff;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -429,7 +429,7 @@
     outline: none;
     background: #ffffff;
     color: #111827;
-    font-size: 13px;
+    font-size: 14px;
     transition:
         border-color 0.15s ease,
         box-shadow 0.15s ease;
@@ -687,7 +687,7 @@
 
     color: #6b7280;
 
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.6;
 }
 
