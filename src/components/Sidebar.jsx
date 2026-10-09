@@ -1,18 +1,41 @@
+
 import { useEffect, useState } from "react";
+import {
+    LayoutDashboard,
+    Database,
+    ClipboardList,
+    IdCard,
+    PanelsTopLeft,
+    ClipboardPenLine,
+    FileUp,
+    UserRoundPlus,
+    Plus,
+    Settings,
+    Palette,
+    ListOrdered,
+    ChevronDown,
+    Menu,
+    X,
+    FolderOpen,
+    Users,
+} from "lucide-react";
+
+import "../styles/sidebar.css";
 
 function Sidebar({ activePage = "dashboard" }) {
     const [storedLists, setStoredLists] = useState([]);
     const [studentLists, setStudentLists] = useState([]);
-
     const [selectedId, setSelectedId] = useState(null);
     const [selectedStudentListId, setSelectedStudentListId] =
         useState(null);
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     const currentPath = window.location.pathname;
+    const params = new URLSearchParams(window.location.search);
 
     const currentPage =
-        currentPath.endsWith("/dashboard") ||
-        currentPath === "/"
+        currentPath === "/" ||
+        currentPath.endsWith("/dashboard")
             ? "dashboard"
             : currentPath.endsWith("/stored-data") ||
               currentPath.endsWith("/stored-data.html")
@@ -20,7 +43,7 @@ function Sidebar({ activePage = "dashboard" }) {
             : currentPath.startsWith("/student-data")
             ? "student-data"
             : currentPath.startsWith("/studentform/")
-            ? "student-form"
+            ? "studentform"
             : currentPath.endsWith("/listform") ||
               currentPath.endsWith("/listform.html") ||
               currentPath.endsWith("/importdata") ||
@@ -33,647 +56,497 @@ function Sidebar({ activePage = "dashboard" }) {
             : currentPath.endsWith("/idlistform") ||
               currentPath.endsWith("/idlistform.html")
             ? "cards"
+            : currentPath.endsWith("/templates") ||
+              currentPath.endsWith("/templates.html")
+            ? "templates"
             : currentPath.endsWith("/create-form") ||
               currentPath.endsWith("/create-form.html")
             ? "createform"
             : currentPath.endsWith("/settings") ||
               currentPath.endsWith("/settings.html")
             ? "settings"
+            : currentPath.endsWith("/data-menu-settings") ||
+                currentPath.endsWith("/data-menu-settings.html")
+            ? "data-menu-settings"
             : activePage;
 
-    const [isDataOpen, setIsDataOpen] = useState(
+            
+
+    const isMasterDataPage =
         currentPage === "data" ||
-        currentPage === "stored-data"
-    );
+        currentPage === "stored-data" ||
+        currentPage === "import";
 
-    const [isStudentApplicationsOpen, setIsStudentApplicationsOpen] =
-        useState(
-            currentPage === "student-data" ||
-            currentPage === "student-form"
-        );
+    const isSubmissionsPage =
+        currentPage === "student-data" ||
+        currentPage === "studentform" ||
+        currentPage === "single-record";
 
-    /* =====================================================
-       INITIAL LOAD
-    ===================================================== */
+    // Only one expandable section can be open.
+    const [openSection, setOpenSection] = useState(() => {
+        if (isMasterDataPage) return "master-data";
+        if (isSubmissionsPage) return "submissions";
+        if (
+            currentPage === "settings" ||
+            currentPage === "data-menu-settings"
+        ) {
+            return "settings";
+        }
+        return null;
+
+    });
 
     useEffect(() => {
-        loadStoredLists();
-        loadStudentLists();
-
-        const params = new URLSearchParams(
-            window.location.search
-        );
-
         setSelectedId(params.get("id"));
-        setSelectedStudentListId(
-            params.get("listId")
-        );
-    }, []);
+        setSelectedStudentListId(params.get("listId"));
 
-    /* =====================================================
-       LOAD STORED DATA LISTS
-    ===================================================== */
-
-    const loadStoredLists = () => {
         try {
-            const stored =
-                JSON.parse(
-                    localStorage.getItem(
-                        "idCardStoredLists"
-                    )
-                ) || [];
-
-            const savedOrder =
-                JSON.parse(
-                    localStorage.getItem(
-                        "idCardMenuOrder"
-                    )
-                ) || [];
-
-            if (!savedOrder.length) {
-                setStoredLists(stored);
-                return;
-            }
-
-            const orderedLists = [];
-
-            savedOrder.forEach((id) => {
-                const list = stored.find(
-                    (item) => item.id === id
-                );
-
-                if (list) {
-                    orderedLists.push(list);
-                }
-            });
-
-            stored.forEach((list) => {
-                const alreadyExists =
-                    orderedLists.some(
-                        (item) =>
-                            item.id === list.id
-                    );
-
-                if (!alreadyExists) {
-                    orderedLists.push(list);
-                }
-            });
-
-            setStoredLists(orderedLists);
-        } catch (error) {
-            console.error(
-                "Failed to load stored lists:",
-                error
+            const savedLists = JSON.parse(
+                localStorage.getItem("idCardStoredLists") || "[]"
             );
 
-            setStoredLists([]);
-        }
-    };
+            const savedOrder = JSON.parse(
+                localStorage.getItem("idCardMenuOrder") || "[]"
+            );
 
-    /* =====================================================
-       LOAD STUDENT APPLICATION LISTS
-    ===================================================== */
+            const validLists = Array.isArray(savedLists)
+                ? savedLists
+                : [];
 
-    const loadStudentLists = () => {
-        try {
-            const stored =
-                JSON.parse(
-                    localStorage.getItem(
-                        "idCardLists"
+            const orderedLists = [
+                ...savedOrder
+                    .map((id) =>
+                        validLists.find((item) => item.id === id)
                     )
-                ) || [];
+                    .filter(Boolean),
+                ...validLists.filter(
+                    (item) => !savedOrder.includes(item.id)
+                ),
+            ];
+
+            setStoredLists(orderedLists);
+
+            const savedStudentLists = JSON.parse(
+                localStorage.getItem("idCardLists") || "[]"
+            );
 
             setStudentLists(
-                Array.isArray(stored)
-                    ? stored
+                Array.isArray(savedStudentLists)
+                    ? savedStudentLists
                     : []
             );
         } catch (error) {
-            console.error(
-                "Failed to load student lists:",
-                error
-            );
-
+            console.error("Failed to load sidebar data:", error);
+            setStoredLists([]);
             setStudentLists([]);
+        }
+    }, []);
+
+    
+    useEffect(() => {
+    if (!mobileOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleEscape = (event) => {
+        if (event.key === "Escape") {
+            setMobileOpen(false);
         }
     };
 
-    /* =====================================================
-       NAVIGATION
-    ===================================================== */
+    document.addEventListener("keydown", handleEscape);
 
-    const handleDashboard = () => {
-        window.location.href = "/dashboard";
+    return () => {
+        document.body.style.overflow = previousOverflow;
+        document.removeEventListener("keydown", handleEscape);
+    };
+}, [mobileOpen]);
+
+    const navigate = (url) => {
+        setMobileOpen(false);
+        window.location.href = url;
     };
 
-    const handleImport = () => {
-        window.location.href = "/listform";
-    };
-
-    const handleCreate = () => {
-        window.location.href = "/create-form";
-    };
-
-    const handleStoredList = (id) => {
-        window.location.href =
-            "/stored-data?id=" +
-            encodeURIComponent(id);
-    };
-
-    const handleStudentList = (list) => {
-        window.location.href =
-            "/student-data?listId=" +
-            encodeURIComponent(list.id);
-    };
-
-    const handleCards = () => {
-        window.location.href = "/idlistform";
-    };
-
-    const handleSettings = () => {
-        window.location.href = "/settings";
-    };
-
-    const handleTemplates = () => {
-        window.location.href = "/templates";
-    };
-
-    /* =====================================================
-       DATA MENU TOGGLE
-    ===================================================== */
-
-    const handleDataToggle = () => {
-        setIsDataOpen((prev) => !prev);
-    };
-
-    /* =====================================================
-       STUDENT APPLICATIONS TOGGLE
-    ===================================================== */
-
-    const handleStudentApplicationsToggle = () => {
-        setIsStudentApplicationsOpen(
-            (prev) => !prev
+    const toggleSection = (section) => {
+        setOpenSection((current) =>
+            current === section ? null : section
         );
     };
 
-    /* =====================================================
-       INITIALS
-    ===================================================== */
+    const getInitials = (name = "") => {
+        const words = name.trim().split(/\s+/).filter(Boolean);
 
-    const getInitials = (name) => {
-        const words = name
-            .trim()
-            .split(/\s+/);
+        if (!words.length) return "—";
 
-        if (!words.length || !words[0]) {
-            return "A";
-        }
-
-        if (words.length === 1) {
-            return words[0]
-                .charAt(0)
-                .toUpperCase();
-        }
-
-        return (
-            words[0].charAt(0) +
-            words[1].charAt(0)
-        ).toUpperCase();
+        return words
+            .slice(0, 2)
+            .map((word) => word[0].toUpperCase())
+            .join("");
     };
 
+    const navItemClass = (page, extraClass = "") =>
+        `nav-item ${currentPage === page ? "active" : ""} ${extraClass}`
+            .trim();
+
+    const isDataActive =
+        isMasterDataPage || currentPage === "import";
+
+    const isSubmissionActive =
+        isSubmissionsPage || currentPage === "single-record";
+
+   
+
     return (
-        <aside className="sidebar">
-
-            {/* =================================================
-                LOGO
-            ================================================= */}
-
-            <div className="logo">
-
-                <div className="logo-icon">
-                    ID
-                </div>
-
-                <div className="logo-text">
-                    ID Card Gen
-
-                    <span>
-                        Digital ID Management
-                    </span>
-                </div>
-
-            </div>
-
-
-            {/* =================================================
-                WORKSPACE
-            ================================================= */}
-
-            <div className="nav-title">
-                Workspace
-            </div>
-
-
-            <nav className="nav">
-
-                {/* =================================================
-                    DASHBOARD
-                ================================================= */}
-
-                <button
-                    className={`nav-item ${
-                        currentPage === "dashboard"
-                            ? "active"
-                            : ""
-                    }`}
-                    onClick={handleDashboard}
-                >
-                    <span className="nav-icon">
-                        ⌂
-                    </span>
-
-                    <span>
-                        Dashboard
-                    </span>
-                </button>
-
-
-                {/* =================================================
-                    DATA
-                ================================================= */}
-
-                <button
-                    className={`nav-item ${
-                        currentPage === "data" ||
-                        currentPage === "stored-data"
-                            ? "active"
-                            : ""
-                    }`}
-                    onClick={handleDataToggle}
-                >
-                    <span className="nav-icon">
-                        ⌂
-                    </span>
-
-                    <span>
-                        Data
-                    </span>
-
-                    <span
-                        style={{
-                            marginLeft: "auto",
-                            fontSize: "11px",
-                            color: "#9ca3af",
-                            transition:
-                                "transform 0.2s ease",
-                            transform: isDataOpen
-                                ? "rotate(180deg)"
-                                : "rotate(0deg)"
-                        }}
-                    >
-                        ⌄
-                    </span>
-                </button>
-
-
-                {/* =================================================
-                    DATA SUBMENU
-                ================================================= */}
-
-                {isDataOpen && (
-                    <div
-                        id="storedList"
-                        className="stored-list"
-                    >
-
-                        {!storedLists.length ? (
-                            <div
-                                style={{
-                                    color: "#777b82",
-                                    fontSize: "12px",
-                                    padding: "8px 10px"
-                                }}
-                            >
-                                No stored data
-                            </div>
-                        ) : (
-                            storedLists.map((list) => (
-                                <button
-                                    key={list.id}
-                                    className={`stored-item ${
-                                        list.id ===
-                                        selectedId
-                                            ? "active"
-                                            : ""
-                                    }`}
-                                    onClick={() =>
-                                        handleStoredList(
-                                            list.id
-                                        )
-                                    }
-                                >
-
-                                    <span className="stored-letter">
-                                        {getInitials(
-                                            list.tabName ||
-                                                "Untitled"
-                                        )}
-                                    </span>
-
-                                    <span className="stored-name">
-                                        {list.tabName ||
-                                            "Untitled"}
-                                    </span>
-
-                                </button>
-                            ))
-                        )}
-
-                    </div>
-                )}
-
-
-                {/* =================================================
-                    STUDENT APPLICATIONS
-                ================================================= */}
-
-                <button
-                    className={`nav-item ${
-                        currentPage === "student-data" ||
-                        currentPage === "student-form"
-                            ? "active"
-                            : ""
-                    }`}
-                    onClick={
-                        handleStudentApplicationsToggle
-                    }
-                >
-
-                    <span className="nav-icon">
-                        ◉
-                    </span>
-
-                    <span>
-                        Student Applications
-                    </span>
-
-                    <span
-                        style={{
-                            marginLeft: "auto",
-                            fontSize: "11px",
-                            color: "#9ca3af",
-                            transition:
-                                "transform 0.2s ease",
-                            transform:
-                                isStudentApplicationsOpen
-                                    ? "rotate(180deg)"
-                                    : "rotate(0deg)"
-                        }}
-                    >
-                        ⌄
-                    </span>
-
-                </button>
-
-
-                {/* =================================================
-                    STUDENT APPLICATION LISTS
-                ================================================= */}
-
-                {isStudentApplicationsOpen && (
-                    <div
-                        className="stored-list"
-                    >
-
-                        {!studentLists.length ? (
-                            <div
-                                style={{
-                                    color: "#777b82",
-                                    fontSize: "12px",
-                                    padding: "8px 10px"
-                                }}
-                            >
-                                No student lists
-                            </div>
-                        ) : (
-                            studentLists.map((list) => (
-                                <button
-                                    key={list.id}
-                                    className={`stored-item ${
-                                        list.id ===
-                                        selectedStudentListId
-                                            ? "active"
-                                            : ""
-                                    }`}
-                                    onClick={() =>
-                                        handleStudentList(
-                                            list
-                                        )
-                                    }
-                                >
-
-                                    <span className="stored-letter">
-                                        {getInitials(
-                                            list.tabName ||
-                                                list.listName ||
-                                                "List"
-                                        )}
-                                    </span>
-
-                                    <span className="stored-name">
-                                        {list.tabName ||
-                                            list.listName ||
-                                            "Untitled"}
-                                    </span>
-
-                                </button>
-                            ))
-                        )}
-
-                    </div>
-                )}
-
-
-                {/* =================================================
-                    ID CARDS
-                ================================================= */}
-
-                <button
-                    className={`nav-item ${
-                        currentPage === "cards"
-                            ? "active"
-                            : ""
-                    }`}
-                    onClick={handleCards}
-                >
-                    <span className="nav-icon">
-                        ▣
-                    </span>
-
-                    <span>
-                        ID Cards
-                    </span>
-                </button>
-
-
-                {/* =================================================
-                    TEMPLATES
-                ================================================= */}
-
-                <button
-                    className={`nav-item ${
-                        currentPage === "templates"
-                            ? "active"
-                            : ""
-                    }`}
-                    onClick={handleTemplates}
-                >
-                    <span className="nav-icon">
-                        ▤
-                    </span>
-
-                    <span>
-                        Templates
-                    </span>
-                </button>
-
-
-                {/* =================================================
-                    IMPORT DATA
-                ================================================= */}
-
-                <button
-                    className={`nav-item ${
-                        currentPage === "import"
-                            ? "active"
-                            : ""
-                    }`}
-                    onClick={handleImport}
-                >
-                    <span className="nav-icon">
-                        ↓
-                    </span>
-
-                    <span>
-                        Import Data
-                    </span>
-                </button>
-
-
-                {/* =================================================
-                    ADD SINGLE RECORD
-                ================================================= */}
-
-                <button
-                    className={`nav-item ${
-                        currentPage === "single-record"
-                            ? "active"
-                            : ""
-                    }`}
-                    onClick={() =>
-                        (window.location.href =
-                            "/single-record")
-                    }
-                >
-                    <span className="nav-icon">
-                        ＋
-                    </span>
-
-                    <span>
-                        Add Single Record
-                    </span>
-                </button>
-
-
-                {/* =================================================
-                    CREATE ID CARD
-                ================================================= */}
-
-                <button
-                    className={`nav-item create-nav ${
-                        currentPage === "createform"
-                            ? "active"
-                            : ""
-                    }`}
-                    onClick={handleCreate}
-                >
-                    <span className="nav-icon">
-                        ＋
-                    </span>
-
-                    <span>
-                        Create ID Card
-                    </span>
-                </button>
-
-            </nav>
-
-
-            {/* =================================================
-                SYSTEM
-            ================================================= */}
-
-            <div
-                className="nav-title"
-                style={{
-                    marginTop: "28px"
-                }}
+        <>
+            {/* Mobile menu trigger */}
+            <button
+                type="button"
+                className="sidebar-mobile-toggle"
+                onClick={() => setMobileOpen(true)}
+                aria-label="Open navigation menu"
+                aria-expanded={mobileOpen}
+                aria-controls="idfoundry-sidebar"
             >
-                System
-            </div>
+                <Menu size={21} />
+            </button>
 
-
-            <nav className="nav">
-
+            {/* Mobile backdrop */}
+            {mobileOpen && (
                 <button
-                    className={`nav-item ${
-                        currentPage === "settings"
-                            ? "active"
-                            : ""
-                    }`}
-                    onClick={handleSettings}
-                >
-                    <span className="nav-icon">
-                        ⚙
-                    </span>
+                    type="button"
+                    className="sidebar-overlay"
+                    onClick={() => setMobileOpen(false)}
+                    aria-label="Close navigation menu"
+                />
+            )}
 
-                    <span>
-                        Settings
-                    </span>
-                </button>
-
-            </nav>
-
-
-            {/* =================================================
-                SIDEBAR USER
-            ================================================= */}
-
-            <div className="sidebar-bottom">
-
-                <div className="sidebar-user">
-
-                    <div className="avatar">
-                        AG
+            <aside
+                id="idfoundry-sidebar"
+                className={`sidebar ${
+                    mobileOpen ? "sidebar-open" : ""
+                }`}
+                aria-label="Main navigation"
+            >
+                {/* Brand */}
+                <div className="sidebar-brand">
+                    <div className="logo-icon" aria-hidden="true">
+                        ID
                     </div>
 
-                    <div className="user-info">
-
-                        <div className="user-name">
-                            Aaditi
-                        </div>
-
-                        <div className="user-role">
-                            Administrator
-                        </div>
-
+                    <div className="logo-text">
+                        <span className="brand-name">IDFoundry</span>
+                        <span className="brand-tagline">
+                            Create. Verify. Identify.
+                        </span>
                     </div>
 
+                    <button
+                        type="button"
+                        className="sidebar-close"
+                        onClick={() => setMobileOpen(false)}
+                        aria-label="Close navigation menu"
+                    >
+                        <X size={19} />
+                    </button>
                 </div>
 
-            </div>
+                {/* Scrollable navigation */}
+                <div className="sidebar-scroll">
+                    <div className="nav-title">Workspace</div>
 
-        </aside>
+                    <nav className="nav" aria-label="Workspace">
+                        <button
+                            type="button"
+                            className={navItemClass("dashboard")}
+                            onClick={() => navigate("/dashboard")}
+                        >
+                            <LayoutDashboard className="nav-icon" />
+                            <span className="nav-label">Dashboard</span>
+                        </button>
+
+                        {/* Master Data */}
+                        <button
+                            type="button"
+                            className={`nav-item ${
+                                isDataActive ? "section-active" : ""
+                            }`}
+                            onClick={() => toggleSection("master-data")}
+                            aria-expanded={openSection === "master-data"}
+                            aria-controls="master-data-submenu"
+                        >
+                            <Database className="nav-icon" />
+                            <span className="nav-label">Master Data</span>
+                            <ChevronDown
+                                className={`nav-chevron ${
+                                    openSection === "master-data"
+                                        ? "rotated"
+                                        : ""
+                                }`}
+                            />
+                        </button>
+
+                        {openSection === "master-data" && (
+                            <div
+                                id="master-data-submenu"
+                                className="nav-submenu"
+                            >
+                                <button
+                                    type="button"
+                                    className={`stored-item ${
+                                        currentPage === "import"
+                                            ? "active"
+                                            : ""
+                                    }`}
+                                    onClick={() => navigate("/listform")}
+                                >
+                                    <FileUp className="submenu-icon" />
+                                    <span className="stored-name">
+                                        Import Data
+                                    </span>
+                                </button>
+
+                                
+                                <button
+                                    type="button"
+                                    className={`stored-item ${
+                                        currentPage === "single-record" ? "active" : ""
+                                    }`}
+                                    onClick={() => navigate("/single-record")}
+                                >
+                                    <UserRoundPlus className="submenu-icon" />
+                                    <span className="stored-name">Add Single Record</span>
+                                </button>
+
+                                {storedLists.length > 0 && (
+                                    <div className="submenu-caption">
+                                        Your lists
+                                    </div>
+                                )}
+
+                                {storedLists.length === 0 ? (
+                                    <div className="nav-empty">
+                                        <FolderOpen size={15} />
+                                        <span>No master lists yet</span>
+                                    </div>
+                                ) : (
+                                    storedLists.map((list) => (
+                                        <button
+                                            type="button"
+                                            key={list.id}
+                                            className={`stored-item ${
+                                                currentPage === "stored-data" &&
+                                                String(list.id) ===
+                                                    String(selectedId)
+                                                    ? "active"
+                                                    : ""
+                                            }`}
+                                            title={
+                                                list.tabName || "Untitled list"
+                                            }
+                                            onClick={() =>
+                                                navigate(
+                                                    "/stored-data?id=" +
+                                                        encodeURIComponent(list.id)
+                                                )
+                                            }
+                                        >
+                                            <span className="stored-letter">
+                                                {getInitials(
+                                                    list.tabName ||
+                                                        list.listName ||
+                                                        "List"
+                                                )}
+                                            </span>
+                                            <span className="stored-name">
+                                                {list.tabName ||
+                                                    list.listName ||
+                                                    "Untitled list"}
+                                            </span>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                        )}
+
+                        {/* Submissions */}
+                        <button
+                            type="button"
+                            className={`nav-item ${
+                                isSubmissionActive ? "section-active" : ""
+                            }`}
+                            onClick={() => toggleSection("submissions")}
+                            aria-expanded={openSection === "submissions"}
+                            aria-controls="submissions-submenu"
+                        >
+                            <ClipboardList className="nav-icon" />
+                            <span className="nav-label">Submissions</span>
+                            <ChevronDown
+                                className={`nav-chevron ${
+                                    openSection === "submissions"
+                                        ? "rotated"
+                                        : ""
+                                }`}
+                            />
+                        </button>
+
+                        {openSection === "submissions" && (
+                            <div
+                                id="submissions-submenu"
+                                className="nav-submenu"
+                            >
+
+                                {studentLists.length > 0 && (
+                                    <div className="submenu-caption">
+                                        Submission lists
+                                    </div>
+                                )}
+
+                                {studentLists.length === 0 ? (
+                                    <div className="nav-empty">
+                                        <Users size={15} />
+                                        <span>No submission lists yet</span>
+                                    </div>
+                                ) : (
+                                    studentLists.map((list) => (
+                                        <button
+                                            type="button"
+                                            key={list.id}
+                                            className={`stored-item ${
+                                                currentPage === "student-data" &&
+                                                String(list.id) ===
+                                                    String(selectedStudentListId)
+                                                    ? "active"
+                                                    : ""
+                                            }`}
+                                            title={
+                                                list.tabName ||
+                                                list.listName ||
+                                                "Untitled list"
+                                            }
+                                            onClick={() =>
+                                                navigate(
+                                                    "/student-data?listId=" +
+                                                        encodeURIComponent(list.id)
+                                                )
+                                            }
+                                        >
+                                            <span className="stored-letter">
+                                                {getInitials(
+                                                    list.tabName ||
+                                                        list.listName ||
+                                                        "List"
+                                                )}
+                                            </span>
+                                            <span className="stored-name">
+                                                {list.tabName ||
+                                                    list.listName ||
+                                                    "Untitled list"}
+                                            </span>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                        )}
+
+                        <div className="nav-divider" />
+
+                        <button
+                            type="button"
+                            className={navItemClass("student-forms")}
+                            onClick={() => navigate("/idlistform")}
+                        >
+                            <ClipboardPenLine className="nav-icon" />
+                            <span className="nav-label">Student Forms</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            className={navItemClass("templates")}
+                            onClick={() => navigate("/templates")}
+                        >
+                            <PanelsTopLeft className="nav-icon" />
+                            <span className="nav-label">Templates</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            className={navItemClass("createform", "create-nav")}
+                            onClick={() => navigate("/create-form")}
+                        >
+                            <IdCard className="nav-icon" />
+                            <span className="nav-label">Create Design</span>
+                        </button>
+                    </nav>
+
+                    <div className="nav-title nav-title-system">
+                        System
+                    </div>
+
+                    <nav className="nav" aria-label="System">
+                        
+                        {/* Settings */}
+                        <button
+                            type="button"
+                            className={`nav-item ${
+                                currentPage === "settings" ||
+                                currentPage === "data-menu-settings"
+                                    ? "section-active"
+                                    : ""
+                            }`}
+                            onClick={() => toggleSection("settings")}
+                            aria-expanded={openSection === "settings"}
+                            aria-controls="settings-submenu"
+                        >
+                            <Settings className="nav-icon" />
+                            <span className="nav-label">Settings</span>
+                            <ChevronDown
+                                className={`nav-chevron ${
+                                    openSection === "settings" ? "rotated" : ""
+                                }`}
+                            />
+                        </button>
+
+                        {openSection === "settings" && (
+                            <div id="settings-submenu" className="nav-submenu">
+                                <button
+                                    type="button"
+                                    className={`stored-item ${
+                                        currentPage === "settings" ? "active" : ""
+                                    }`}
+                                    onClick={() => navigate("/settings")}
+                                >
+                                    <Palette className="submenu-icon" />
+                                    <span className="stored-name">Appearance</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className={`stored-item ${
+                                        currentPage === "data-menu-settings" ? "active" : ""
+                                    }`}
+                                    onClick={() => navigate("/data-menu-settings")}
+                                >
+                                    <ListOrdered className="submenu-icon" />
+                                    <span className="stored-name">Data Menu</span>
+                                </button>
+                            </div>
+                        )}
+                    </nav>
+                </div>
+
+                {/* Pinned account footer */}
+                <div className="sidebar-bottom">
+                    <div className="sidebar-user">
+                        <div className="avatar">AG</div>
+                        <div className="user-info">
+                            <div className="user-name">Aaditi</div>
+                            <div className="user-role">Administrator</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </>
     );
 }
 

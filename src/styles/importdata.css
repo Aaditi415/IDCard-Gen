@@ -1216,47 +1216,13 @@ tr:last-child td {
 
 @media(max-width: 760px) {
 
-    .sidebar {
-
-        width: 70px;
-
-        padding:
-            15px 8px;
-    }
-
-    .brand-title,
-    .brand-subtitle,
-    .nav-title,
-    .nav-item span:not(.nav-icon) {
-
-        display: none;
-    }
-
-    .brand {
-
-        justify-content: center;
-
-        padding:
-            4px 0 25px;
-    }
-
-    .nav-item {
-
-        justify-content: center;
-
-        padding: 0;
-    }
-
+    
     .main {
 
         margin-left: 70px;
     }
 
-    .topbar {
-
-        padding:
-            0 18px;
-    }
+   
 
     .content {
 

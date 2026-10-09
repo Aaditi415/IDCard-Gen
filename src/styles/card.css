@@ -350,41 +350,6 @@
 ========================= */
 
 @media (max-width: 800px) {
-
-    .sidebar {
-        width: 70px;
-
-        padding: 18px 9px;
-    }
-
-    .logo-text,
-    .nav-title,
-    .nav-item span:not(.nav-icon),
-    .user-info {
-        display: none;
-    }
-
-    .logo {
-        justify-content: center;
-
-        padding: 0;
-    }
-
-    .nav-item {
-        justify-content: center;
-
-        padding: 12px;
-    }
-
-    .sidebar-bottom {
-        left: 9px;
-        right: 9px;
-    }
-
-    .sidebar-user {
-        justify-content: center;
-    }
-
     .main {
         margin-left: 70px;
 
@@ -402,14 +367,7 @@
         padding: 22px 16px 40px;
     }
 
-    .topbar {
-        padding: 0 16px;
-    }
-
-    .profile-name {
-        display: none;
-    }
-
+ 
     .steps {
         overflow-x: auto;
 

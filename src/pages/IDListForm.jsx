@@ -339,7 +339,7 @@ function IDListForm() {
         ========================== */
 
         const studentLink =
-            `/student-form/${slug}`;
+            `/studentform/${slug}`;
 
 
         /* =========================

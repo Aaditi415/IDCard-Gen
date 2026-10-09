@@ -191,6 +191,30 @@ function App() {
         return <Review />;
     }
 
+    
+    
+    if (
+        path.endsWith("/settings") ||
+        path.endsWith("/settings.html")
+    ) {
+        return <AppTheme />;
+    }
+
+    if (
+        path.endsWith("/data-menu-settings") ||
+        path.endsWith("/data-menu-settings.html")
+    ) {
+        return <DataMenuSettings />;
+    }
+
+    if (
+        path.endsWith("/apptheme") ||
+        path.endsWith("/apptheme.html")
+    ) {
+        return <AppTheme />;
+    }
+
+
     // Stored Data
     if (
         path.startsWith("/stored-data") ||
@@ -212,21 +236,6 @@ function App() {
         return <Data />;
     }
 
-    // Settings
-    if (
-        path.endsWith("/settings") ||
-        path.endsWith("/settings.html")
-    ) {
-        return <DataMenuSettings />;
-    }
-
-     // Settings
-    if (
-        path.endsWith("/apptheme") ||
-        path.endsWith("/apptheme.html")
-    ) {
-        return <AppTheme />;
-    }
 
     // Default
     return <Dashboard />;
