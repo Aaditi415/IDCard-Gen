@@ -1,6 +1,6 @@
+
 /* =====================================================
-   ADD SINGLE RECORD
-   LIST TYPE
+   ADD SINGLE RECORD — LIST TYPE
 ===================================================== */
 
 .list-type-options {
@@ -10,27 +10,18 @@
 }
 
 .list-type-option {
-    width: 100%;
     display: flex;
     align-items: center;
     gap: 12px;
-
+    width: 100%;
     padding: 13px 14px;
-
     border: 1px solid #e5e7eb;
     border-radius: 8px;
-
-    background: #ffffff;
+    background: #fff;
     color: #374151;
-
     text-align: left;
-
     cursor: pointer;
-
-    transition:
-        border-color 0.15s ease,
-        background 0.15s ease,
-        box-shadow 0.15s ease;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .list-type-option:hover {
@@ -41,32 +32,19 @@
 .list-type-option.active {
     border-color: #6366f1;
     background: #f8f8ff;
-
-    box-shadow:
-        0 0 0 2px
-        rgba(99, 102, 241, 0.08);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.08);
 }
 
-
-/* =====================================================
-   LIST TYPE ICON
-===================================================== */
-
 .list-type-icon {
-    width: 36px;
-    height: 36px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     flex-shrink: 0;
-
+    width: 36px;
+    height: 36px;
     border-radius: 8px;
-
     background: #f3f4f6;
     color: #4b5563;
-
     font-size: 17px;
 }
 
@@ -75,45 +53,29 @@
     color: #4f46e5;
 }
 
-
-/* =====================================================
-   LIST TYPE CONTENT
-===================================================== */
-
 .list-type-content {
-    min-width: 0;
-
     display: flex;
+    flex: 1;
     flex-direction: column;
     gap: 3px;
-
-    flex: 1;
+    min-width: 0;
 }
 
 .list-type-content strong {
     color: #111827;
-
     font-size: 14px;
     font-weight: 600;
 }
 
 .list-type-content span {
     color: #9ca3af;
-
     font-size: 11px;
-    line-height: 1.4;
+    line-height: 1.5;
 }
-
-
-/* =====================================================
-   LIST TYPE CHECK
-===================================================== */
 
 .list-type-check {
     flex-shrink: 0;
-
     color: #d1d5db;
-
     font-size: 16px;
 }
 
@@ -123,21 +85,17 @@
 
 
 /* =====================================================
-   STORED LIST SELECTOR
+   EXISTING LIST SELECTOR
 ===================================================== */
 
 .stored-list-selector {
     display: flex;
     flex-direction: column;
     gap: 7px;
-
     max-height: 235px;
-
     padding-right: 3px;
-
-    overflow-y: auto;
     overflow-x: hidden;
-
+    overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: #d1d5db transparent;
 }
@@ -151,40 +109,26 @@
 }
 
 .stored-list-selector::-webkit-scrollbar-thumb {
-    background: #d1d5db;
     border-radius: 10px;
+    background: #d1d5db;
 }
 
 .stored-list-selector::-webkit-scrollbar-thumb:hover {
     background: #9ca3af;
 }
 
-
-/* =====================================================
-   STORED LIST OPTION
-===================================================== */
-
 .stored-list-option {
-    width: 100%;
-
     display: flex;
     align-items: center;
     gap: 11px;
-
+    width: 100%;
     padding: 10px 12px;
-
     border: 1px solid #e5e7eb;
     border-radius: 8px;
-
-    background: #ffffff;
-
+    background: #fff;
     text-align: left;
-
     cursor: pointer;
-
-    transition:
-        border-color 0.15s ease,
-        background 0.15s ease;
+    transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .stored-list-option:hover {
@@ -195,166 +139,118 @@
 .stored-list-option.selected {
     border-color: #6366f1;
     background: #f8f8ff;
-
-    box-shadow:
-        0 0 0 2px
-        rgba(99, 102, 241, 0.07);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.07);
 }
 
-
-/* =====================================================
-   STORED LIST AVATAR
-===================================================== */
-
 .stored-list-avatar {
-    width: 34px;
-    height: 34px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     flex-shrink: 0;
-
+    width: 34px;
+    height: 34px;
     border-radius: 7px;
-
     background: #f3f4f6;
     color: #4b5563;
-
     font-size: 11px;
     font-weight: 700;
 }
 
-.stored-list-option.selected
-.stored-list-avatar {
+.stored-list-option.selected .stored-list-avatar {
     background: #6366f1;
-    color: #ffffff;
+    color: #fff;
 }
 
-
-/* =====================================================
-   STORED LIST DETAILS
-===================================================== */
-
 .stored-list-details {
-    min-width: 0;
-
     display: flex;
+    flex: 1;
     flex-direction: column;
     gap: 3px;
-
-    flex: 1;
+    min-width: 0;
 }
 
 .stored-list-details strong {
     overflow: hidden;
-
     color: #111827;
-
     font-size: 14px;
     font-weight: 600;
-
     white-space: nowrap;
     text-overflow: ellipsis;
 }
 
 .stored-list-details span {
     color: #9ca3af;
-
     font-size: 11px;
 }
 
-
-/* =====================================================
-   STORED LIST RADIO
-===================================================== */
-
 .stored-list-radio {
     flex-shrink: 0;
-
     color: #d1d5db;
-
     font-size: 16px;
 }
 
-.stored-list-option.selected
-.stored-list-radio {
+.stored-list-option.selected .stored-list-radio {
     color: #4f46e5;
 }
 
 
 /* =====================================================
-   EMPTY LIST
+   EMPTY LIST STATE
 ===================================================== */
 
 .list-empty-state {
     display: flex;
     align-items: center;
     gap: 12px;
-
     padding: 14px;
-
     border: 1px dashed #d1d5db;
     border-radius: 8px;
-
     background: #fafafa;
 }
 
 .list-empty-icon {
-    width: 34px;
-    height: 34px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     flex-shrink: 0;
-
+    width: 34px;
+    height: 34px;
     border-radius: 7px;
-
     background: #f3f4f6;
     color: #6b7280;
-
     font-size: 18px;
 }
 
 .list-empty-content {
-    min-width: 0;
-
     display: flex;
+    flex: 1;
     flex-direction: column;
     gap: 3px;
-
-    flex: 1;
+    min-width: 0;
 }
 
 .list-empty-content strong {
     color: #374151;
-
     font-size: 12px;
 }
 
 .list-empty-content span {
     color: #9ca3af;
-
     font-size: 11px;
+    line-height: 1.5;
 }
 
 .list-empty-state button {
     flex-shrink: 0;
-
-    padding: 7px 10px;
-
+    padding: 8px 10px;
     border: 0;
     border-radius: 6px;
-
     background: #111827;
-    color: #ffffff;
-
+    color: #fff;
     font-size: 11px;
     font-weight: 600;
-
     cursor: pointer;
+    transition: background 0.15s ease;
 }
 
 .list-empty-state button:hover {
@@ -363,31 +259,7 @@
 
 
 /* =====================================================
-   ADD SINGLE RECORD RESPONSIVE
-===================================================== */
-
-@media (max-width: 600px) {
-
-    .list-empty-state {
-        align-items: flex-start;
-        flex-wrap: wrap;
-    }
-
-    .list-empty-state button {
-        width: 100%;
-    }
-
-    .list-type-option {
-        padding: 12px;
-    }
-
-    .stored-list-option {
-        padding: 10px;
-    }
-}
-
-/* =====================================================
-   NEW LIST - COLUMN SETUP
+   NEW LIST — COLUMN NAMES
 ===================================================== */
 
 .new-list-columns {
@@ -400,366 +272,101 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
 }
 
 .column-number {
-    width: 28px;
-    height: 28px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     flex-shrink: 0;
-
+    width: 28px;
+    height: 28px;
     border-radius: 6px;
-
     background: #f3f4f6;
     color: #6b7280;
-
     font-size: 11px;
     font-weight: 600;
 }
 
 .column-name-field .input {
     flex: 1;
+    min-width: 0;
 }
 
 
 /* =====================================================
-   ADD SINGLE RECORD - LIST TYPE
+   FORM VALIDATION
 ===================================================== */
 
-.list-type-options {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+.input.invalid {
+    border-color: #ef4444;
 }
 
-.list-type-option {
-    width: 100%;
-
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    padding: 13px 14px;
-
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-
-    background: #ffffff;
-    color: #374151;
-
-    text-align: left;
-
-    cursor: pointer;
-
-    transition:
-        border-color 0.15s ease,
-        background 0.15s ease,
-        box-shadow 0.15s ease;
+.input.invalid:focus {
+    outline: none;
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
-.list-type-option:hover {
-    border-color: #c7d2fe;
-    background: #fafaff;
-}
-
-.list-type-option.active {
-    border-color: #6366f1;
-    background: #f8f8ff;
-
-    box-shadow:
-        0 0 0 2px
-        rgba(99, 102, 241, 0.08);
-}
-
-.list-type-icon {
-    width: 36px;
-    height: 36px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    flex-shrink: 0;
-
-    border-radius: 8px;
-
-    background: #f3f4f6;
-    color: #4b5563;
-
-    font-size: 17px;
-}
-
-.list-type-option.active .list-type-icon {
-    background: #eef2ff;
-    color: #4f46e5;
-}
-
-.list-type-content {
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-
-    flex: 1;
-}
-
-.list-type-content strong {
-    color: #111827;
-
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.list-type-content span {
-    color: #9ca3af;
-
-    font-size: 11px;
-    line-height: 1.4;
-}
-
-.list-type-check {
-    flex-shrink: 0;
-
-    color: #d1d5db;
-
-    font-size: 16px;
-}
-
-.list-type-option.active .list-type-check {
-    color: #4f46e5;
-}
-
-
-/* =====================================================
-   STORED LIST SELECTOR
-===================================================== */
-
-.stored-list-selector {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-
-    max-height: 235px;
-
-    padding-right: 3px;
-
-    overflow-y: auto;
-    overflow-x: hidden;
-
-    scrollbar-width: thin;
-    scrollbar-color: #d1d5db transparent;
-}
-
-.stored-list-selector::-webkit-scrollbar {
-    width: 5px;
-}
-
-.stored-list-selector::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.stored-list-selector::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 10px;
-}
-
-.stored-list-selector::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
-}
-
-.stored-list-option {
-    width: 100%;
-
-    display: flex;
-    align-items: center;
-    gap: 11px;
-
-    padding: 10px 12px;
-
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-
-    background: #ffffff;
-
-    text-align: left;
-
-    cursor: pointer;
-
-    transition:
-        border-color 0.15s ease,
-        background 0.15s ease;
-}
-
-.stored-list-option:hover {
-    border-color: #d1d5db;
-    background: #f9fafb;
-}
-
-.stored-list-option.selected {
-    border-color: #6366f1;
-    background: #f8f8ff;
-
-    box-shadow:
-        0 0 0 2px
-        rgba(99, 102, 241, 0.07);
-}
-
-.stored-list-avatar {
-    width: 34px;
-    height: 34px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    flex-shrink: 0;
-
-    border-radius: 7px;
-
-    background: #f3f4f6;
-    color: #4b5563;
-
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.stored-list-option.selected
-.stored-list-avatar {
-    background: #6366f1;
-    color: #ffffff;
-}
-
-.stored-list-details {
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-
-    flex: 1;
-}
-
-.stored-list-details strong {
-    overflow: hidden;
-
-    color: #111827;
-
-    font-size: 14px;
-    font-weight: 600;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.stored-list-details span {
-    color: #9ca3af;
-
-    font-size: 11px;
-}
-
-.stored-list-radio {
-    flex-shrink: 0;
-
-    color: #d1d5db;
-
-    font-size: 16px;
-}
-
-.stored-list-option.selected
-.stored-list-radio {
-    color: #4f46e5;
-}
-
-
-/* =====================================================
-   EMPTY LIST
-===================================================== */
-
-.list-empty-state {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    padding: 14px;
-
-    border: 1px dashed #d1d5db;
-    border-radius: 8px;
-
-    background: #fafafa;
-}
-
-.list-empty-icon {
-    width: 34px;
-    height: 34px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    flex-shrink: 0;
-
-    border-radius: 7px;
-
-    background: #f3f4f6;
-    color: #6b7280;
-
-    font-size: 18px;
-}
-
-.list-empty-content {
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-
-    flex: 1;
-}
-
-.list-empty-content strong {
-    color: #374151;
-
+.error {
+    display: none;
+    margin-top: 6px;
+    color: #dc2626;
     font-size: 12px;
+    line-height: 1.5;
 }
 
-.list-empty-content span {
-    color: #9ca3af;
-
-    font-size: 11px;
-}
-
-.list-empty-state button {
-    flex-shrink: 0;
-
-    padding: 7px 10px;
-
-    border: 0;
-    border-radius: 6px;
-
-    background: #111827;
-    color: #ffffff;
-
-    font-size: 11px;
-    font-weight: 600;
-
-    cursor: pointer;
-}
-
-.list-empty-state button:hover {
-    background: #1f2937;
+.error.show {
+    display: block;
 }
 
 
 /* =====================================================
-   RESPONSIVE
+   INTERACTION & ACCESSIBILITY
+===================================================== */
+
+.list-type-option:focus-visible,
+.stored-list-option:focus-visible,
+.list-empty-state button:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+
+
+/* =====================================================
+   RESPONSIVE — TABLET
+===================================================== */
+
+@media (max-width: 900px) {
+    .column-name-field {
+        min-width: 0;
+    }
+
+    .stored-list-selector {
+        max-height: 280px;
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE — MOBILE
 ===================================================== */
 
 @media (max-width: 600px) {
+    .list-type-option {
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .list-type-content span {
+        font-size: 12px;
+    }
+
+    .stored-list-option {
+        gap: 9px;
+        padding: 10px;
+    }
 
     .list-empty-state {
         align-items: flex-start;
@@ -768,10 +375,23 @@
 
     .list-empty-state button {
         width: 100%;
+        min-height: 38px;
     }
 
     .column-name-field {
-        align-items: flex-start;
+        align-items: center;
     }
+}
 
+
+/* =====================================================
+   REDUCED MOTION
+===================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .list-type-option,
+    .stored-list-option,
+    .list-empty-state button {
+        transition: none;
+    }
 }

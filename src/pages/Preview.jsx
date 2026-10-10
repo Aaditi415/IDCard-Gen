@@ -646,7 +646,7 @@ function Preview() {
                     <div className="bottom-actions">
 
                         <button
-                            className="back-btn"
+                            className="ui-btn ui-btn--secondary"
                             id="backBtn"
                             onClick={goBackToDesign}
                         >

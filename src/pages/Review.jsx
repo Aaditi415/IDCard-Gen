@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import '../styles/review.css'
+import { ArrowLeft, ArrowRight } from "lucide-react";
 function Review() {
-
+    const [editErrors, setEditErrors] = useState({});
     const [deleteIndex, setDeleteIndex] = useState(null);
 
     /* =====================================================
@@ -137,22 +138,184 @@ function Review() {
         );
     };
 
+    
+    
+    const getFieldType = (header) => {
+        const name = String(header || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[_-]+/g, " ")
+            .replace(/\s+/g, " ");
+
+        if (/\b(dob|date of birth|birth date|birthdate)\b/.test(name)) {
+            return "date";
+        }
+
+        if (/\b(email|email address)\b/.test(name)) {
+            return "email";
+        }
+
+        if (/\b(phone|mobile|contact number|phone number|mobile number)\b/.test(name)) {
+            return "tel";
+        }
+
+        if (/\b(website|website url|url)\b/.test(name)) {
+            return "url";
+        }
+
+        if (/\b(age|quantity|marks|score)\b/.test(name)) {
+            return "number";
+        }
+
+        return "text";
+    };
+
+    const getFieldLimits = (header) => {
+        const name = String(header || "").trim().toLowerCase();
+
+        if (/\b(email|email address)\b/.test(name)) {
+            return { minLength: 5, maxLength: 254 };
+        }
+
+        if (/\b(phone|mobile|contact number|phone number|mobile number)\b/.test(name)) {
+            return { minLength: 7, maxLength: 15 };
+        }
+
+        if (/\b(name|student name|father name|mother name)\b/.test(name)) {
+            return { minLength: 2, maxLength: 100 };
+        }
+
+        if (/\b(address)\b/.test(name)) {
+            return { minLength: 5, maxLength: 250 };
+        }
+
+        return { minLength: 1, maxLength: 100 };
+    };
+
+    const validateField = (header, value) => {
+        const type = getFieldType(header);
+        const name = String(header || "This field").trim();
+        const input = String(value ?? "").trim();
+
+        // All fields required.
+        if (!input) {
+            return `${name} is required.`;
+        }
+
+        if (type === "date") {
+            let dateValue = input;
+
+            // Also accept common typed date formats:
+            // 7 10 2026, 07/10/2026, 07-10-2026.
+            const match = input.match(
+                /^(\d{1,2})[\/\s-](\d{1,2})[\/\s-](\d{4})$/
+            );
+
+            if (match) {
+                const [, first, second, year] = match;
+
+                // Interpret these formats as DD/MM/YYYY.
+                dateValue = `${year}-${second.padStart(2, "0")}-${first.padStart(2, "0")}`;
+            }
+
+            const isoMatch = dateValue.match(
+                /^(\d{4})-(\d{2})-(\d{2})$/
+            );
+
+            if (!isoMatch) {
+                return "Enter date as DD/MM/YYYY, for example 07/10/2026.";
+            }
+
+            const [, year, month, day] = isoMatch;
+            const date = new Date(
+                Number(year),
+                Number(month) - 1,
+                Number(day)
+            );
+
+            if (
+                date.getFullYear() !== Number(year) ||
+                date.getMonth() !== Number(month) - 1 ||
+                date.getDate() !== Number(day)
+            ) {
+                return "Enter a real calendar date.";
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (date > today) {
+                return "Date of birth cannot be in the future.";
+            }
+
+            return "";
+        }
+
+        const { minLength, maxLength } = getFieldLimits(header);
+
+        if (input.length < minLength) {
+            return `${name} must contain at least ${minLength} characters.`;
+        }
+
+        if (input.length > maxLength) {
+            return `${name} cannot exceed ${maxLength} characters.`;
+        }
+
+        if (type === "email") {
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input)) {
+                return "Enter a valid email address.";
+            }
+        }
+
+        if (type === "tel") {
+            const digits = input.replace(/\D/g, "");
+
+            if (digits.length < 7 || digits.length > 15) {
+                return "Phone number must contain 7–15 digits.";
+            }
+        }
+
+        if (type === "number") {
+            if (!/^\d+(\.\d+)?$/.test(input)) {
+                return `${name} must be a valid number.`;
+            }
+        }
+
+        if (type === "url") {
+            try {
+                const url = new URL(input);
+
+                if (!["http:", "https:"].includes(url.protocol)) {
+                    return "URL must start with http:// or https://.";
+                }
+            } catch {
+                return "Enter a valid URL, including https://.";
+            }
+        }
+
+        return "";
+    };
 
     /* =====================================================
        EDIT STUDENT
     ===================================================== */
 
     const openEditModal = (index) => {
-        const student = students[index];
+    const student = students[index];
 
         setEditingIndex(index);
-
         setEditValues(
-            headers.map(
-                (_, columnIndex) =>
-                    student[columnIndex] || ""
+            headers.map((_, columnIndex) =>
+                student[columnIndex] ?? ""
             )
         );
+        setEditErrors({});
+    };
+
+    const closeEditModal = () => {
+        setEditingIndex(null);
+        setEditValues([]);
+        setEditErrors({});
     };
 
 
@@ -162,6 +325,21 @@ function Review() {
 
     const saveEdit = () => {
         if (editingIndex === null) {
+            return;
+        }
+        const errors = {};
+
+        headers.forEach((header, index) => {
+            const error = validateField(header, editValues[index]);
+
+            if (error) {
+                errors[index] = error;
+            }
+        });
+
+        setEditErrors(errors);
+
+        if (Object.keys(errors).length > 0) {
             return;
         }
 
@@ -194,14 +372,7 @@ function Review() {
     };
 
 
-    /* =====================================================
-       CLOSE EDIT
-    ===================================================== */
-
-    const closeEditModal = () => {
-        setEditingIndex(null);
-        setEditValues([]);
-    };
+ 
 
 
     /* =====================================================
@@ -797,11 +968,11 @@ function Review() {
                                         </p>
 
                                         <button
-                                            className="secondary-btn"
+                                            className="ui-btn ui-btn--primary"
                                             id="goImportBtn"
                                             onClick={goBackToImport}
                                         >
-                                            ← Back to Import
+                                            <ArrowRight size={10}/> Back to Import
                                         </button>
 
                                     </div>
@@ -868,24 +1039,22 @@ function Review() {
                             <div className="bottom-actions">
 
                                 <button
-                                    className="back-btn"
+                                    className="ui-btn ui-btn--secondary"
                                     id="backBtn"
                                     onClick={goBackToImport}
                                 >
-                                    ← Back
+                                    <ArrowLeft size={10} /> Back
                                 </button>
 
 
                                 <button
-                                    className="save-btn"
+                                    className="ui-btn ui-btn--primary"
                                     id="saveBtn"
                                     onClick={saveStudentList}
                                 >
                                     Save Student List
 
-                                    <span>
-                                        →
-                                    </span>
+                                    <ArrowRight size={10} />
 
                                 </button>
 
@@ -987,183 +1156,216 @@ function Review() {
 
             <div
                 className={`modal-overlay ${
-                    editingIndex !== null
-                        ? "show"
-                        : ""
+                    editingIndex !== null ? "show" : ""
                 }`}
                 id="editModal"
                 onClick={(event) => {
-
-                    if (
-                        event.target === event.currentTarget
-                    ) {
+                    if (event.target === event.currentTarget) {
                         closeEditModal();
                     }
-
                 }}
+                aria-hidden={editingIndex === null}
             >
+                <div
+                    className="edit-modal modern-edit-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="editModalTitle"
+                >
+                    {/* Header */}
+                    <div className="modern-modal-header">
+                        <div className="modern-modal-heading">
+                            <div className="modern-modal-icon">
+                                ✎
+                            </div>
 
-                <div className="edit-modal">
+                            <div>
+                                <span className="modern-modal-eyebrow">
+                                    STUDENT RECORD
+                                </span>
 
+                                <h3 id="editModalTitle">
+                                    Edit Student Record
+                                </h3>
 
-                    <div className="modal-header">
-
-                        <div>
-
-                            <h3>
-                                Edit Student
-                            </h3>
-
-                            <p>
-                                Update the student information.
-                            </p>
-
+                                <p>
+                                    Update the details below and save your changes.
+                                </p>
+                            </div>
                         </div>
 
-
                         <button
-                            className="modal-close"
-                            id="closeModal"
+                            type="button"
+                            className="modern-modal-close"
                             onClick={closeEditModal}
+                            aria-label="Close edit dialog"
                         >
                             ×
                         </button>
-
                     </div>
 
+                    {/* Record information */}
+                    <div className="modern-record-strip">
+                        <span className="modern-record-dot" />
 
-                    <div
-                        className="edit-fields"
-                        id="editFields"
-                    >
+                        <span>
+                            Editing record
+                        </span>
 
-                        {headers.map(
-                            (header, columnIndex) => (
+                        <strong>
+                            #{editingIndex !== null ? editingIndex + 1 : "—"}
+                        </strong>
 
-                                <div
-                                    className="edit-field"
-                                    key={columnIndex}
-                                >
+                        <span className="modern-record-separator">·</span>
 
-                                    <label>
-                                        {header || "Column"}
-                                    </label>
-
-                                    <input
-                                        type="text"
-                                        value={
-                                            editValues[columnIndex] || ""
-                                        }
-                                        onChange={(event) => {
-
-                                            setEditValues(
-                                                (currentValues) => {
-
-                                                    const updatedValues =
-                                                        [...currentValues];
-
-                                                    updatedValues[
-                                                        columnIndex
-                                                    ] =
-                                                        event.target.value;
-
-                                                    return updatedValues;
-
-                                                }
-                                            );
-
-                                        }}
-                                    />
-
-                                </div>
-
-                            )
-                        )}
-
+                        <span>
+                            {headers.length} fields
+                        </span>
                     </div>
 
+                    {/* Form fields */}
+                    <div className="modern-edit-fields">
+                        {headers.map((header, columnIndex) => (
+                            <div
+                                className="modern-edit-field"
+                                key={columnIndex}
+                            >
+                                <label htmlFor={`edit-field-${columnIndex}`}>
+                                    {header || `Column ${columnIndex + 1}`}
+                                    <span className="modern-field-index">
+                                        {String(columnIndex + 1).padStart(2, "0")}
+                                    </span>
+                                </label>
 
-                    <div className="modal-actions">
+                                
+                                <input
+                                    id={`edit-field-${columnIndex}`}
+                                    type={getFieldType(header)}
+                                    value={editValues[columnIndex] ?? ""}
+                                    placeholder={
+                                        getFieldType(header) === "date"
+                                            ? "Select date of birth"
+                                            : `Enter ${String(header || "value").toLowerCase()}`
+                                    }
+                                    max={getFieldType(header) === "date"
+                                        ? new Date().toISOString().slice(0, 10)
+                                        : undefined
+                                    }
+                                    aria-invalid={Boolean(editErrors[columnIndex])}
+                                    aria-describedby={
+                                        editErrors[columnIndex]
+                                            ? `edit-error-${columnIndex}`
+                                            : undefined
+                                    }
+                                    onChange={(event) => {
+                                        const updatedValues = [...editValues];
+                                        updatedValues[columnIndex] = event.target.value;
+                                        setEditValues(updatedValues);
 
+                                        setEditErrors((current) => ({
+                                            ...current,
+                                            [columnIndex]: validateField(
+                                                header,
+                                                event.target.value
+                                            ),
+                                        }));
+                                    }}
+                                />
+
+                                {editErrors[columnIndex] && (
+                                    <span
+                                        className="modern-field-error"
+                                        id={`edit-error-${columnIndex}`}
+                                        role="alert"
+                                    >
+                                        {editErrors[columnIndex]}
+                                    </span>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="modern-modal-footer">
+                        <span className="modern-modal-note">
+                            Changes apply when you save.
+                        </span>
+
+                        <div className="modern-modal-actions">
+                            <button
+                                type="button"
+                                className="modern-cancel-btn"
+                                onClick={closeEditModal}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                className="modern-save-btn"
+                                onClick={saveEdit}
+                            >
+                                <span>Save Changes</span>
+                                <span className="modern-save-arrow">→</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* DELETE CONFIRMATION MODAL */}
+
+            <div
+                className={`delete-overlay ${
+                    studentToDelete !== null ? "show" : ""
+                }`}
+                onClick={(event) => {
+                    if (event.target === event.currentTarget) {
+                        cancelDelete();
+                    }
+                }}
+                aria-hidden={studentToDelete === null}
+            >
+                <div
+                    className="delete-modal"
+                    role="alertdialog"
+                    aria-modal="true"
+                    aria-labelledby="deleteModalTitle"
+                    aria-describedby="deleteModalDescription"
+                >
+                    <div className="delete-modal-icon">!</div>
+
+                    <h3 id="deleteModalTitle">
+                        Delete student record?
+                    </h3>
+
+                    <p id="deleteModalDescription">
+                        Are you sure you want to delete{" "} 
+                        <strong>
+                            {studentToDelete?.name || "this student"}
+                        </strong> record
+                        ? This action cannot be undone.
+                    </p>
+
+                    <div className="delete-modal-actions">
                         <button
-                            className="back-btn"
-                            id="cancelEdit"
-                            onClick={closeEditModal}
+                            type="button"
+                            className="delete-cancel-btn"
+                            onClick={cancelDelete}
                         >
                             Cancel
                         </button>
 
-
                         <button
-                            className="save-btn"
-                            id="saveEdit"
-                            onClick={saveEdit}
+                            type="button"
+                            className="delete-confirm-btn"
+                            onClick={confirmDeleteStudent}
                         >
-                            Save Changes
+                            Delete Record
                         </button>
-
                     </div>
-
-                </div>
-
-            </div>
-
-
-
-
-        {/* DELETE CONFIRMATION MODAL */}
-
-        <div
-            className={`delete-overlay ${
-                studentToDelete !== null ? "show" : ""
-            }`}
-            onClick={(event) => {
-                if (event.target === event.currentTarget) {
-                    cancelDelete();
-                }
-            }}
-            aria-hidden={studentToDelete === null}
-        >
-            <div
-                className="delete-modal"
-                role="alertdialog"
-                aria-modal="true"
-                aria-labelledby="deleteModalTitle"
-                aria-describedby="deleteModalDescription"
-            >
-                <div className="delete-modal-icon">!</div>
-
-                <h3 id="deleteModalTitle">
-                    Delete student record?
-                </h3>
-
-                <p id="deleteModalDescription">
-                    Are you sure you want to delete{" "}
-                    <strong>
-                        {studentToDelete?.name || "this student"}
-                    </strong>
-                    ? This action cannot be undone.
-                </p>
-
-                <div className="delete-modal-actions">
-                    <button
-                        type="button"
-                        className="delete-cancel-btn"
-                        onClick={cancelDelete}
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        type="button"
-                        className="delete-confirm-btn"
-                        onClick={confirmDeleteStudent}
-                    >
-                        Delete Record
-                    </button>
                 </div>
             </div>
-        </div>
 
 
             {/* TOAST */}

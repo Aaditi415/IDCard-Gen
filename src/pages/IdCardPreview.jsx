@@ -2009,7 +2009,7 @@ function IdCardPreview() {
 
                         <button
                             type="button"
-                            className="secondary-btn"
+                            className="ui-btn ui-btn--primary"
                             onClick={
                                 goDemo
                             }

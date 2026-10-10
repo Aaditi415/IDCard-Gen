@@ -1,83 +1,252 @@
-/* =====================================================
-   SINGLE RECORD
-===================================================== */
+
+/* =========================================
+   SINGLE RECORD PAGE
+========================================= */
+
+.single-record-page {
+    min-width: 0;
+}
+
+.single-record-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    align-items: start;
+    gap: 22px;
+    margin-top: 24px;
+}
+
+.single-record-form-card {
+    min-width: 0;
+    width: 100%;
+}
+
+.single-record-form-card {
+    overflow: hidden;
+}
+
+.single-record-form-card .form-card-header h3 {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.single-record-form-card .form-card-header p {
+    margin: 6px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* List and tab information */
 
 .record-list-info {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin-bottom: 22px;
+    gap: 12px;
+    margin-bottom: 26px;
 }
 
 .record-list-info-item {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-
-    padding: 11px 13px;
-
+    gap: 6px;
+    min-width: 0;
+    padding: 13px 14px;
     border: 1px solid #e5e7eb;
-    border-radius: 7px;
-
+    border-radius: 8px;
     background: #fafafa;
 }
 
 .record-list-info-label {
     color: #9ca3af;
     font-size: 10px;
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
 }
 
 .record-list-info-item strong {
-    color: #374151;
-    font-size: 12px;
-    font-weight: 600;
-
     overflow: hidden;
-    white-space: nowrap;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
+
+/* Section heading */
+
+.single-record-section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.single-record-section-heading h4 {
+    margin: 0;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.single-record-section-heading p {
+    margin: 6px 0 0;
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.required-note {
+    flex-shrink: 0;
+    color: #6b7280;
+    font-size: 11px;
+}
+
+.required-star {
+    color: #dc2626;
+}
+
+/* Form fields */
 
 .single-record-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 17px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 16px;
 }
 
-/* Keep the same field appearance as ListForm */
-
-.single-record-fields .field {
+.single-record-fields .single-record-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
     margin: 0;
 }
 
 .single-record-fields .field-label {
     display: block;
-    margin-bottom: 7px;
-
+    margin-bottom: 8px;
     color: #374151;
     font-size: 12px;
     font-weight: 600;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
 }
 
 .single-record-fields .input {
+    box-sizing: border-box;
+    display: block;
     width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    background: #fff;
+    color: #111827;
+    font: inherit;
+    font-size: 13px;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* Error */
-
-.single-record-fields + .error,
-.form-body > .error {
-    margin-top: 15px;
+.single-record-fields .input::placeholder {
+    color: #9ca3af;
 }
 
-/* Mobile */
+.single-record-fields .input:focus {
+    border-color: #2563eb;
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(37 99 235 / 10%);
+}
 
-@media (max-width: 600px) {
+.single-record-fields .input.invalid {
+    border-color: #dc2626;
+    background: #fffafa;
+}
 
-    .record-list-info {
-        grid-template-columns: 1fr;
+.single-record-fields .input.invalid:focus {
+    box-shadow: 0 0 0 3px rgb(220 38 38 / 10%);
+}
+
+/* Individual field validation */
+
+.single-record-field-error {
+    margin: 6px 0 0;
+    color: #dc2626;
+    font-size: 11px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 1000px) {
+    .single-record-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
     }
 
+    .single-record-info-card {
+        order: 2;
+    }
+
+    .single-record-info-card .info-item {
+        margin-bottom: 16px;
+    }
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 600px) {
+    .single-record-layout {
+        gap: 16px;
+        margin-top: 18px;
+    }
+
+    .record-list-info {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+        margin-bottom: 22px;
+    }
+
+    .record-list-info-item {
+        padding: 12px;
+    }
+
+    .single-record-section-heading {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .single-record-fields {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+    }
+
+    .single-record-fields .input {
+        min-height: 44px;
+        font-size: 16px;
+    }
+
+
+    
+}
+
+/* =========================================
+   SMALL MOBILE
+========================================= */
+
+@media (max-width: 360px) {
+    .single-record-info-card {
+        padding: 13px;
+    }
+
+    .single-record-section-heading p,
+    .single-record-info-heading p {
+        font-size: 11px;
+    }
 }

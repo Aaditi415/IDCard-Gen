@@ -964,7 +964,7 @@ function Details() {
 
                                 <button
                                     type="button"
-                                    className="back-btn"
+                                    className="ui-btn ui-btn--secondary"
                                     id="backBtn"
                                     onClick={handleBack}
                                 >

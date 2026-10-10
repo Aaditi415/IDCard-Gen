@@ -542,7 +542,7 @@ css
     top: 20px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
     max-height: calc(100vh - 40px);
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -554,6 +554,7 @@ css
     border: 1px solid var(--border);
     border-radius: 12px;
     background: var(--card, #fff);
+    width: 100%;
 }
 
 .side-card h3 {

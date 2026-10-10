@@ -1002,6 +1002,11 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
                                                     )
                                                 )}
 
+                                                {/* Status column */}
+                                                {!(headers.length === 4 && headers[0] === "File") && (
+                                                    <th>Status</th>
+                                                )}
+
                                             </tr>
 
                                         </thead>

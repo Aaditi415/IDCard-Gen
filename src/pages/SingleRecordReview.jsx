@@ -457,7 +457,7 @@ function SingleRecordReview() {
                             <div className="form-actions">
 
                                 <button
-                                    className="secondary-btn"
+                                    className="ui-btn ui-btn--primary"
                                     onClick={
                                         handleBack
                                     }

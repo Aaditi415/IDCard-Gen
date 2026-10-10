@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 import Sidebar from "../components/Sidebar";
@@ -6,7 +7,7 @@ import Topbar from "../components/Topbar";
 function SingleRecord() {
     const [listSetup, setListSetup] = useState(null);
     const [formData, setFormData] = useState([]);
-    const [error, setError] = useState("");
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         try {
@@ -28,46 +29,206 @@ function SingleRecord() {
             setListSetup(savedSetup);
             setFormData(savedSetup.headers.map(() => ""));
         } catch (error) {
-            console.error(
-                "Failed to load list setup:",
-                error
-            );
-
+            console.error("Failed to load list setup:", error);
             window.location.href = "/add-single-record";
         }
     }, []);
+    
+    const getFieldType = (header) => {
+        const name = String(header).trim().toLowerCase();
+
+        if (/\b(email|e-mail)\b/.test(name)) {
+            return "email";
+        }
+
+        if (/\b(dob|date of birth|birth date|birthdate)\b/.test(name)) {
+            return "dob";
+        }
+
+        if (/\b(date|joining date|admission date|expiry date)\b/.test(name)) {
+            return "date";
+        }
+
+        if (
+            /\b(phone|mobile|telephone|contact number|phone number)\b/.test(name)
+        ) {
+            return "tel";
+        }
+
+        return "text";
+    };
+    // Identify the input type from the column name.
+    
+    const getFieldHint = (header) => {
+        const name = String(header).trim().toLowerCase();
+        const type = getFieldType(header);
+
+        if (type === "email") {
+            return "Enter a valid email address, e.g. student@example.com.";
+        }
+
+        if (type === "dob") {
+            return "Select the student's date of birth. Future dates are not allowed.";
+        }
+
+        if (type === "date") {
+            return "Select a valid date.";
+        }
+
+        if (type === "tel") {
+            return "Enter a contact number containing 10–15 digits.";
+        }
+
+        if (/\b(name|student name|full name)\b/.test(name)) {
+            return "Enter the student's full name.";
+        }
+
+        if (/\b(roll no|roll number|roll)\b/.test(name)) {
+            return "Enter a unique roll number for the student.";
+        }
+
+        if (/\b(class|standard|division)\b/.test(name)) {
+            return "Enter the student's class or division.";
+        }
+
+        if (/\b(address|location)\b/.test(name)) {
+            return "Enter the complete address.";
+        }
+
+        return `Enter ${header.toLowerCase()}.`;
+    };
+
+    const getFieldLength = (header) => {
+        const name = String(header).trim().toLowerCase();
+
+        if (/\b(roll no|roll number|roll)\b/.test(name)) {
+            return { minLength: 1, maxLength: 20 };
+        }
+
+        if (/\b(name|student name|full name)\b/.test(name)) {
+            return { minLength: 2, maxLength: 100 };
+        }
+
+        if (/\b(class|standard|division)\b/.test(name)) {
+            return { minLength: 1, maxLength: 30 };
+        }
+
+        if (getFieldType(header) === "email") {
+            return { minLength: 5, maxLength: 254 };
+        }
+
+        if (getFieldType(header) === "tel") {
+            return { minLength: 10, maxLength: 15 };
+        }
+
+        return { minLength: 1, maxLength: 255 };
+    };
+    const getToday = () => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, "0");
+        const day = String(today.getDate()).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+    };
+
+    const validateField = (header, value) => {
+        const name = String(header).trim();
+        const type = getFieldType(header);
+        const cleanValue = String(value ?? "").trim();
+        const { minLength, maxLength } = getFieldLength(header);
+
+        if (cleanValue.length < minLength) {
+            return `${name} must contain at least ${minLength} characters.`;
+        }
+
+        if (cleanValue.length > maxLength) {
+            return `${name} cannot exceed ${maxLength} characters.`;
+        }
+
+        if (!cleanValue) {
+            return `${name} is required.`;
+        }
+
+        if (type === "email") {
+            const emailPattern =
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!emailPattern.test(cleanValue)) {
+                return "Enter a valid email address.";
+            }
+        }
+
+        if (type === "tel") {
+            const digits = cleanValue.replace(/\D/g, "");
+
+            if (digits.length < 10 || digits.length > 15) {
+                return "Enter a valid phone number with 10–15 digits.";
+            }
+        }
+
+        
+        if (type === "dob" || type === "date") {
+            const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+
+            if (!datePattern.test(cleanValue)) {
+                return "Select a valid date.";
+            }
+
+            const [year, month, day] = cleanValue.split("-").map(Number);
+            const parsedDate = new Date(year, month - 1, day);
+
+            const isValidDate =
+                parsedDate.getFullYear() === year &&
+                parsedDate.getMonth() === month - 1 &&
+                parsedDate.getDate() === day;
+
+            if (!isValidDate) {
+                return "Enter a valid date.";
+            }
+
+            if (type === "dob" && cleanValue > getToday()) {
+                return "Date of birth cannot be in the future.";
+            }
+        }
+
+        return "";
+    };
 
     const handleChange = (index, value) => {
-        const updated = [...formData];
+        setFormData((currentData) =>
+            currentData.map((item, itemIndex) =>
+                itemIndex === index ? value : item
+            )
+        );
 
-        updated[index] = value;
-
-        setFormData(updated);
-        setError("");
+        setErrors((currentErrors) => ({
+            ...currentErrors,
+            [index]: listSetup
+                ? validateField(listSetup.headers[index], value)
+                : ""
+        }));
     };
 
     const handleContinue = () => {
         if (!listSetup) return;
 
-        const hasEmptyField = formData.some(
-            (value) => !String(value).trim()
-        );
+        const nextErrors = {};
 
-        if (hasEmptyField) {
-            setError(
-                "Please fill all fields before continuing."
-            );
+        listSetup.headers.forEach((header, index) => {
+            const message = validateField(header, formData[index]);
+            if (message) {
+                nextErrors[index] = message;
+            }
+        });
 
+        setErrors(nextErrors);
+
+        if (Object.keys(nextErrors).length > 0) {
             return;
         }
 
-        /*
-         * Existing Review.jsx expects:
-         *
-         * idCardList
-         * idCardImportedData
-         */
-
+        // Preserve the data format used by Review.jsx.
         localStorage.setItem(
             "idCardList",
             JSON.stringify({
@@ -85,12 +246,8 @@ function SingleRecord() {
             })
         );
 
-        // Remove temporary new-list setup
-        sessionStorage.removeItem(
-            "singleRecordListSetup"
-        );
+        sessionStorage.removeItem("singleRecordListSetup");
 
-        // Existing Review screen
         window.location.href = "/review";
     };
 
@@ -104,366 +261,243 @@ function SingleRecord() {
 
     return (
         <div className="app">
-
             <Sidebar />
 
             <main className="main">
-
                 <Topbar />
 
-                <div className="content">
-
-                    {/* =====================================================
-                        BREADCRUMB
-                    ===================================================== */}
-
+                <div className="content single-record-page">
                     <div className="breadcrumb">
-
-                        <span>
-                            Add Single Record
-                        </span>
-
-                        <span className="breadcrumb-separator">
-                            /
-                        </span>
-
-                        <span>
-                            Enter Record
-                        </span>
-
+                        <span>Add Single Record</span>
+                        <span className="breadcrumb-separator">/</span>
+                        <span>Add Record</span>
                     </div>
 
-
-                    {/* =====================================================
-                        TITLE
-                    ===================================================== */}
-
-                    <div className="page-title">
-                        Enter Record
-                    </div>
+                    <div className="page-title">Add Student Record</div>
 
                     <div className="page-subtitle">
-                        Add the first record to your new list.
+                        Enter the student’s details to add the first record to your selected master list.
                     </div>
-
-
-                    {/* =====================================================
-                        STEPS
-                    ===================================================== */}
 
                     <div className="steps">
-
                         <div className="step completed">
-
-                            <div className="step-number">
-                                ✓
-                            </div>
-
-                            <div className="step-label">
-                                List
-                            </div>
-
+                            <div className="step-number">✓</div>
+                            <div className="step-label">List</div>
                         </div>
 
-
-                        <div className="step-line completed"></div>
-
+                        <div className="step-line completed" />
 
                         <div className="step active">
-
-                            <div className="step-number">
-                                2
-                            </div>
-
-                            <div className="step-label">
-                                Add Record
-                            </div>
-
+                            <div className="step-number">2</div>
+                            <div className="step-label">Add Record</div>
                         </div>
 
-
-                        <div className="step-line"></div>
-
+                        <div className="step-line" />
 
                         <div className="step">
-
-                            <div className="step-number">
-                                3
-                            </div>
-
-                            <div className="step-label">
-                                Review
-                            </div>
-
+                            <div className="step-number">3</div>
+                            <div className="step-label">Review</div>
                         </div>
-
                     </div>
 
-
-                    {/* =====================================================
-                        MAIN LAYOUT
-                    ===================================================== */}
-
-                    <div className="layout">
-
-
-                        {/* =================================================
-                            LEFT — FORM
-                        ================================================= */}
-
-                        <section className="form-card">
-
+                    <div className="single-record-layout">
+                        <section className="form-card single-record-form-card">
                             <div className="form-card-header">
-
                                 <div>
-
-                                    <h3>
-                                        {listSetup.listName}
-                                    </h3>
-
+                                    <h3>Add Data in {listSetup.listName} List</h3>
                                     <p>
-                                        Enter information for the
-                                        first record.
+                                        Fill in all required fields. Make sure the details are accurate before continuing.
                                     </p>
-
                                 </div>
-
                             </div>
 
-
                             <div className="form-body">
-
-
-                                {/* =================================================
-                                    LIST INFORMATION
-                                ================================================= */}
-
                                 <div className="record-list-info">
-
                                     <div className="record-list-info-item">
-
                                         <span className="record-list-info-label">
                                             List
                                         </span>
-
-                                        <strong>
-                                            {listSetup.listName}
-                                        </strong>
-
+                                        <strong>{listSetup.listName}</strong>
                                     </div>
 
-
                                     <div className="record-list-info-item">
-
                                         <span className="record-list-info-label">
                                             Tab
                                         </span>
+                                        <strong>{listSetup.tabName}</strong>
+                                    </div>
+                                </div>
 
-                                        <strong>
-                                            {listSetup.tabName}
-                                        </strong>
-
+                                <div className="single-record-section-heading">
+                                    <div>
+                                        <h4>Record information</h4>
+                                        <p>
+                                            Required fields are marked with an asterisk ().*
+                                        </p>
                                     </div>
 
                                 </div>
-
-
-                                {/* =================================================
-                                    RECORD FIELDS
-                                ================================================= */}
 
                                 <div className="single-record-fields">
+                                    {listSetup.headers.map((header, index) => {
+                                        const type = getFieldType(header);
+                                        const { minLength, maxLength } = getFieldLength(header);
+                                        const inputType =
+                                            type === "dob" || type === "date"
+                                                ? "date"
+                                                : type;
 
-                                    {listSetup.headers.map(
-                                        (header, index) => (
-
+                                        return (
                                             <div
-                                                className="field"
-                                                key={index}
+                                                className="field single-record-field"
+                                                key={`${header}-${index}`}
                                             >
-
-                                                <label className="field-label">
+                                                <label
+                                                    className="field-label"
+                                                    htmlFor={`record-field-${index}`}
+                                                >
                                                     {header}
+                                                    <span className="required-star">
+                                                        {" "}*
+                                                    </span>
                                                 </label>
 
+                                                
+                                                <input
+                                                    id={`record-field-${index}`}
+                                                    type={inputType}
+                                                    className={`input ${errors[index] ? "invalid" : ""}`}
+                                                    value={formData[index] || ""}
+                                                    minLength={minLength}
+                                                    maxLength={maxLength}
+                                                    placeholder={
+                                                        inputType === "date"
+                                                            ? "Select date"
+                                                            : type === "email"
+                                                            ? "e.g. student@example.com"
+                                                            : type === "tel"
+                                                            ? "e.g. 9876543210"
+                                                            : /\b(name|full name)\b/i.test(header)
+                                                            ? "e.g. Aarav Sharma"
+                                                            : `Enter ${header}`
+                                                    }
+                                                    max={type === "dob" ? getToday() : undefined}
+                                                    aria-invalid={Boolean(errors[index])}
+                                                    aria-describedby={
+                                                        errors[index]
+                                                            ? `record-error-${index}`
+                                                            : `record-hint-${index}`
+                                                    }
+                                                    onChange={(event) =>
+                                                        handleChange(index, event.target.value)
+                                                    }
+                                                />
 
-                                                <div className="input-wrap">
+                                                <p
+                                                    className="field-hint"
+                                                >
+                                                    {getFieldHint(header)}
+                                                </p>
 
-                                                    <input
-                                                        type="text"
-                                                        className="input"
-                                                        value={
-                                                            formData[index] ||
-                                                            ""
-                                                        }
-                                                        placeholder={`Enter ${header}`}
-                                                        onChange={(event) =>
-                                                            handleChange(
-                                                                index,
-                                                                event.target.value
-                                                            )
-                                                        }
-                                                    />
-
-                                                </div>
+                                                {errors[index] && (
+                                                    <p
+                                                        className="field-error"
+                                                        role="alert"
+                                                    >
+                                                        {errors[index]}
+                                                    </p>
+                                                )}
 
                                             </div>
-
-                                        )
-                                    )}
-
+                                        );
+                                    })}
                                 </div>
-
-
-                                {/* =================================================
-                                    ERROR
-                                ================================================= */}
-
-                                {error && (
-                                    <div className="error show">
-                                        {error}
-                                    </div>
-                                )}
-
                             </div>
 
+                                
 
-                            {/* =================================================
-                                FOOTER
-                            ================================================= */}
+                            <div className="bottom-actions ">
+                                <button
+                                    type="button"
+                                    className="ui-btn ui-btn--secondary"
+                                    onClick={handleBack}
+                                >
+                                    Back
+                                </button>
 
-                            <div className="form-footer">
-
-                                <div className="footer-note">
-
-                                    <span>
-                                        {listSetup.headers.length}
-                                    </span>
-
-                                    {listSetup.headers.length === 1
-                                        ? " field"
-                                        : " fields"}{" "}
-                                    to complete
-
-                                </div>
-
-
-                                <div className="actions">
-
-                                    <button
-                                        type="button"
-                                        className="ui-btn ui-btn--secondary"
-                                        onClick={handleBack}
-                                    >
-                                        Back
-                                    </button>
-
-
-                                    <button
-                                        type="button"
-                                        className="ui-btn ui-btn--primary"
-                                        onClick={handleContinue}
-                                    >
-                                        Continue to Review
-                                    </button>
-
-                                </div>
-
+                                <button
+                                    type="button"
+                                    className="ui-btn ui-btn--primary"
+                                    onClick={handleContinue}
+                                >
+                                    Continue to Review
+                                    <span aria-hidden="true"> →</span>
+                                </button>
                             </div>
-
                         </section>
 
-
-                        {/* =================================================
-                            RIGHT — HOW THIS WORKS
-                        ================================================= */}
-
+                        
                         <aside className="info-card">
-
-                            <h3>
-                                How this works
-                            </h3>
-
-
-                            <div className="info-item">
-
-                                <div className="info-number">
-                                    1
-                                </div>
+                            <div className="info-card-heading">
+                                <div className="info-heading-icon">i</div>
 
                                 <div>
-
-                                    <strong>
-                                        List created
-                                    </strong>
-
-                                    <span>
-                                        Your new list and its
-                                        columns have been
-                                        created.
-                                    </span>
-
+                                    <h3>Before you continue</h3>
+                                    <p>Understand how your student record will be added.</p>
                                 </div>
+                            </div>
 
+                            <div className="info-divider"></div>
+
+                            <div className="info-item">
+                                <div className="info-number">1</div>
+
+                                <div>
+                                    <strong>List Created</strong>
+                                    <span>
+                                        Your master list and tab are ready to organize
+                                        student records.
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="info-item">
+                                <div className="info-number">2</div>
+
+                                <div>
+                                    <strong>Enter Student Details</strong>
+                                    <span>
+                                        Fill in the required fields. Email, date of birth,
+                                        and phone fields are validated automatically when
+                                        their column names are recognized.
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="info-item">
+                                <div className="info-number">3</div>
+
+                                <div>
+                                    <strong>Review the Record</strong>
+                                    <span>
+                                        Continue to review your student's information
+                                        before saving it to the list.
+                                    </span>
+                                </div>
                             </div>
 
 
-                            <div className="info-item">
-
-                                <div className="info-number">
-                                    2
-                                </div>
-
-                                <div>
-
-                                    <strong>
-                                        Add one record
-                                    </strong>
-
-                                    <span>
-                                        Enter the student's
-                                        information in the
-                                        fields on the left.
-                                    </span>
-
-                                </div>
-
+                            <div className="info-tip">
+                                <strong>Tip</strong>
+                                <p>
+                                    Double-check student names, dates of birth, and contact
+                                    details before continuing to review.
+                                </p>
                             </div>
-
-
-                            <div className="info-item">
-
-                                <div className="info-number">
-                                    3
-                                </div>
-
-                                <div>
-
-                                    <strong>
-                                        Review & save
-                                    </strong>
-
-                                    <span>
-                                        Check the record on
-                                        the review screen
-                                        before saving the list.
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-
-                          
-
                         </aside>
-
                     </div>
-
                 </div>
-
             </main>
-
         </div>
     );
 }

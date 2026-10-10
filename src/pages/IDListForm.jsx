@@ -891,7 +891,7 @@ function IDListForm() {
                                                             : ""
                                                     }`}
                                                     placeholder="e.g. 1st Standard - A Students"
-                                                    maxLength="80"
+                                                    maxLength="50"
                                                     value={listName}
                                                     onChange={(event) => {
 

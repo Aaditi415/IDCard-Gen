@@ -1,7 +1,8 @@
 import { useState } from "react";
 
 import{
-   ArrowRight
+    Info,
+    ArrowRight,
 } from "lucide-react";
 
 
@@ -513,37 +514,31 @@ function ListForm() {
 
                                     {/* FOOTER */}
 
-                                    <div className="form-footer">
+                                    
+                                    <div className="bottom-actions">
 
-                                        <div className="footer-note">
-                                            You can change student records after importing them.
-                                        </div>
-
-
-                                        <div className="actions">
-
-                                            <button
-                                                type="button"
-                                                className="ui-btn ui-btn--secondary"
-                                                onClick={handleCancel}
-                                            >
-                                                Cancel
-                                            </button>
+                                        <button
+                                            type="button"
+                                            className="ui-btn ui-btn--secondary"
+                                            onClick={handleCancel}
+                                        >
+                                            Cancel
+                                        </button>
 
 
-                                            <button
-                                                type="button"
-                                                className="ui-btn ui-btn--primary "
-                                                onClick={handleContinue}
-                                            >
-                                                Continue
-                                                <ArrowRight size={10} />
-                                                
-                                            </button>
-
-                                        </div>
+                                        <button
+                                            type="button"
+                                            className="ui-btn ui-btn--primary"
+                                            onClick={handleContinue}
+                                        >
+                                            Continue
+                                            <ArrowRight size={10} />
+                                            
+                                        </button>
 
                                     </div>
+
+                                   
 
                                 </div>
                             )}

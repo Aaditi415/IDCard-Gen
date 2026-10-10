@@ -1,4 +1,13 @@
 import { useEffect, useState } from "react";
+import {
+    List,
+    Plus,
+    CheckCircle2,
+    Circle,
+    ArrowRight,
+    Hash,
+    Info,
+} from 'lucide-react'
 
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
@@ -27,6 +36,12 @@ function AddSingleRecord() {
     const [tabNameError, setTabNameError] =
         useState(false);
 
+    const [duplicateTabNameError, setDuplicateTabNameError] =
+        useState(false);
+
+    const [duplicateHeadersError, setDuplicateHeadersError] =
+        useState(false);
+    
     const [columnCountError, setColumnCountError] =
         useState(false);
 
@@ -192,12 +207,13 @@ function AddSingleRecord() {
        NEW LIST - BASIC VALIDATION
     ===================================================== */
 
-     const validateBasicInformation = () => {
+    const validateBasicInformation = () => {
         let valid = true;
 
-        const cleanListName = listName.trim();
+        const cleanListName = listName.trim().toLowerCase();
+        const cleanTabName = tabName.trim().toLowerCase();
 
-        /* LIST NAME */
+        // Validate list name
         if (!cleanListName) {
             setListNameError(true);
             setDuplicateListNameError(false);
@@ -205,31 +221,59 @@ function AddSingleRecord() {
         } else {
             setListNameError(false);
 
-            const listNameExists = storedLists.some(
+            const duplicateList = storedLists.some(
                 (list) =>
                     String(list.listName || "")
                         .trim()
-                        .toLowerCase() ===
-                    cleanListName.toLowerCase()
+                        .toLowerCase() === cleanListName
             );
 
-            if (listNameExists) {
-                setDuplicateListNameError(true);
+            setDuplicateListNameError(duplicateList);
+
+            if (duplicateList) {
                 valid = false;
-            } else {
-                setDuplicateListNameError(false);
             }
         }
 
-        /* TAB NAME */
-        if (!tabName.trim()) {
+        // Validate tab name
+        if (!cleanTabName) {
             setTabNameError(true);
+            setDuplicateTabNameError(false);
             valid = false;
         } else {
             setTabNameError(false);
+
+            const duplicateTab = storedLists.some(
+                (list) =>
+                    String(list.tabName || "")
+                        .trim()
+                        .toLowerCase() === cleanTabName
+            );
+
+            setDuplicateTabNameError(duplicateTab);
+
+            if (duplicateTab) {
+                valid = false;
+            }
         }
 
         return valid;
+    };
+
+
+    /* =====================================================
+       Duplicate Headers VALIDATION
+    ===================================================== */
+    
+    const hasDuplicateHeaders = (headers) => {
+        const normalizedHeaders = headers.map((header) =>
+            String(header || "")
+                .trim()
+                .replace(/\s+/g, " ")
+                .toLowerCase()
+        );
+
+        return new Set(normalizedHeaders).size !== normalizedHeaders.length;
     };
 
     /* =====================================================
@@ -277,21 +321,15 @@ function AddSingleRecord() {
        HEADER CHANGE
     ===================================================== */
 
-    const handleHeaderChange = (
-        index,
-        value
-    ) => {
+    const handleHeaderChange = (index, value) => {
         setHeaders((currentHeaders) => {
-            const updated = [
-                ...currentHeaders
-            ];
-
+            const updated = [...currentHeaders];
             updated[index] = value;
-
             return updated;
         });
 
         setHeadersError(false);
+        setDuplicateHeadersError(false);
     };
 
     /* =====================================================
@@ -303,59 +341,65 @@ function AddSingleRecord() {
     ===================================================== */
 
     const handleCreateList = () => {
-    if (!validateBasicInformation()) {
-        showToast(
-            "Please complete the required fields."
+        if (!validateBasicInformation()) {
+            showToast("Please correct the highlighted fields.");
+            return;
+        }
+
+        // Column count must be a whole number from 1 to 20.
+        const count = Number(columnCount);
+
+        if (
+            !Number.isInteger(count) ||
+            count < 1 ||
+            count > 20
+        ) {
+            setColumnCountError(true);
+            showToast("Enter a whole number between 1 and 20.");
+            return;
+        }
+
+        setColumnCountError(false);
+
+                
+        const cleanHeaders = Array.from(
+            { length: count },
+            (_, index) => String(headers[index] || "").trim()
         );
 
-        return;
-    }
+        // 1. Check for empty column names
+        
+        if (cleanHeaders.some((header) => !header)) {
+            setHeadersError(true);
+            setDuplicateHeadersError(false);
+            showToast("Please enter all column names.");
+            return;
+        }
 
-    if (!columnCount || columnCount < 1) {
-        setColumnCountError(true);
+        if (hasDuplicateHeaders(cleanHeaders)) {
+            setHeadersError(true);
+            setDuplicateHeadersError(true);
+            showToast("Column names cannot be repeated.");
+            return;
+        }
+        setHeadersError(false);
+        setDuplicateHeadersError(false);
 
-        showToast(
-            "Please enter the number of columns."
+        sessionStorage.setItem(
+            "singleRecordListSetup",
+            JSON.stringify({
+                listName: listName.trim(),
+                tabName: tabName.trim(),
+                headers: cleanHeaders
+            })
         );
 
-        return;
-    }
+        showToast("List information saved.");
 
-    const cleanHeaders = headers.map((header) =>
-        String(header || "").trim()
-    );
-
-    const hasEmptyHeader = cleanHeaders.some(
-        (header) => !header
-    );
-
-    if (hasEmptyHeader) {
-        setHeadersError(true);
-
-        showToast(
-            "Please enter all column names."
-        );
-
-        return;
-    }
-
-    // Store the NEW LIST setup temporarily.
-    // No stored list is created yet.
-    sessionStorage.setItem(
-        "singleRecordListSetup",
-        JSON.stringify({
-            listName: listName.trim(),
-            tabName: tabName.trim(),
-            headers: cleanHeaders
-        })
-    );
-
-    showToast("List information saved.");
-
-    setTimeout(() => {
-        window.location.href = "/single-record";
-    }, 400);
-};
+        setTimeout(() => {
+            window.location.href = "/single-record";
+        }, 400);
+    };
 
     /* =====================================================
        CANCEL
@@ -457,7 +501,7 @@ function AddSingleRecord() {
                                 goImportData
                             }
                         >
-                            Import Data
+                            Master Data
                         </button>
 
                         <span>
@@ -478,9 +522,7 @@ function AddSingleRecord() {
                     </h1>
 
                     <p className="page-subtitle">
-                        Add one student record to an
-                        existing list or create a new
-                        list before adding the record.
+                        Add an individual student to an existing list or create a new list before entering their details.
                     </p>
 
 
@@ -594,14 +636,14 @@ function AddSingleRecord() {
                                             >
 
                                                 <div className="list-type-icon">
-                                                    ☷
+                                                    <List size={20} strokeWidth={1.8} />
                                                 </div>
 
                                                 <div className="list-type-content">
 
-                                                    <strong>
+                                                    <h4>
                                                         Existing List
-                                                    </strong>
+                                                    </h4>
 
                                                     <span>
                                                         Add the record
@@ -613,8 +655,8 @@ function AddSingleRecord() {
 
                                                 <div className="list-type-check">
                                                     {mode === "existing"
-                                                        ? "●"
-                                                        : "○"}
+                                                        ? <CheckCircle2 size={19} />
+                                                        : <Circle size={19} />}
                                                 </div>
 
                                             </button>
@@ -633,14 +675,14 @@ function AddSingleRecord() {
                                             >
 
                                                 <div className="list-type-icon">
-                                                    ＋
+                                                    <Plus size={20} strokeWidth={1.8} />
                                                 </div>
 
                                                 <div className="list-type-content">
 
-                                                    <strong>
+                                                    <h4>
                                                         Create New List
-                                                    </strong>
+                                                    </h4>
 
                                                     <span>
                                                         Create a new
@@ -693,7 +735,7 @@ function AddSingleRecord() {
                                                 <div className="list-empty-state">
 
                                                     <div className="list-empty-icon">
-                                                        +
+                                                        <Plus size={20} />
                                                     </div>
 
                                                     <div className="list-empty-content">
@@ -771,9 +813,9 @@ function AddSingleRecord() {
 
                                                                     <div className="stored-list-details">
 
-                                                                        <strong>
+                                                                        <h5>
                                                                             {name}
-                                                                        </strong>
+                                                                        </h5>
 
                                                                         <span>
                                                                             {count}{" "}
@@ -786,8 +828,8 @@ function AddSingleRecord() {
 
                                                                     <div className="stored-list-radio">
                                                                         {selected
-                                                                            ? "●"
-                                                                            : "○"}
+                                                                            ? <CheckCircle2 size={19} />
+                                                                            : <Circle size={19} />}
                                                                     </div>
 
                                                                 </button>
@@ -851,7 +893,7 @@ function AddSingleRecord() {
                                                                 : ""
                                                         }`}
                                                         placeholder="e.g. 1st Standard - A Students"
-                                                        maxLength="80"
+                                                        maxLength="50"
                                                         value={
                                                             listName
                                                         }
@@ -866,6 +908,10 @@ function AddSingleRecord() {
                                                     />
 
                                                 </div>
+
+                                                <p className="field-hint">
+                                                    Use a unique name to identify this student group.
+                                                </p>
 
                                                 <div
                                                     className={`error ${
@@ -896,10 +942,6 @@ function AddSingleRecord() {
                                                         </span>
                                                     </label>
 
-                                                    <span className="field-hint">
-                                                        Short name
-                                                    </span>
-
                                                 </div>
 
                                                 <div className="input-wrap">
@@ -908,7 +950,7 @@ function AddSingleRecord() {
                                                         type="text"
                                                         id="tabName"
                                                         className={`input ${
-                                                            tabNameError
+                                                            tabNameError  || duplicateTabNameError
                                                                 ? "invalid"
                                                                 : ""
                                                         }`}
@@ -917,41 +959,30 @@ function AddSingleRecord() {
                                                         value={
                                                             tabName
                                                         }
-                                                        onChange={(
-                                                            event
-                                                        ) => {
-
-                                                            setTabName(
-                                                                event
-                                                                    .target
-                                                                    .value
-                                                            );
-
-                                                            if (
-                                                                event
-                                                                    .target
-                                                                    .value
-                                                                    .trim()
-                                                            ) {
-                                                                setTabNameError(
-                                                                    false
-                                                                );
-                                                            }
-
+                                                        onChange={(event) => {
+                                                            setTabName(event.target.value);
+                                                            setTabNameError(false);
+                                                            setDuplicateTabNameError(false);
                                                         }}
                                                     />
 
+
                                                 </div>
+
+                                                <p className="field-hint">
+                                                    Enter the class or division name that teachers will recognize.
+                                                </p>
 
                                                 <div
                                                     className={`error ${
-                                                        tabNameError
+                                                        tabNameError || duplicateTabNameError
                                                             ? "show"
                                                             : ""
                                                     }`}
                                                 >
-                                                    Please enter a
-                                                    tab name.
+                                                    {duplicateTabNameError
+                                                        ? "This tab name already exists. Please choose a different name."
+                                                        : "Please enter a tab name."}
                                                 </div>
 
                                             </div>
@@ -998,6 +1029,10 @@ function AddSingleRecord() {
                                                     />
 
                                                 </div>
+
+                                                <p className="field-hint">
+                                                    Choose between 1 and 20 fields for this list.
+                                                </p>
 
 
                                                 <div
@@ -1063,10 +1098,7 @@ function AddSingleRecord() {
                                                                 <input
                                                                     type="text"
                                                                     className={`input ${
-                                                                        headersError &&
-                                                                        !headers[
-                                                                            index
-                                                                        ]?.trim()
+                                                                        headersError
                                                                             ? "invalid"
                                                                             : ""
                                                                     }`}
@@ -1109,16 +1141,15 @@ function AddSingleRecord() {
 
                                                 </div>
 
+                                                <p className="field-hint">
+                                                    Each column must have a name, and names cannot be repeated within the same list.
+                                                </p>
 
-                                                <div
-                                                    className={`error ${
-                                                        headersError
-                                                            ? "show"
-                                                            : ""
-                                                    }`}
-                                                >
-                                                    Please enter all
-                                                    column names.
+                                                <div className={`error ${headersError ? "show" : ""}`}>
+                                                    {duplicateHeadersError
+                                                        ? "Please enter all column names."
+                                                        : "Duplicate column names found. Please use a different name for each column."
+                                                    }
                                                 </div>
 
                                             </div>
@@ -1157,73 +1188,61 @@ function AddSingleRecord() {
 
                                 {/* FOOTER */}
 
-                                <div className="form-footer">
 
-                                    <div className="footer-note">
+                                <div className="bottom-actions">
 
-                                        {mode === "existing"
-                                            ? "The existing list will open in Stored Data where you can add the record."
-                                            : "Your column names will be used to create the single-record form."}
+                                    <button
+                                        type="button"
+                                        className="ui-btn ui-btn--secondary"
+                                        onClick={
+                                            handleCancel
+                                        }
+                                    >
+                                        Cancel
+                                    </button>
 
-                                    </div>
 
-
-                                    <div className="actions">
+                                    {mode === "existing" ? (
 
                                         <button
                                             type="button"
-                                            className="ui-btn ui-btn--secondary"
+                                            className="ui-btn ui-btn--primary"
                                             onClick={
-                                                handleCancel
+                                                handleExistingContinue
                                             }
                                         >
-                                            Cancel
+                                            Continue
+                                            <span
+                                                style={{
+                                                    marginLeft:
+                                                        "5px"
+                                                }}
+                                            >
+                                                <ArrowRight size={10} />
+                                            </span>
                                         </button>
 
+                                    ) : (
 
-                                        {mode === "existing" ? (
-
-                                            <button
-                                                type="button"
-                                                className="ui-btn ui-btn--primary"
-                                                onClick={
-                                                    handleExistingContinue
-                                                }
+                                        <button
+                                            type="button"
+                                            className="ui-btn ui-btn--primary"
+                                            onClick={
+                                                handleCreateList
+                                            }
+                                        >
+                                            Continue
+                                            <span
+                                                style={{
+                                                    marginLeft:
+                                                        "5px"
+                                                }}
                                             >
-                                                Continue
-                                                <span
-                                                    style={{
-                                                        marginLeft:
-                                                            "5px"
-                                                    }}
-                                                >
-                                                    →
-                                                </span>
-                                            </button>
+                                                →
+                                            </span>
+                                        </button>
 
-                                        ) : (
-
-                                            <button
-                                                type="button"
-                                                className="ui-btn ui-btn--primary"
-                                                onClick={
-                                                    handleCreateList
-                                                }
-                                            >
-                                                Continue
-                                                <span
-                                                    style={{
-                                                        marginLeft:
-                                                            "5px"
-                                                    }}
-                                                >
-                                                    →
-                                                </span>
-                                            </button>
-
-                                        )}
-
-                                    </div>
+                                    )}
 
                                 </div>
 
@@ -1234,80 +1253,60 @@ function AddSingleRecord() {
 
                         {/* INFO CARD */}
 
+                        
                         <aside className="info-card">
-
-                            <h3>
-                                How this works
-                            </h3>
-
-
-                            <div className="info-item">
-
-                                <div className="info-number">
-                                    1
-                                </div>
+                            <div className="info-card-heading">
+                                <div className="info-heading-icon">i</div>
 
                                 <div>
-
-                                    <strong>
-                                        Choose a list
-                                    </strong>
-
-                                    <span>
-                                        Select an existing list
-                                        or create a new one.
-                                    </span>
-
+                                    <h3>How It Works</h3>
+                                    <p>Add one student record in a few simple steps.</p>
                                 </div>
-
                             </div>
 
+                            <div className="info-divider" />
 
                             <div className="info-item">
-
-                                <div className="info-number">
-                                    2
-                                </div>
-
+                                <div className="info-number">1</div>
                                 <div>
-
-                                    <strong>
-                                        Define fields
-                                    </strong>
-
+                                    <strong>Choose a List</strong>
                                     <span>
-                                        For a new list, decide
-                                        how many columns you
-                                        need and name them.
+                                        Select an existing student list or create
+                                        a new one if the required list doesn't exist.
                                     </span>
-
                                 </div>
-
                             </div>
-
 
                             <div className="info-item">
-
-                                <div className="info-number">
-                                    3
-                                </div>
-
+                                <div className="info-number">2</div>
                                 <div>
-
-                                    <strong>
-                                        Add one record
-                                    </strong>
-
+                                    <strong>Enter Student Details</strong>
                                     <span>
-                                        Enter the student's
-                                        information and review
-                                        it before saving.
+                                        For an existing list, use its current fields.
+                                        For a new list, define the column names first.
                                     </span>
-
                                 </div>
-
                             </div>
 
+                            <div className="info-item">
+                                <div className="info-number">3</div>
+                                <div>
+                                    <strong>Review and Save</strong>
+                                    <span>
+                                        Verify the student's information before saving
+                                        the record to the selected list.
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="info-tip">
+                                <strong>Important</strong>
+                                <p>
+                                    Choose the correct class or division before adding
+                                    a student to avoid saving their details in the
+                                    wrong list.
+                                </p>
+                            </div>
                         </aside>
 
                     </div>
