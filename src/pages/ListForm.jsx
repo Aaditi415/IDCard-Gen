@@ -14,8 +14,8 @@ function ListForm() {
     const [listName, setListName] = useState("");
     const [tabName, setTabName] = useState("");
 
-    const [listNameError, setListNameError] = useState(false);
-    const [tabNameError, setTabNameError] = useState(false);
+    const [listNameError, setListNameError] = useState("");
+    const [tabNameError, setTabNameError] = useState("");
 
     const [showSuccess, setShowSuccess] = useState(false);
 
@@ -35,24 +35,80 @@ function ListForm() {
        VALIDATION
     ========================== */
 
+    
     const validateForm = () => {
         let valid = true;
 
         const listValue = listName.trim();
         const tabValue = tabName.trim();
 
-        if (!listValue) {
-            setListNameError(true);
-            valid = false;
-        } else {
-            setListNameError(false);
+        // Read previously saved lists
+        const savedLists = JSON.parse(
+            localStorage.getItem("idCardLists") || "[]"
+        );
+
+        // Include the existing single-list storage format
+        const existingList = localStorage.getItem("idCardList");
+
+        if (existingList) {
+            try {
+                const parsed = JSON.parse(existingList);
+
+                const alreadyIncluded = savedLists.some(
+                    (item) =>
+                        item.listName?.trim().toLowerCase() ===
+                            parsed.listName?.trim().toLowerCase() &&
+                        item.tabName?.trim().toLowerCase() ===
+                            parsed.tabName?.trim().toLowerCase()
+                );
+
+                if (!alreadyIncluded) {
+                    savedLists.push(parsed);
+                }
+            } catch {
+                // Ignore invalid saved data
+            }
         }
 
-        if (!tabValue) {
-            setTabNameError(true);
+        const normalizedList = listValue.toLowerCase();
+        const normalizedTab = tabValue.toLowerCase();
+
+        // List name validation
+        if (!listValue) {
+            setListNameError("Please enter a list name.");
+            valid = false;
+        } else if (listValue.length > 50) {
+            setListNameError("List name cannot exceed 50 characters.");
+            valid = false;
+        } else if (
+            savedLists.some(
+                (item) =>
+                    item.listName?.trim().toLowerCase() === normalizedList
+            )
+        ) {
+            setListNameError("This list name already exists.");
             valid = false;
         } else {
-            setTabNameError(false);
+            setListNameError("");
+        }
+
+        // Tab name validation
+        if (!tabValue) {
+            setTabNameError("Please enter a tab name.");
+            valid = false;
+        } else if (tabValue.length > 50) {
+            setTabNameError("Tab name cannot exceed 50 characters.");
+            valid = false;
+        } else if (
+            savedLists.some(
+                (item) =>
+                    item.tabName?.trim().toLowerCase() === normalizedTab
+            )
+        ) {
+            setTabNameError("This tab name already exists.");
+            valid = false;
+        } else {
+            setTabNameError("");
         }
 
         return valid;
@@ -62,30 +118,42 @@ function ListForm() {
        CONTINUE
     ========================== */
 
+    
     const handleContinue = () => {
         if (!validateForm()) {
-            showToast("Please complete the required fields.");
+            showToast("Please correct the errors before continuing.");
             return;
         }
 
         const list = listName.trim();
         const tab = tabName.trim();
 
-        localStorage.setItem(
-            "idCardList",
-            JSON.stringify({
-                listName: list,
-                tabName: tab
-            })
+        const savedLists = JSON.parse(
+            localStorage.getItem("idCardLists") || "[]"
         );
 
-        console.log("List created:", {
+        const newList = {
             listName: list,
             tabName: tab
-        });
+        };
+
+        savedLists.push(newList);
+
+        // Save all created lists
+        localStorage.setItem(
+            "idCardLists",
+            JSON.stringify(savedLists)
+        );
+
+        // Keep compatibility with your Import Data page
+        localStorage.setItem(
+            "idCardList",
+            JSON.stringify(newList)
+        );
+
+        console.log("List created:", newList);
 
         setShowSuccess(true);
-
         showToast("List information saved.");
     };
 
@@ -320,15 +388,12 @@ function ListForm() {
                                                             : ""
                                                     }`}
                                                     placeholder="e.g. 1st Standard - A Students"
-                                                    maxLength="80"
+                                                    maxLength="50"
                                                     value={listName}
                                                     onChange={(event) => {
                                                         setListName(event.target.value);
-
-                                                        if (
-                                                            event.target.value.trim()
-                                                        ) {
-                                                            setListNameError(false);
+                                                        if (listNameError) {
+                                                            setListNameError("");
                                                         }
                                                     }}
                                                     onKeyDown={handleKeyDown}
@@ -350,7 +415,7 @@ function ListForm() {
                                                 }`}
                                                 id="listNameError"
                                             >
-                                                Please enter a list name.
+                                                {listNameError}
                                             </div>
 
                                         </div>
@@ -385,15 +450,13 @@ function ListForm() {
                                                             : ""
                                                     }`}
                                                     placeholder="e.g. 1st A"
-                                                    maxLength="30"
+                                                    maxLength="10"
                                                     value={tabName}
                                                     onChange={(event) => {
                                                         setTabName(event.target.value);
 
-                                                        if (
-                                                            event.target.value.trim()
-                                                        ) {
-                                                            setTabNameError(false);
+                                                        if (tabNameError) {
+                                                            setTabNameError("");
                                                         }
                                                     }}
                                                     onKeyDown={handleKeyDown}
@@ -415,7 +478,7 @@ function ListForm() {
                                                 }`}
                                                 id="tabNameError"
                                             >
-                                                Please enter a tab name.
+                                                 {tabNameError}
                                             </div>
 
                                         </div>

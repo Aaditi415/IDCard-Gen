@@ -195,6 +195,7 @@ color: #ef4444;
 .field-hint {
 color: #9ca3af;
 font-size: 10px;
+margin-top: 2px;
 }
 
 .field-help {
@@ -762,7 +763,6 @@ padding: 20px 14px 32px;
 }
 
 .field-hint {
-    text-align: right;
     line-height: 1.5;
 }
 
