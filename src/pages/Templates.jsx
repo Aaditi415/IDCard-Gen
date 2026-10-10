@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import IDCardRenderer from "../components/IDCardRenderer";
+import{
+ SquareDashedPlus,
+ LayoutTemplate
+} from 'lucide-react'
 
 
 /* =========================================================
@@ -622,7 +626,7 @@ function EmptyTemplates({
         <div className="templates-empty">
 
             <div className="empty-icon">
-                ▧
+                <SquareDashedPlus />
             </div>
 
 
@@ -1009,7 +1013,7 @@ function Templates() {
 
                         <button
                             type="button"
-                            className="primary-btn templates-create-btn"
+                            className="add-record-btn"
                             onClick={
                                 handleCreate
                             }
@@ -1027,7 +1031,7 @@ function Templates() {
                     <div className="templates-summary">
 
                         <div className="templates-summary-icon">
-                            ▧
+                            <LayoutTemplate />
                         </div>
 
 

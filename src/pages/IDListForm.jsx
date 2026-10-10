@@ -175,73 +175,121 @@ function IDListForm() {
 
     }, []);
 
+    
+    const LIST_NAME_MIN_LENGTH = 3;
+    const LIST_NAME_MAX_LENGTH = 50;
+
+    const TAB_NAME_MIN_LENGTH = 2;
+    const TAB_NAME_MAX_LENGTH = 30;
 
     /* =========================
        VALIDATION
     ========================== */
 
-    const validateForm = () => {
 
+    const validateForm = () => {
         let valid = true;
 
-        const listValue =
-            listName.trim();
+        const listValue = listName.trim();
+        const tabValue = tabName.trim();
 
-        const tabValue =
-            tabName.trim();
+        setListNameError(false);
+        setTabNameError(false);
+        setTemplateError(false);
+        setMasterListError(false);
 
-
+        // Validate List Name
         if (!listValue) {
-
-            setListNameError(true);
+            setListNameError("Please enter a list name.");
             valid = false;
-
-        } else {
-
-            setListNameError(false);
-
+        } else if (listValue.length < LIST_NAME_MIN_LENGTH) {
+            setListNameError(
+                `List name must contain at least ${LIST_NAME_MIN_LENGTH} characters.`
+            );
+            valid = false;
+        } else if (listValue.length > LIST_NAME_MAX_LENGTH) {
+            setListNameError(
+                `List name cannot exceed ${LIST_NAME_MAX_LENGTH} characters.`
+            );
+            valid = false;
         }
 
-
+        // Validate Tab Name
         if (!tabValue) {
-
-            setTabNameError(true);
+            setTabNameError("Please enter a tab name.");
             valid = false;
-
-        } else {
-
-            setTabNameError(false);
-
+        } else if (tabValue.length < TAB_NAME_MIN_LENGTH) {
+            setTabNameError(
+                `Tab name must contain at least ${TAB_NAME_MIN_LENGTH} characters.`
+            );
+            valid = false;
+        } else if (tabValue.length > TAB_NAME_MAX_LENGTH) {
+            setTabNameError(
+                `Tab name cannot exceed ${TAB_NAME_MAX_LENGTH} characters.`
+            );
+            valid = false;
         }
 
+        // Load existing lists
+        let existingLists = [];
 
+        try {
+            const savedLists = JSON.parse(
+                localStorage.getItem("idCardLists") || "[]"
+            );
+
+            if (Array.isArray(savedLists)) {
+                existingLists = savedLists;
+            }
+        } catch (error) {
+            console.error("Unable to load existing lists:", error);
+        }
+
+        const normalizedList = listValue.toLowerCase();
+        const normalizedTab = tabValue.toLowerCase();
+        const slug = createSlug(tabValue);
+
+        // Duplicate List Name
+        if (
+            listValue &&
+            existingLists.some(
+                (item) =>
+                    item.listName?.trim().toLowerCase() === normalizedList
+            )
+        ) {
+            setListNameError("This list name already exists.");
+            valid = false;
+        }
+
+        // Duplicate Tab Name or Student Link
+        if (
+            tabValue &&
+            existingLists.some(
+                (item) =>
+                    item.tabName?.trim().toLowerCase() === normalizedTab ||
+                    item.slug === slug
+            )
+        ) {
+            setTabNameError(
+                "This tab name or its student link already exists."
+            );
+            valid = false;
+        }
+
+        // Validate Template
         if (!selectedTemplateId) {
-
             setTemplateError(true);
             valid = false;
-
-        } else {
-
-            setTemplateError(false);
-
         }
 
-
+        // Validate Master List
         if (!selectedMasterListId) {
-
             setMasterListError(true);
             valid = false;
-
-        } else {
-
-            setMasterListError(false);
-
         }
-
 
         return valid;
     };
-
 
     /* =========================
        CREATE SLUG
@@ -754,15 +802,13 @@ function IDListForm() {
                     ========================== */}
 
                     <h1 className="page-title">
-                        Create Student List
+                        Create Student Form
                     </h1>
 
-
                     <p className="page-subtitle">
-                        Create a student list, choose
-                        the ID card template, and select
-                        the master list used to verify
-                        student information.
+                        Create a shareable student registration form, choose
+                        the master list for verification, and select the ID
+                        card design.
                     </p>
 
 
@@ -873,9 +919,6 @@ function IDListForm() {
 
                                                 </label>
 
-                                                <span className="field-hint">
-                                                    Full name
-                                                </span>
 
                                             </div>
 
@@ -891,7 +934,8 @@ function IDListForm() {
                                                             : ""
                                                     }`}
                                                     placeholder="e.g. 1st Standard - A Students"
-                                                    maxLength="50"
+                                                    minLength={LIST_NAME_MIN_LENGTH}
+                                                    maxLength={LIST_NAME_MAX_LENGTH}
                                                     value={listName}
                                                     onChange={(event) => {
 
@@ -918,6 +962,8 @@ function IDListForm() {
 
                                             </div>
 
+                                            <p class="field-hint">Give the complete group a recognizable name. For example, use an academic year or a class name so you can find it later.</p>
+
 
                                             <div
                                                 className={`error ${
@@ -926,7 +972,7 @@ function IDListForm() {
                                                         : ""
                                                 }`}
                                             >
-                                                Please enter a list name.
+                                                {listNameError}
                                             </div>
 
                                         </div>
@@ -950,10 +996,6 @@ function IDListForm() {
 
                                                 </label>
 
-                                                <span className="field-hint">
-                                                    Short name
-                                                </span>
-
                                             </div>
 
 
@@ -968,7 +1010,8 @@ function IDListForm() {
                                                             : ""
                                                     }`}
                                                     placeholder="e.g. 1st A"
-                                                    maxLength="30"
+                                                    minLength={TAB_NAME_MIN_LENGTH}
+                                                    maxLength={TAB_NAME_MAX_LENGTH}
                                                     value={tabName}
                                                     onChange={(event) => {
 
@@ -995,6 +1038,8 @@ function IDListForm() {
 
                                             </div>
 
+                                            <p class="field-hint">This is the short label used to identify this group in your student data view. Keep it brief, such as "10th A" or "5th B".</p>
+
 
                                             <div
                                                 className={`error ${
@@ -1003,7 +1048,7 @@ function IDListForm() {
                                                         : ""
                                                 }`}
                                             >
-                                                Please enter a tab name.
+                                                {tabNameError}
                                             </div>
 
                                         </div>
@@ -1093,6 +1138,8 @@ function IDListForm() {
                                                 </select>
 
                                             </div>
+
+                                            <p class="field-hint">Select the ID card design you want to use for students in this group. The selected template will be used to generate their ID cards.</p>
 
 
                                             <div
@@ -1195,6 +1242,7 @@ function IDListForm() {
 
                                             </div>
 
+                                            <p class="field-hint">Select the master student list used to verify submitted details. Student information will be checked against this list before approval.</p>
 
                                             <div
                                                 className={`error ${
@@ -1297,52 +1345,44 @@ function IDListForm() {
                                         FOOTER
                                     ========================== */}
 
-                                    <div className="form-footer">
+                                     
 
-                                        <div className="footer-note">
+                                    <div className="bottom-actions">
 
-                                            Student data will be compared
-                                            against the selected master list.
+                                        <button
+                                            type="button"
+                                            className="ui-btn ui-btn--secondary"
+                                            onClick={
+                                                handleCancel
+                                            }
+                                        >
+                                            Cancel
+                                        </button>
 
-                                        </div>
 
+                                        <button
+                                            type="button"
+                                            className="ui-btn ui-btn--primary"
+                                            onClick={
+                                                handleContinue
+                                            }
+                                        >
+                                            Continue
 
-                                        <div className="actions">
-
-                                            <button
-                                                type="button"
-                                                className="ui-btn ui-btn--secondary"
-                                                onClick={
-                                                    handleCancel
-                                                }
+                                            <span
+                                                style={{
+                                                    marginLeft:
+                                                        "5px"
+                                                }}
                                             >
-                                                Cancel
-                                            </button>
+                                                →
+                                            </span>
 
-
-                                            <button
-                                                type="button"
-                                                className="ui-btn ui-btn--primary"
-                                                onClick={
-                                                    handleContinue
-                                                }
-                                            >
-                                                Continue
-
-                                                <span
-                                                    style={{
-                                                        marginLeft:
-                                                            "5px"
-                                                    }}
-                                                >
-                                                    →
-                                                </span>
-
-                                            </button>
-
-                                        </div>
+                                        </button>
 
                                     </div>
+
+                                 
 
                                 </div>
 
@@ -1442,80 +1482,73 @@ function IDListForm() {
                             INFORMATION
                         ========================== */}
 
+                        
                         <aside className="info-card">
-
-                            <h3>
-                                How this works
-                            </h3>
-
-
-                            <div className="info-item">
-
-                                <div className="info-number">
-                                    1
-                                </div>
-
-
+                            <div className="info-card-heading">
+                                <div className="info-heading-icon">i</div>
                                 <div>
-
-                                    <strong>
-                                        Create your list
-                                    </strong>
-
-                                    <span>
-                                        Example: 1st Standard - A Students
-                                    </span>
-
+                                    <h3>How this works</h3>
+                                    <p>
+                                        Set up a student submission flow in a few steps.
+                                    </p>
                                 </div>
-
                             </div>
 
+                            <div className="info-divider" />
 
                             <div className="info-item">
-
-                                <div className="info-number">
-                                    2
-                                </div>
-
-
+                                <div className="info-number">1</div>
                                 <div>
-
-                                    <strong>
-                                        Select ID card template
-                                    </strong>
-
+                                    <strong>Identify submissions</strong>
                                     <span>
-                                        Choose the saved design that
-                                        will be used for this student list.
+                                        The list name and tab name organize the
+                                        submissions from your student form.
                                     </span>
-
                                 </div>
-
                             </div>
-
 
                             <div className="info-item">
-
-                                <div className="info-number">
-                                    3
-                                </div>
-
-
+                                <div className="info-number">2</div>
                                 <div>
-
-                                    <strong>
-                                        Select master list
-                                    </strong>
-
+                                    <strong>Verify student details</strong>
                                     <span>
-                                        Student information will be
-                                        checked against this list.
+                                        Select the master list that will be used
+                                        to check the submitted student information.
                                     </span>
-
                                 </div>
-
                             </div>
 
+                            <div className="info-item">
+                                <div className="info-number">3</div>
+                                <div>
+                                    <strong>Choose the ID card design</strong>
+                                    <span>
+                                        Associate a saved template with this student
+                                        form for the later card-generation workflow.
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="info-item">
+                                <div className="info-number">4</div>
+                                <div>
+                                    <strong>Share the link</strong>
+                                    <span>
+                                        Students can open the generated URL to submit
+                                        their information. The public form route must
+                                        load and save this configuration.
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="info-tip">
+                                <strong>Tip</strong>
+                                <p>
+                                    Select the correct master list before sharing
+                                    the link. Student verification depends on the
+                                    master data configured for this form.
+                                </p>
+                            </div>
                         </aside>
 
                     </div>
