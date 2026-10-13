@@ -25,12 +25,12 @@
    CARD HEADER
 ========================================================= */
 
-.form-card-header {
+/* .form-card-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 20px;
-}
+} */
 
 .form-card-header h2 {
     margin: 0;

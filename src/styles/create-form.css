@@ -1,21 +1,218 @@
 /* =====================================================
-   CREATE FORM
+   CREATE FORM — BASE
 ===================================================== */
+
+.create-form-content,
+.create-form-content * {
+    box-sizing: border-box;
+}
+
+.create-form-content {
+    min-width: 0;
+    width: 100%;
+}
+
+.create-form-content .form-card {
+    min-width: 0;
+    max-width: 100%;
+}
 
 .create-form-name-card {
     margin-bottom: 18px;
 }
 
 
+
+.create-form-content .form-card-header > div {
+    min-width: 0;
+}
+
+.create-form-content .form-card-header h2 {
+    overflow-wrap: anywhere;
+}
+
+.create-form-content .form-card-header p {
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+
 /* =====================================================
-   BUILDER
+   STEPS
+===================================================== */
+
+.create-form-content .steps {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 22px;
+}
+
+.create-form-content .step-group {
+    display: contents;
+}
+
+.create-form-content .step {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    flex-shrink: 0;
+}
+
+.create-form-content .step-number {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.create-form-content .step.active .step-number {
+    border-color: #4f46e5;
+    background: #4f46e5;
+    color: #ffffff;
+}
+
+.create-form-content .step-label {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.create-form-content .step.active .step-label {
+    color: #3730a3;
+    font-weight: 600;
+}
+
+.create-form-content .step-line {
+    flex: 1;
+    min-width: 12px;
+    height: 1px;
+    margin: 0 12px;
+    background: #e5e7eb;
+}
+
+
+/* =====================================================
+   FORM NAME
+===================================================== */
+
+.create-form-name-card .form-body {
+    padding: 16px;
+}
+
+.create-form-name-card .field {
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.create-form-name-card .field-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.create-form-name-card .field-label label {
+    min-width: 0;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.create-form-name-card .field-hint {
+    color: #9ca3af;
+    font-size: 10px;
+}
+
+.create-form-name-card .input {
+    width: 100%;
+    min-width: 0;
+}
+
+.input-character-count {
+    margin-top: 5px;
+    color: #9ca3af;
+    font-size: 10px;
+    text-align: right;
+}
+
+
+/* =====================================================
+   VALIDATION
+===================================================== */
+
+.create-form-content .input.invalid {
+    border-color: #dc2626;
+    outline-color: #dc2626;
+}
+
+.create-form-content .input.invalid:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 2px rgb(220 38 38 / 10%);
+}
+
+.create-form-content .error {
+    display: none;
+    margin-top: 5px;
+    color: #dc2626;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.create-form-content .error.show {
+    display: block;
+}
+
+.create-form-content .validation-error {
+    display: block;
+    margin-top: 5px;
+    color: #dc2626;
+    font-size: 11px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.create-form-content .required {
+    margin-left: 3px;
+    color: #dc2626;
+}
+
+
+/* =====================================================
+   BUILDER LAYOUT
 ===================================================== */
 
 .create-form-builder {
     display: grid;
-    grid-template-columns: 250px minmax(320px, 1fr) 290px;
+    grid-template-columns:
+        minmax(205px, 250px)
+        minmax(0, 1fr)
+        minmax(245px, 290px);
     gap: 14px;
     align-items: start;
+    width: 100%;
+    min-width: 0;
+}
+
+.field-library,
+.created-form-card,
+.field-settings-card {
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
 }
 
 
@@ -23,29 +220,26 @@
    FIELD LIBRARY
 ===================================================== */
 
-.field-library {
-    min-width: 0;
-}
-
 .field-library-body {
-    padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 7px;
+    padding: 12px;
 }
 
 .field-library-item {
-    width: 100%;
     display: flex;
     align-items: center;
     gap: 10px;
+    width: 100%;
+    min-width: 0;
     padding: 10px;
     border: 1px solid #e5e7eb;
     border-radius: 7px;
     background: #ffffff;
     text-align: left;
-    cursor: grab;
     font-family: inherit;
+    cursor: grab;
     transition:
         border-color 0.15s ease,
         background 0.15s ease,
@@ -53,41 +247,41 @@
 }
 
 .field-library-item:hover {
-    border-color: #cbd5e1;
+    border-color: #c7d2fe;
     background: #f9fafb;
-    transform: translateY(-1px);
 }
 
 .field-library-item:active {
     cursor: grabbing;
 }
 
-.field-library-icon {
-    width: 30px;
-    height: 30px;
-    flex-shrink: 0;
+.field-library-item:focus-visible,
+.created-field-delete:focus-visible {
+    outline: 2px solid #4f46e5;
+    outline-offset: 2px;
+}
 
+.field-library-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
     border: 1px solid #e5e7eb;
     border-radius: 6px;
-
     background: #f8fafc;
     color: #374151;
-
     font-size: 12px;
     font-weight: 700;
 }
 
 .field-library-content {
-    min-width: 0;
-    flex: 1;
-
     display: flex;
+    flex: 1;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
+    min-width: 0;
 }
 
 .field-library-content strong {
@@ -99,9 +293,12 @@
 .field-library-content span {
     color: #9ca3af;
     font-size: 10px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
 }
 
 .field-library-add {
+    flex-shrink: 0;
     color: #9ca3af;
     font-size: 17px;
 }
@@ -110,43 +307,28 @@
 /* =====================================================
    CREATED FORM
 ===================================================== */
-.form-card{
-    max-width: 1500px;
-}
-.created-form-card {
-    min-width: 0;
+
+.created-form-header {
+    flex-wrap: wrap;
 }
 
-.created-form-card{
-    display: block;
-}
-
-.form-card-header
-{
-    display: block;
-}
 .field-count {
     flex-shrink: 0;
-
     padding: 4px 8px;
-
     border-radius: 5px;
-
     background: #f3f4f6;
     color: #6b7280;
-
     font-size: 10px;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .created-form-body {
-    min-height: 400px;
-    padding: 14px;
-
     display: flex;
     flex-direction: column;
     gap: 8px;
-
+    min-height: 400px;
+    padding: 14px;
     background: #fafafa;
 }
 
@@ -156,35 +338,28 @@
 ===================================================== */
 
 .form-drop-zone {
-    flex: 1;
-    min-height: 370px;
-
     display: flex;
+    flex: 1;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
+    min-height: 370px;
+    padding: 20px;
     border: 1px dashed #d1d5db;
     border-radius: 8px;
-
     background: #ffffff;
-
     text-align: center;
 }
 
 .form-drop-icon {
-    width: 38px;
-    height: 38px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
+    width: 38px;
+    height: 38px;
     margin-bottom: 10px;
-
     border: 1px solid #e5e7eb;
     border-radius: 8px;
-
     color: #9ca3af;
     font-size: 20px;
 }
@@ -198,10 +373,9 @@
 .form-drop-zone span {
     max-width: 230px;
     margin-top: 5px;
-
     color: #9ca3af;
     font-size: 11px;
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
 
@@ -210,21 +384,16 @@
 ===================================================== */
 
 .created-field {
-    min-height: 54px;
-
     display: flex;
     align-items: center;
     gap: 9px;
-
+    min-width: 0;
+    min-height: 54px;
     padding: 9px 10px;
-
     border: 1px solid #e5e7eb;
     border-radius: 7px;
-
     background: #ffffff;
-
     cursor: grab;
-
     transition:
         border-color 0.15s ease,
         box-shadow 0.15s ease,
@@ -236,12 +405,12 @@
 }
 
 .created-field.selected {
-    border-color: #9ca3af;
-    box-shadow: 0 0 0 2px #f3f4f6;
+    border-color: #818cf8;
+    box-shadow: 0 0 0 2px rgb(79 70 229 / 9%);
 }
 
 .created-field.drag-over {
-    border-top: 2px solid #6b7280;
+    border-top: 2px solid #4f46e5;
 }
 
 .created-field:active {
@@ -249,86 +418,74 @@
 }
 
 .created-field-drag {
+    flex-shrink: 0;
     color: #c4c7cc;
     font-size: 14px;
     letter-spacing: -3px;
 }
 
 .created-field-type {
+    flex-shrink: 0;
     min-width: 48px;
-
     padding: 4px 6px;
-
     border-radius: 4px;
-
     background: #f3f4f6;
     color: #6b7280;
-
     font-size: 9px;
     font-weight: 600;
     text-align: center;
     text-transform: uppercase;
+    overflow-wrap: anywhere;
 }
 
 .created-field-info {
-    min-width: 0;
-    flex: 1;
-
     display: flex;
+    flex: 1;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
+    min-width: 0;
+}
+
+.created-field-info strong,
+.created-field-info span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .created-field-info strong {
-    overflow: hidden;
-
     color: #374151;
     font-size: 12px;
     font-weight: 600;
-
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .created-field-info span {
-    overflow: hidden;
-
     color: #9ca3af;
     font-size: 10px;
-
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .field-required-badge {
     flex-shrink: 0;
-
     padding: 3px 6px;
-
     border-radius: 4px;
-
     background: #fef2f2;
     color: #dc2626;
-
     font-size: 9px;
     font-weight: 600;
 }
 
 .created-field-delete {
-    width: 26px;
-    height: 26px;
-    flex-shrink: 0;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
     border: 0;
     border-radius: 5px;
-
     background: transparent;
     color: #9ca3af;
-
     font-size: 17px;
     cursor: pointer;
 }
@@ -343,73 +500,96 @@
    FIELD SETTINGS
 ===================================================== */
 
-.field-settings-card {
-    min-width: 0;
-}
-
 .field-settings-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
     padding: 16px;
 }
 
 .field-settings-body .field {
+    min-width: 0;
     margin-bottom: 15px;
 }
 
-.field-settings-body
-.field:last-child {
+.field-settings-body .field:last-child {
     margin-bottom: 0;
 }
 
-.no-field-selected {
-    min-height: 300px;
+.field-settings-body .field-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 7px;
+}
 
+.field-settings-body .field-label label {
+    min-width: 0;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.field-settings-body .field-hint {
+    color: #9ca3af;
+    font-size: 10px;
+}
+
+.field-settings-body .input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.no-field-selected {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
+    min-height: 300px;
     padding: 20px;
-
     text-align: center;
 }
 
 .no-field-selected div {
-    width: 38px;
-    height: 38px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
+    width: 38px;
+    height: 38px;
     margin-bottom: 10px;
-
     border: 1px solid #e5e7eb;
     border-radius: 8px;
-
     background: #f9fafb;
     color: #9ca3af;
 }
 
 .no-field-selected span {
     max-width: 190px;
-
     color: #9ca3af;
     font-size: 11px;
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
 .settings-two-column {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 9px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    min-width: 0;
+}
+
+.settings-two-column > .field {
+    min-width: 0;
 }
 
 .settings-textarea {
     width: 100%;
     min-height: 100px;
-
     resize: vertical;
-
     font-family: inherit;
 }
 
@@ -417,22 +597,18 @@
     display: flex;
     align-items: center;
     gap: 8px;
-
-    margin-bottom: 15px;
-
+    margin: 0 0 15px;
     color: #4b5563;
     font-size: 12px;
     font-weight: 500;
-
     cursor: pointer;
 }
 
 .field-checkbox input {
     width: 14px;
     height: 14px;
-
+    flex-shrink: 0;
     margin: 0;
-
     cursor: pointer;
 }
 
@@ -442,30 +618,53 @@
 ===================================================== */
 
 .create-form-footer {
-    margin-top: 14px;
-
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
-
+    gap: 16px;
+    margin-top: 14px;
     padding: 14px 16px;
 }
 
-.create-form-footer
-.footer-note {
+.create-form-footer .footer-note {
+    min-width: 0;
     color: #9ca3af;
     font-size: 11px;
+    line-height: 1.6;
+}
+
+.create-form-footer .actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+}
+
+.create-form-footer .ui-btn {
+    min-height: 40px;
+}
+
+.create-form-footer .ui-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.continue-arrow {
+    margin-left: 7px;
 }
 
 
 /* =====================================================
-   RESPONSIVE
+   TABLET — 1150px
 ===================================================== */
 
 @media (max-width: 1150px) {
     .create-form-builder {
-        grid-template-columns: 220px minmax(300px, 1fr);
+        grid-template-columns:
+            minmax(190px, 0.8fr)
+            minmax(0, 1.5fr);
     }
 
     .field-settings-card {
@@ -474,43 +673,53 @@
 
     .field-settings-body {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 16px;
+        align-items: start;
     }
 
-    .field-settings-body
-    .field {
-        margin-bottom: 14px;
-    }
-
-    .field-settings-body
-    .field-checkbox {
+    .field-settings-body > .field-checkbox {
         grid-column: 1 / -1;
+    }
+
+    .field-settings-body .settings-two-column {
+        align-self: start;
     }
 }
 
+
+/* =====================================================
+   SMALL TABLET — 800px
+===================================================== */
+
 @media (max-width: 800px) {
+    .create-form-content .steps {
+        gap: 0;
+    }
+
+    .create-form-content .step {
+        gap: 6px;
+    }
+
+    .create-form-content .step-label {
+        font-size: 11px;
+    }
+
+    .create-form-content .step-line {
+        margin: 0 8px;
+    }
+
     .create-form-builder {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .field-settings-card {
         grid-column: auto;
     }
 
-    .field-settings-body {
-        display: block;
-    }
-
     .field-library-body {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-@media (max-width: 600px) {
-    .field-library-body {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .created-form-body {
@@ -518,25 +727,164 @@
     }
 
     .form-drop-zone {
-        min-height: 270px;
+        min-height: 260px;
     }
 
-    .create-form-footer {
+    .field-settings-body {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 16px;
+    }
+
+    .field-settings-body > .field-checkbox {
+        grid-column: 1 / -1;
+    }
+}
+
+
+/* =====================================================
+   MOBILE — 600px
+===================================================== */
+
+@media (max-width: 600px) {
+    .create-form-content .steps {
         align-items: flex-start;
+    }
+
+    .create-form-content .step {
         flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 5px;
+        text-align: center;
     }
 
-    .create-form-footer
-    .actions {
-        width: 100%;
+    .create-form-content .step-number {
+        width: 30px;
+        height: 30px;
     }
 
-    .create-form-footer
-    .actions button {
-        flex: 1;
+    .create-form-content .step-label {
+        max-width: 75px;
+        font-size: 10px;
+        line-height: 1.35;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .create-form-content .step-line {
+        min-width: 8px;
+        margin: 15px 5px 0;
+    }
+
+    .create-form-name-card .form-body {
+        padding: 12px;
+    }
+
+    .create-form-content .form-card-header {
+        gap: 8px;
+    }
+
+    .field-library-body {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 10px;
+    }
+
+    .field-settings-body {
+        display: flex;
+        flex-direction: column;
+        padding: 12px;
     }
 
     .settings-two-column {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .created-form-body {
+        min-height: 240px;
+        padding: 10px;
+    }
+
+    .form-drop-zone {
+        min-height: 220px;
+        padding: 15px;
+    }
+
+    .created-field {
+        gap: 7px;
+        padding: 8px;
+    }
+
+    .created-field-type {
+        min-width: 40px;
+        padding: 4px;
+        font-size: 8px;
+    }
+
+    .field-required-badge {
+        display: none;
+    }
+
+    .create-form-footer {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .create-form-footer .actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    .create-form-footer .actions .ui-btn {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+
+/* =====================================================
+   VERY SMALL MOBILE — 380px
+===================================================== */
+
+@media (max-width: 380px) {
+    .create-form-content .step-label {
+        max-width: 62px;
+        font-size: 9px;
+    }
+
+    .create-form-content .step-line {
+        min-width: 5px;
+        margin-right: 3px;
+        margin-left: 3px;
+    }
+
+    .created-field {
+        gap: 5px;
+        padding: 7px 6px;
+    }
+
+    .created-field-drag {
+        display: none;
+    }
+
+    .created-field-type {
+        min-width: 34px;
+        font-size: 7px;
+    }
+
+    .created-field-info strong {
+        font-size: 11px;
+    }
+
+    .created-field-info span {
+        font-size: 9px;
+    }
+
+    .settings-two-column {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
