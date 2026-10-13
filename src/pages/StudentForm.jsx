@@ -2203,6 +2203,9 @@ function handleBack(){
                 design
             );
 
+            
+    const templateClass =
+        design.template || "modern";
 
         const activeSide =
             design.sides === 2
@@ -2394,21 +2397,9 @@ function handleBack(){
                 <div
                     className={[
                         "id-card-premium",
+                        `template-${templateClass}`,
                         design.orientation,
-                        design.cardSize ===
-                            "compact"
-                            ? "compact"
-                            : "",
-                        design.background ===
-                            "soft"
-                            ? "background-soft"
-                            : "",
-                        design.background ===
-                            "light"
-                            ? "background-light"
-                            : "",
-                        design.template ||
-                            "modern"
+                        design.cardSize === "compact" ? "compact" : "",
                     ]
                         .filter(Boolean)
                         .join(" ")}

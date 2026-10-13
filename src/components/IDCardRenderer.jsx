@@ -315,20 +315,9 @@ function IDCardRenderer({
         <div
             className={[
                 "id-card-premium",
+                `template-${templateClass}`,
                 design.orientation,
-                design.cardSize ===
-                "compact"
-                    ? "compact"
-                    : "",
-                design.background ===
-                "soft"
-                    ? "background-soft"
-                    : "",
-                design.background ===
-                "light"
-                    ? "background-light"
-                    : "",
-                templateClass
+                design.cardSize === "compact" ? "compact" : "",
             ]
                 .filter(Boolean)
                 .join(" ")}

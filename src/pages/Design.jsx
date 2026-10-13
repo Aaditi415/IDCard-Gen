@@ -6,7 +6,7 @@ import React, {
 
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
-
+import '../styles/design.css'
 
 const DESIGN_STORAGE_KEY = "idCardDesign";
 const FORM_STORAGE_KEY = "idCardForm";
@@ -110,6 +110,84 @@ const DEFAULT_DESIGN = {
 
 
 /* =====================================================
+   ID CARD TEMPLATES
+===================================================== */
+
+const CARD_TEMPLATES = [
+    {
+        id: "modern",
+        name: "Modern Blue",
+        color: "#2563eb",
+        background: "white",
+        description: "Clean and modern",
+    },
+    {
+        id: "classic",
+        name: "Classic White",
+        color: "#1f2937",
+        background: "white",
+        description: "Traditional design",
+    },
+    {
+        id: "minimal",
+        name: "Minimal Clean",
+        color: "#64748b",
+        background: "light",
+        description: "Simple and minimal",
+    },
+    {
+        id: "corporate",
+        name: "Corporate",
+        color: "#0f766e",
+        background: "white",
+        description: "Professional look",
+    },
+    {
+        id: "colorful",
+        name: "Colorful",
+        color: "#7c3aed",
+        background: "soft",
+        description: "Bright and friendly",
+    },
+    {
+        id: "dark",
+        name: "Dark Premium",
+        color: "#111827",
+        background: "soft",
+        description: "Bold and premium",
+    },
+    {
+        id: "academic",
+        name: "Green Academic",
+        color: "#15803d",
+        background: "white",
+        description: "Education inspired",
+    },
+    {
+        id: "gradient",
+        name: "Gradient Modern",
+        color: "#9333ea",
+        background: "light",
+        description: "Vibrant and modern",
+    },
+    {
+        id: "photo",
+        name: "Photo Focus",
+        color: "#0369a1",
+        background: "white",
+        description: "Photo-first layout",
+    },
+    {
+        id: "navy",
+        name: "Elegant Navy",
+        color: "#172554",
+        background: "soft",
+        description: "Elegant and formal",
+    },
+];
+
+
+/* =====================================================
    NORMALIZE FIELD
 ===================================================== */
 
@@ -158,15 +236,11 @@ function normalizeField(field, index) {
    MEDIA FIELD
 ===================================================== */
 
-function isMediaField(field) {
-    return [
-        "media",
-        "image",
-        "photo",
-        "file",
-    ].includes(field.type);
-}
 
+const isMediaField = (field) =>
+    ["media", "image", "photo", "file"].includes(
+        String(field?.type || "").toLowerCase()
+    );
 
 /* =====================================================
    DESIGN
@@ -186,8 +260,6 @@ function Design() {
     const [logoError, setLogoError] =
         useState("");
 
-    const [backgroundError, setBackgroundError] =
-        useState("");
 
     const [toast, setToast] =
         useState("");
@@ -694,51 +766,6 @@ function Design() {
     };
 
 
-    /* =================================================
-       CARD DIMENSIONS
-    ================================================= */
-
-    const cardDimensions = useMemo(() => {
-
-        if (
-            design.orientation ===
-            "landscape"
-        ) {
-
-            return {
-                width:
-                    design.cardSize ===
-                    "compact"
-                        ? 360
-                        : 440,
-
-                height:
-                    design.cardSize ===
-                    "compact"
-                        ? 230
-                        : 280,
-            };
-        }
-
-
-        return {
-            width:
-                design.cardSize ===
-                "compact"
-                    ? 230
-                    : 280,
-
-            height:
-                design.cardSize ===
-                "compact"
-                    ? 360
-                    : 440,
-        };
-
-    }, [
-        design.orientation,
-        design.cardSize,
-    ]);
 
 
     /* =================================================
@@ -849,84 +876,6 @@ function Design() {
     };
 
 
-    /* =================================================
-       BACKGROUND UPLOAD
-    ================================================= */
-
-    const handleBackgroundUpload = (
-        event
-    ) => {
-
-        const file =
-            event.target.files?.[0];
-
-        if (!file) {
-            return;
-        }
-
-
-        setBackgroundError("");
-
-
-        if (
-            !file.type.startsWith(
-                "image/"
-            )
-        ) {
-
-            setBackgroundError(
-                "Please select an image file."
-            );
-
-            return;
-        }
-
-
-        if (
-            file.size >
-            4 * 1024 * 1024
-        ) {
-
-            setBackgroundError(
-                "Background image must be smaller than 4MB."
-            );
-
-            return;
-        }
-
-
-        const reader =
-            new FileReader();
-
-
-        reader.onload = () => {
-
-            setDesign((prev) => ({
-                ...prev,
-
-                backgroundImage: {
-                    ...prev.backgroundImage,
-
-                    data:
-                        reader.result,
-
-                    name:
-                        file.name,
-
-                    visible: true,
-                },
-            }));
-
-            showToast(
-                "Background image updated"
-            );
-
-        };
-
-
-        reader.readAsDataURL(file);
-
-    };
 
 
     /* =================================================
@@ -956,29 +905,6 @@ function Design() {
     };
 
 
-    /* =================================================
-       REMOVE BACKGROUND
-    ================================================= */
-
-    const removeBackground = () => {
-
-        setDesign((prev) => ({
-            ...prev,
-
-            backgroundImage: {
-                ...prev.backgroundImage,
-
-                data: null,
-
-                name: "",
-            },
-        }));
-
-        showToast(
-            "Background removed"
-        );
-
-    };
 
 
     /* =================================================
@@ -1060,53 +986,28 @@ function Design() {
        ACTIVE FIELDS
     ================================================= */
 
-    const visibleFields =
-        formFields.filter((field) => {
+    const visibleFields = formFields.filter((field) => {
+        if (isMediaField(field)) {
+            return false;
+        }
 
-            if (
-                design.sides === 1
-            ) {
+        if (design.sides === 1) {
+            return true;
+        }
 
-                return true;
-            }
-
-
-            return (
-                (
-                    design.fieldSides?.[
-                        field.id
-                    ] ||
-                    "front"
-                ) === activeSide
-            );
-
-        });
-
-
-    /* =================================================
-       PHOTO FIELD
-
-       IMPORTANT:
-       Photo is now completely separated
-       from the normal field grid.
-    ================================================= */
-
-    const photoField =
-        visibleFields.find(
-            (field) =>
-                isMediaField(field)
+        return (
+            (design.fieldSides?.[field.id] || "front") === activeSide
         );
+    });
 
+    const photoField = formFields.find(isMediaField);
 
-    /* =================================================
-       NORMAL INFORMATION FIELDS
-    ================================================= */
+    const informationFields = visibleFields;
+    
+    const layoutFields = formFields.filter(
+        (field) => !isMediaField(field)
+    );
 
-    const informationFields =
-        visibleFields.filter(
-            (field) =>
-                !isMediaField(field)
-        );
 
 
     /* =================================================
@@ -1260,56 +1161,81 @@ function Design() {
                             {/* =================================
                                 TEMPLATE
                             ================================= */}
-
                             <section className="setting-section">
 
                                 <div className="setting-title">
-                                    Template
+                                    Choose a Template
                                 </div>
 
+                                <p className="setting-description">
+                                    Select a design style for your ID card.
+                                    You can customize its color and layout afterward.
+                                </p>
 
                                 <div className="template-grid">
 
-                                    {[
-                                        "modern",
-                                        "classic",
-                                        "minimal",
-                                    ].map(
-                                        (template) => (
+                                    {CARD_TEMPLATES.map((template) => (
 
-                                            <button
-                                                key={template}
-                                                type="button"
-                                                className={
-                                                    design.template ===
-                                                    template
-                                                        ? "template-option active"
-                                                        : "template-option"
-                                                }
-                                                onClick={() =>
-                                                    updateDesign({
-                                                        template,
-                                                    })
-                                                }
+                                        <button
+                                            key={template.id}
+                                            type="button"
+                                            className={
+                                                design.template === template.id
+                                                    ? "template-option active"
+                                                    : "template-option"
+                                            }
+                                            onClick={() => {
+                                                setDesign((prev) => ({
+                                                    ...prev,
+                                                    template: template.id,
+                                                    primaryColor: template.color,
+                                                    background: template.background,
+                                                }));
+
+                                                setSelectedElement(null);
+
+                                                showToast(
+                                                    `${template.name} template selected`
+                                                );
+                                            }}
+                                            aria-pressed={
+                                                design.template === template.id
+                                            }
+                                            title={template.description}
+                                        >
+
+                                            <span
+                                                className={`template-mini ${template.id}`}
+                                                style={{
+                                                    "--template-color": template.color,
+                                                }}
                                             >
-
-                                                <span
-                                                    className={`template-mini ${template}`}
-                                                />
-
-                                                <span>
-                                                    {template
-                                                        .charAt(0)
-                                                        .toUpperCase() +
-                                                        template.slice(
-                                                            1
-                                                        )}
+                                                <span className="template-mini-header" />
+                                                <span className="template-mini-photo" />
+                                                <span className="template-mini-lines">
+                                                    <i />
+                                                    <i />
+                                                    <i />
                                                 </span>
+                                            </span>
 
-                                            </button>
+                                            <span className="template-option-name">
+                                                {template.name}
+                                            </span>
 
-                                        )
-                                    )}
+                                            <span className="template-option-description">
+                                                {template.description}
+                                            </span>
+
+                                            {design.template === template.id && (
+                                                <span className="template-selected">
+                                                    ✓ Selected
+                                                </span>
+                                            )}
+
+                                        </button>
+
+                                    ))}
 
                                 </div>
 
@@ -1454,177 +1380,9 @@ function Design() {
                                 </div>
 
 
-                                {/* BACKGROUND */}
-
-                                <div className="control-row">
-
-                                    <label>
-                                        Background
-                                    </label>
-
-                                    <select
-                                        value={
-                                            design.background
-                                        }
-                                        onChange={(event) =>
-                                            updateDesign({
-                                                background:
-                                                    event.target
-                                                        .value,
-                                            })
-                                        }
-                                    >
-
-                                        <option value="white">
-                                            White
-                                        </option>
-
-                                        <option value="soft">
-                                            Soft
-                                        </option>
-
-                                        <option value="light">
-                                            Light
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-
-                                {/* CARD SIZE */}
-
-                                <div className="control-row">
-
-                                    <label>
-                                        Card Size
-                                    </label>
-
-                                    <select
-                                        value={
-                                            design.cardSize
-                                        }
-                                        onChange={(event) =>
-                                            updateDesign({
-                                                cardSize:
-                                                    event.target
-                                                        .value,
-                                            })
-                                        }
-                                    >
-
-                                        <option value="standard">
-                                            Standard
-                                        </option>
-
-                                        <option value="compact">
-                                            Compact
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-
-                                {/* PHOTO POSITION */}
-
-                                <div className="control-row">
-
-                                    <label>
-                                        Photo Position
-                                    </label>
-
-                                    <select
-                                        value={design.photo?.position || "left"}
-                                        onChange={(event) =>
-                                        setDesign((prev) => ({
-                                            ...prev,
-                                            photo: {
-                                            ...prev.photo,
-                                            position: event.target.value,
-                                            },
-                                        }))
-                                        }
-                                    >
-                                        <option value="left">Left</option>
-                                        <option value="center">Center</option>
-                                        <option value="right">Right</option>
-                                    </select>
-
-                                </div>
-
                             </section>
 
 
-                            {/* =================================
-                                BACKGROUND IMAGE
-                            ================================= */}
-
-                            <section className="setting-section">
-
-                                <div className="setting-title">
-                                    Background Image
-                                </div>
-
-
-                                <label className="logo-upload">
-
-                                    {design.backgroundImage?.data ? (
-
-                                        <img
-                                            src={
-                                                design
-                                                    .backgroundImage
-                                                    .data
-                                            }
-                                            alt="Background"
-                                        />
-
-                                    ) : (
-
-                                        <span>
-                                            + Upload Background
-                                        </span>
-
-                                    )}
-
-
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={
-                                            handleBackgroundUpload
-                                        }
-                                    />
-
-                                </label>
-
-
-                                <div className="logo-help">
-                                    JPG, PNG or SVG · Max 4MB
-                                </div>
-
-
-                                {backgroundError && (
-                                    <div className="error">
-                                        {backgroundError}
-                                    </div>
-                                )}
-
-
-                                {design.backgroundImage?.data && (
-                                    <button
-                                        type="button"
-                                        className="remove-logo-btn"
-                                        onClick={
-                                            removeBackground
-                                        }
-                                    >
-                                        Remove Background
-                                    </button>
-                                )}
-
-                            </section>
 
 
                             {/* =================================
@@ -1701,84 +1459,45 @@ function Design() {
                             ================================= */}
 
                             <section className="setting-section">
-
-                                <div className="setting-title">
-                                    Design Elements
-                                </div>
-
+                                <div className="setting-title">Design Elements</div>
 
                                 <p className="setting-description">
-                                    Select an element to edit
-                                    its content or position.
+                                    Customize the organization name displayed on your ID card.
                                 </p>
 
+                                <div className="organization-name-control">
+                                    <label htmlFor="organizationName">
+                                        Organization Name
+                                    </label>
 
-                                {/* ORGANIZATION */}
-
-                                <div
-                                    className={
-                                        selectedElement ===
-                                        "organization"
-                                            ? "design-field-item selected"
-                                            : "design-field-item"
-                                    }
-                                    onClick={() =>
-                                        setSelectedElement(
-                                            "organization"
-                                        )
-                                    }
-                                >
-
-                                    <span className="design-field-info">
-
-                                        <strong>
-                                            Organization Name
-                                        </strong>
-
-                                        <small>
-                                            Text
-                                        </small>
-
-                                    </span>
-
+                                    <input
+                                        id="organizationName"
+                                        type="text"
+                                        className="input"
+                                        placeholder="Enter organization name"
+                                        value={design.organization?.text || ""}
+                                        onChange={(event) =>
+                                            setDesign((prev) => ({
+                                                ...prev,
+                                                organization: {
+                                                    ...prev.organization,
+                                                    text: event.target.value,
+                                                },
+                                            }))
+                                        }
+                                    />
                                 </div>
 
-
-                                {/* LOGO */}
-
                                 {design.logo?.data && (
-
-                                    <div
-                                        className={
-                                            selectedElement ===
-                                            "logo"
-                                                ? "design-field-item selected"
-                                                : "design-field-item"
-                                        }
-                                        onClick={() =>
-                                            setSelectedElement(
-                                                "logo"
-                                            )
-                                        }
-                                    >
-
+                                    <div className="design-field-item">
                                         <span className="design-field-info">
-
-                                            <strong>
-                                                Organization Logo
-                                            </strong>
-
-                                            <small>
-                                                Image
-                                            </small>
-
+                                            <strong>Organization Logo</strong>
+                                            <small>Image</small>
                                         </span>
-
                                     </div>
-
                                 )}
-
                             </section>
+
 
 
                             {/* =================================
@@ -1801,7 +1520,7 @@ function Design() {
 
                                 <div className="field-layout-list">
 
-                                    {formFields.length === 0 ? (
+                                    {layoutFields.length === 0 ? (
 
                                         <div className="empty-fields">
 
@@ -1816,7 +1535,7 @@ function Design() {
 
                                     ) : (
 
-                                        formFields.map(
+                                        layoutFields.map(
                                             (
                                                 field,
                                                 index
@@ -2092,11 +1811,11 @@ function Design() {
                                                                 >
 
                                                                     <option value="1">
-                                                                        Full
+                                                                        Half
                                                                     </option>
                                                                     
                                                                     <option value="2">
-                                                                        Half
+                                                                        Full
                                                                     </option>
 
 
@@ -2367,496 +2086,217 @@ function Design() {
                                     }}
                                 >
 
-                                    {/* =================================
-                                        PREMIUM CARD
-                                    ================================= */}
+                               
+                                    
+                                    {/* =========================================
+                                        PREMIUM CARD — TEMPLATE-SPECIFIC RENDERER
+                                    ========================================= */}
 
                                     <div
                                         className={[
                                             "id-card-premium",
+                                            `template-${templateClass}`,
                                             design.orientation,
                                             design.cardSize === "compact" ? "compact" : "",
-                                            design.background === "soft" ? "background-soft" : "",
-                                            design.background === "light" ? "background-light" : "",
-                                            templateClass,
                                         ]
                                             .filter(Boolean)
                                             .join(" ")}
                                         style={{
-                                            width: `${cardDimensions.width}px`,
-                                            height: `${cardDimensions.height}px`,
                                             "--card-primary": design.primaryColor || "#2563eb",
                                         }}
                                     >
 
-                                        {/* =================================
-                                            BACKGROUND IMAGE
-                                        ================================= */}
-
-                                        {design.backgroundImage?.data &&
-                                            design.backgroundImage
-                                                .visible !==
-                                                false && (
-
+                                        {/* Organization header */}
+                                        <div className={`premium-card-header header-${templateClass}`}>
+                                            {design.logo?.visible && design.logo?.data ? (
                                                 <img
-                                                    src={
-                                                        design
-                                                            .backgroundImage
-                                                            .data
-                                                    }
-                                                    alt=""
-                                                    className="premium-background-image"
-                                                    style={{
-                                                        opacity:
-                                                            design
-                                                                .backgroundImage
-                                                                .opacity,
-                                                    }}
-                                                />
-
-                                            )}
-
-
-                                        {/* =================================
-                                            PREMIUM CARD HEADER
-                                        ================================= */}
-
-                                        <div className="premium-card-header">
-
-                                            {/* LOGO */}
-
-                                            {design.logo?.visible &&
-                                            design.logo?.data ? (
-
-                                                <img
-                                                    src={
-                                                        design
-                                                            .logo
-                                                            .data
-                                                    }
-                                                    alt="Organization Logo"
+                                                    src={design.logo.data}
+                                                    alt="Organization logo"
                                                     className="premium-card-logo"
                                                     style={{
-                                                        width:
-                                                            `${design.logo.width || 43}px`,
-
-                                                        height:
-                                                            `${design.logo.height || 43}px`,
+                                                        width: `${design.logo.width || 43}px`,
+                                                        height: `${design.logo.height || 43}px`,
                                                     }}
                                                 />
-
                                             ) : (
-
                                                 <div className="premium-card-logo-placeholder">
                                                     LOGO
                                                 </div>
-
                                             )}
 
-
-                                            {/* ORGANIZATION */}
-
-                                            {design.organization
-                                                ?.visible && (
-
+                                            {design.organization?.visible && (
                                                 <div className="premium-card-organization">
-
                                                     <span className="premium-org-name">
-
-                                                        {
-                                                            design
-                                                                .organization
-                                                                ?.text ||
-                                                            "ORGANIZATION"
-                                                        }
-
+                                                        {design.organization?.text || "ORGANIZATION"}
                                                     </span>
-
 
                                                     <span className="premium-org-subtitle">
-
                                                         STUDENT IDENTITY CARD
-
                                                     </span>
-
                                                 </div>
-
                                             )}
 
-
-                                            {/* HEADER ACCENT */}
-
                                             <div className="premium-header-accent" />
-
                                         </div>
 
-
-                                        {/* =================================
-                                            FRONT
-                                        ================================= */}
-
-                                        {activeSide ===
-                                            "front" && (
-
-                                            <div className="premium-card-front">
-
-
-                                                {/* =================================
-                                                    IDENTITY AREA
-                                                ================================= */}
-
+                                        {/* FRONT SIDE */}
+                                        {activeSide === "front" && (
+                                            <div className={`premium-card-front front-${templateClass}`}>
+                                                {/* Identity and photo */}
                                                 <div
-                                                    className={`
-                                                        premium-identity-area
-                                                        photo-position-${design.photo?.position || "left"}
-                                                    `}
+                                                    className={[
+                                                        "premium-identity-area",
+                                                        `photo-position-${design.photo?.position || "left"}`,
+                                                        `identity-${templateClass}`,
+                                                    ].join(" ")}
                                                 >
-
-                                                    {/* PHOTO */}
-
-                                                    {design.photo?.visible &&
-                                                        photoField && (
-
+                                                    {design.photo?.visible && photoField && (
                                                         <div className="premium-photo-wrapper">
-
                                                             <div
-                                                                className="premium-photo"
+                                                                className={`premium-photo photo-${templateClass}`}
                                                                 style={{
-                                                                    width:
-                                                                        `${design.photo.width || 74}px`,
-
-                                                                    height:
-                                                                        `${design.photo.height || 91}px`,
+                                                                    width:  '74px',
+                                                                    height: '91px',
                                                                 }}
                                                             >
-
-                                                                <span>
-                                                                    PHOTO
-                                                                </span>
-
+                                                                <span>PHOTO</span>
                                                             </div>
-
                                                         </div>
-
                                                     )}
 
-
-                                                    {/* IDENTITY */}
-
                                                     <div className="premium-identity-content">
-
                                                         <div className="premium-student-name">
-
                                                             {getFieldValue(
                                                                 informationFields.find(
-                                                                    (
-                                                                        field
-                                                                    ) =>
-                                                                        field.label
-                                                                            ?.toLowerCase()
-                                                                            .includes(
-                                                                                "name"
-                                                                            ) ||
-                                                                        field.name
-                                                                            ?.toLowerCase()
-                                                                            .includes(
-                                                                                "name"
-                                                                            )
+                                                                    (field) =>
+                                                                        field.label?.toLowerCase().includes("name") ||
+                                                                        field.name?.toLowerCase().includes("name")
                                                                 )
-                                                            ) ||
-                                                                "STUDENT NAME"}
-
+                                                            ) || "STUDENT NAME"}
                                                         </div>
-
 
                                                         <div className="premium-student-role">
-
                                                             STUDENT
-
                                                         </div>
-
                                                     </div>
-
                                                 </div>
 
-
-                                                {/* =================================
-                                                    INFORMATION AREA
-                                                ================================= */}
-
-                                                <div className="premium-information-area">
-
+                                                {/* Student information */}
+                                                <div className={`premium-information-area information-${templateClass}`}>
                                                     <div className="premium-section-title">
-
                                                         STUDENT INFORMATION
-
                                                     </div>
-
 
                                                     <div className="premium-information-grid">
+                                                        {informationFields.map((field, index) => {
+                                                            const layout =
+                                                                activeFieldLayout?.[field.id] || {
+                                                                    row: index + 1,
+                                                                    column: 1,
+                                                                    width: 1,
+                                                                };
 
-                                                        {informationFields.map(
-                                                            (
-                                                                field
-                                                            ) => {
+                                                            const value = getFieldValue(field);
 
-                                                                const layout =
-                                                                    activeFieldLayout?.[
-                                                                        field
-                                                                            .id
-                                                                    ] ||
-                                                                    {
-                                                                        row: 1,
-
-                                                                        column: 1,
-
-                                                                        width: 1,
-                                                                    };
-
-
-                                                                const value =
-                                                                    getFieldValue(
-                                                                        field
-                                                                    );
-
-
-                                                                return (
-
-                                                                    <div
-                                                                        key={
-                                                                            field.id
-                                                                        }
-                                                                        className={`
-                                                                            premium-info-item
-                                                                            ${
-                                                                                layout.width ===
-                                                                                2
-                                                                                    ? "premium-info-full"
-                                                                                    : ""
-                                                                            }
-                                                                        `}
-                                                                        style={{
-                                                                            gridColumn:
-                                                                                layout.width ===
-                                                                                2
-                                                                                    ? "1 / -1"
-                                                                                    : layout.column,
-                                                                            gridRow:
-                                                                                layout.row,
-                                                                        }}
-                                                                    >
-
-                                                                        <span className="premium-info-label">
-
-                                                                            {
-                                                                                field.label
-                                                                            }
-
-                                                                        </span>
-
-
-                                                                        <strong className="premium-info-value">
-
-                                                                            {
-                                                                                value ||
-                                                                                "—"
-                                                                            }
-
-                                                                        </strong>
-
-                                                                    </div>
-
-                                                                );
-
-                                                            }
-                                                        )}
-
-                                                    </div>
-
-                                                </div>
-
-
-                                                {/* =================================
-                                                    FRONT FOOTER
-                                                ================================= */}
-
-                                                <div className="premium-card-footer">
-
-                                                    <span>
-                                                        VALID STUDENT IDENTIFICATION
-                                                    </span>
-
-
-                                                    <span className="premium-footer-line" />
-
-
-                                                    <span>
-                                                        ID CARD
-                                                    </span>
-
-                                                </div>
-
-                                            </div>
-
-                                        )}
-
-
-                                        {/* =================================
-                                            BACK
-                                        ================================= */}
-
-                                        {activeSide ===
-                                            "back" && (
-
-                                            <div className="premium-card-back">
-
-
-                                                {/* BACK TITLE */}
-
-                                                <div className="premium-back-title">
-
-                                                    <span>
-                                                        IDENTIFICATION CARD
-                                                    </span>
-
-                                                    <small>
-                                                        CARD INFORMATION
-                                                    </small>
-
-                                                </div>
-
-
-                                                {/* BACK INFORMATION */}
-
-                                                {informationFields.length >
-                                                    0 ? (
-
-                                                    <div className="premium-back-information">
-
-                                                        {informationFields.map(
-                                                            (
-                                                                field
-                                                            ) => (
-
+                                                            return (
                                                                 <div
-                                                                    key={
-                                                                        field.id
-                                                                    }
-                                                                    className="premium-back-item"
+                                                                    key={field.id}
+                                                                    className={[
+                                                                        "premium-info-item",
+                                                                        layout.width === 2
+                                                                            ? "premium-info-full"
+                                                                            : "",
+                                                                    ]
+                                                                        .filter(Boolean)
+                                                                        .join(" ")}
+                                                                    style={{
+                                                                        gridColumn:
+                                                                            layout.width === 2
+                                                                                ? "1 / -1"
+                                                                                : layout.column,
+                                                                        gridRow: layout.row,
+                                                                    }}
                                                                 >
-
-                                                                    <span>
-                                                                        {
-                                                                            field.label
-                                                                        }
+                                                                    <span className="premium-info-label">
+                                                                        {field.label}
                                                                     </span>
 
-
-                                                                    <strong>
-                                                                        {
-                                                                            getFieldValue(
-                                                                                field
-                                                                            ) ||
-                                                                            "—"
-                                                                        }
+                                                                    <strong className="premium-info-value">
+                                                                        {value || "—"}
                                                                     </strong>
-
                                                                 </div>
-
-                                                            )
-                                                        )}
-
+                                                            );
+                                                        })}
                                                     </div>
-
-                                                ) : (
-
-                                                    <div className="premium-empty-back">
-
-                                                        No fields assigned
-                                                        to the back side.
-
-                                                    </div>
-
-                                                )}
-
-
-                                                {/* BACK NOTE */}
-
-                                                <div className="premium-back-note">
-
-                                                    <strong>
-                                                        IMPORTANT
-                                                    </strong>
-
-
-                                                    <p>
-                                                        This card is
-                                                        issued by the
-                                                        organization and
-                                                        must be carried
-                                                        by the student
-                                                        while on campus.
-                                                    </p>
-
                                                 </div>
 
-
-                                                {/* SECURITY AREA */}
-
-                                                <div className="premium-security-area">
-
-                                                    <div className="premium-barcode">
-
-                                                        <span />
-                                                        <span />
-                                                        <span />
-                                                        <span />
-                                                        <span />
-                                                        <span />
-                                                        <span />
-                                                        <span />
-                                                        <span />
-                                                        <span />
-                                                        <span />
-                                                        <span />
-
-                                                    </div>
-
-
-                                                    <div className="premium-card-number">
-
-                                                        ID • STUDENT
-
-                                                    </div>
-
-                                                </div>
-
-
-                                                {/* BACK FOOTER */}
-
+                                                {/* Front footer */}
                                                 <div className="premium-card-footer">
-
-                                                    <span>
-                                                        {
-                                                            design
-                                                                .organization
-                                                                ?.text ||
-                                                            "ORGANIZATION"
-                                                        }
-                                                    </span>
-
-
-                                                    <span>
-                                                        STUDENT SERVICES
-                                                    </span>
-
+                                                    <span>VALID STUDENT IDENTIFICATION</span>
+                                                    <span className="premium-footer-line" />
+                                                    <span>ID CARD</span>
                                                 </div>
-
                                             </div>
-
                                         )}
 
+                                        {/* BACK SIDE */}
+                                        {activeSide === "back" && (
+                                            <div className={`premium-card-back back-${templateClass}`}>
+                                                <div className="premium-back-title">
+                                                    <span>IDENTIFICATION CARD</span>
+                                                    <small>CARD INFORMATION</small>
+                                                </div>
+
+                                                {informationFields.length > 0 ? (
+                                                    <div className="premium-back-information">
+                                                        {informationFields.map((field) => (
+                                                            <div
+                                                                key={field.id}
+                                                                className="premium-back-item"
+                                                            >
+                                                                <span>{field.label}</span>
+                                                                <strong>
+                                                                    {getFieldValue(field) || "—"}
+                                                                </strong>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="premium-empty-back">
+                                                        No fields assigned to the backside.
+                                                    </div>
+                                                )}
+
+                                                <div className="premium-back-note">
+                                                    <strong>IMPORTANT</strong>
+                                                    <p>
+                                                        This card is issued by the organization and must
+                                                        be carried by the student while on campus.
+                                                    </p>
+                                                </div>
+
+                                                <div className="premium-security-area">
+                                                    <div className="premium-barcode">
+                                                        {Array.from({ length: 12 }, (_, index) => (
+                                                            <span key={index} />
+                                                        ))}
+                                                    </div>
+
+                                                    <div className="premium-card-number">
+                                                        ID • STUDENT
+                                                    </div>
+                                                </div>
+
+                                                <div className="premium-card-footer">
+                                                    <span>
+                                                        {design.organization?.text || "ORGANIZATION"}
+                                                    </span>
+                                                    <span>STUDENT SERVICES</span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
+
 
                                 </div>
 
@@ -2867,72 +2307,51 @@ function Design() {
                                 ORGANIZATION EDITOR
                             ================================= */}
 
-                            {selectedElement ===
-                                "organization" && (
-
+                            {(selectedElement === "organization" ||
+                                selectedElement === "companyName") && (
                                 <section className="preview-position-editor">
-
                                     <div className="preview-position-header">
-
                                         <div>
-
                                             <strong>
-                                                Organization Name
+                                                {selectedElement === "organization"
+                                                    ? "Organization Name"
+                                                    : "Company Name"}
                                             </strong>
-
-                                            <span>
-                                                Edit the organization
-                                                name used on the card.
-                                            </span>
-
+                                            <span>Edit the text displayed on your ID card.</span>
                                         </div>
-
                                     </div>
 
-
                                     <div className="preview-position-controls">
-
                                         <div className="preview-position-text">
-
                                             <label>
-                                                Organization Text
+                                                {selectedElement === "organization"
+                                                    ? "Organization Name"
+                                                    : "Company Name"}
                                             </label>
 
                                             <input
                                                 className="input"
                                                 type="text"
                                                 value={
-                                                    design
-                                                        .organization
-                                                        .text
+                                                    selectedElement === "organization"
+                                                        ? design.organization?.text || ""
+                                                        : design.organization?.companyName || ""
                                                 }
-                                                onChange={(
-                                                    event
-                                                ) =>
-                                                    setDesign(
-                                                        (prev) => ({
-                                                            ...prev,
-
-                                                            organization:
-                                                                {
-                                                                    ...prev.organization,
-
-                                                                    text:
-                                                                        event
-                                                                            .target
-                                                                            .value,
-                                                                },
-                                                        })
-                                                    )
+                                                onChange={(event) =>
+                                                    setDesign((prev) => ({
+                                                        ...prev,
+                                                        organization: {
+                                                            ...prev.organization,
+                                                            [selectedElement === "organization"
+                                                                ? "text"
+                                                                : "companyName"]: event.target.value,
+                                                        },
+                                                    }))
                                                 }
                                             />
-
                                         </div>
-
                                     </div>
-
                                 </section>
-
                             )}
 
 
@@ -2994,39 +2413,34 @@ function Design() {
                         FOOTER
                     ================================= */}
 
-                    <div className="form-footer">
+                    
 
-                        <div className="footer-note">
-                            Your design is automatically saved.
-                        </div>
+                    <div className="bottom-actions">
 
-
-                        <div className="actions">
-
-                            <button
-                                type="button"
-                                className="ui-btn ui-btn--secondary"
-                                onClick={
-                                    handleBack
-                                }
-                            >
-                                Back
-                            </button>
+                        <button
+                            type="button"
+                            className="ui-btn ui-btn--secondary"
+                            onClick={
+                                handleBack
+                            }
+                        >
+                            Back
+                        </button>
 
 
-                            <button
-                                type="button"
-                                className="ui-btn ui-btn--primary"
-                                onClick={
-                                    handleNext
-                                }
-                            >
-                                Continue to Demo →
-                            </button>
-
-                        </div>
+                        <button
+                            type="button"
+                            className="ui-btn ui-btn--primary"
+                            onClick={
+                                handleNext
+                            }
+                        >
+                            Continue to Demo →
+                        </button>
 
                     </div>
+
+                 
 
                 </div>
 

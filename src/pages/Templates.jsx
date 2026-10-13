@@ -103,301 +103,301 @@ function getCardDimensions(design) {
 }
 
 
-/* =========================================================
-   TEMPLATE PREVIEW
-========================================================= */
-
-function TemplatePreview({
-    template,
-    form
-}) {
-
-    const design =
-        template?.design || {};
-
-    const fields =
-        Array.isArray(form?.fields)
-            ? form.fields
-            : [];
-
-    const dimensions =
-        getCardDimensions(
-            design
-        );
-
-
-    const photoField =
-        fields.find(
-            (field) =>
-                [
-                    "media",
-                    "image",
-                    "photo",
-                    "file"
-                ].includes(
-                    String(
-                        field?.type || ""
-                    ).toLowerCase()
-                )
-        );
-
-
-    const nameField =
-        fields.find(
-            (field) =>
-                String(
-                    field?.label ||
-                    field?.name ||
-                    ""
-                )
-                    .toLowerCase()
-                    .includes("name")
-        );
-
-
-    const informationFields =
-        fields.filter(
-            (field) =>
-                field?.id !==
-                photoField?.id &&
-                field?.id !==
-                nameField?.id
-        );
-
-
-    return (
-
-        <div className="template-preview-wrapper">
-
-            <div
-                className={[
-                    "template-preview-card",
-                    design.orientation || "portrait",
-                    design.template || "modern",
-                    design.cardSize === "compact"
-                        ? "compact"
-                        : "",
-                    design.background === "soft"
-                        ? "background-soft"
-                        : "",
-                    design.background === "light"
-                        ? "background-light"
-                        : ""
-                ]
-                    .filter(Boolean)
-                    .join(" ")}
-
-                style={{
-                    width: `${dimensions.width}px`,
-                    height: `${dimensions.height}px`,
-                    "--template-primary":
-                        design.primaryColor ||
-                        "#2563eb"
-                }}
-            >
-
-                {/* BACKGROUND IMAGE */}
-
-                {design.backgroundImage?.data &&
-                    design.backgroundImage.visible !== false && (
-
-                        <img
-                            src={
-                                design
-                                    .backgroundImage
-                                    .data
-                            }
-                            alt=""
-                            className="template-background-image"
-                            style={{
-                                opacity:
-                                    design
-                                        .backgroundImage
-                                        .opacity ??
-                                    1
-                            }}
-                        />
+// /* =========================================================
+//    TEMPLATE PREVIEW
+// ========================================================= */
+
+// function TemplatePreview({
+//     template,
+//     form
+// }) {
+
+//     const design =
+//         template?.design || {};
+
+//     const fields =
+//         Array.isArray(form?.fields)
+//             ? form.fields
+//             : [];
+
+//     const dimensions =
+//         getCardDimensions(
+//             design
+//         );
+
+
+//     const photoField =
+//         fields.find(
+//             (field) =>
+//                 [
+//                     "media",
+//                     "image",
+//                     "photo",
+//                     "file"
+//                 ].includes(
+//                     String(
+//                         field?.type || ""
+//                     ).toLowerCase()
+//                 )
+//         );
+
+
+//     const nameField =
+//         fields.find(
+//             (field) =>
+//                 String(
+//                     field?.label ||
+//                     field?.name ||
+//                     ""
+//                 )
+//                     .toLowerCase()
+//                     .includes("name")
+//         );
+
+
+//     const informationFields =
+//         fields.filter(
+//             (field) =>
+//                 field?.id !==
+//                 photoField?.id &&
+//                 field?.id !==
+//                 nameField?.id
+//         );
+
+
+//     return (
+
+//         <div className="template-preview-wrapper">
+
+//             <div
+//                 className={[
+//                     "template-preview-card",
+//                     design.orientation || "portrait",
+//                     design.template || "modern",
+//                     design.cardSize === "compact"
+//                         ? "compact"
+//                         : "",
+//                     design.background === "soft"
+//                         ? "background-soft"
+//                         : "",
+//                     design.background === "light"
+//                         ? "background-light"
+//                         : ""
+//                 ]
+//                     .filter(Boolean)
+//                     .join(" ")}
+
+//                 style={{
+//                     width: `${dimensions.width}px`,
+//                     height: `${dimensions.height}px`,
+//                     "--template-primary":
+//                         design.primaryColor ||
+//                         "#2563eb"
+//                 }}
+//             >
+
+//                 {/* BACKGROUND IMAGE */}
+
+//                 {design.backgroundImage?.data &&
+//                     design.backgroundImage.visible !== false && (
+
+//                         <img
+//                             src={
+//                                 design
+//                                     .backgroundImage
+//                                     .data
+//                             }
+//                             alt=""
+//                             className="template-background-image"
+//                             style={{
+//                                 opacity:
+//                                     design
+//                                         .backgroundImage
+//                                         .opacity ??
+//                                     1
+//                             }}
+//                         />
 
-                    )}
+//                     )}
 
 
-                {/* HEADER */}
+//                 {/* HEADER */}
 
-                <div className="template-preview-header">
+//                 <div className="template-preview-header">
 
-                    {design.logo?.visible !== false && (
+//                     {design.logo?.visible !== false && (
 
-                        design.logo?.data ? (
+//                         design.logo?.data ? (
 
-                            <img
-                                src={
-                                    design
-                                        .logo
-                                        .data
-                                }
-                                alt="Logo"
-                                className="template-preview-logo"
-                            />
+//                             <img
+//                                 src={
+//                                     design
+//                                         .logo
+//                                         .data
+//                                 }
+//                                 alt="Logo"
+//                                 className="template-preview-logo"
+//                             />
 
-                        ) : (
+//                         ) : (
 
-                            <div className="template-logo-placeholder">
-                                LOGO
-                            </div>
+//                             <div className="template-logo-placeholder">
+//                                 LOGO
+//                             </div>
 
-                        )
+//                         )
 
-                    )}
+//                     )}
 
 
-                    {design.organization?.visible !== false && (
+//                     {design.organization?.visible !== false && (
 
-                        <div className="template-preview-organization">
+//                         <div className="template-preview-organization">
 
-                            <strong>
-                                {
-                                    design
-                                        .organization
-                                        ?.text ||
-                                    "ORGANIZATION"
-                                }
-                            </strong>
+//                             <strong>
+//                                 {
+//                                     design
+//                                         .organization
+//                                         ?.text ||
+//                                     "ORGANIZATION"
+//                                 }
+//                             </strong>
 
-                            <span>
-                                STUDENT IDENTITY CARD
-                            </span>
+//                             <span>
+//                                 STUDENT IDENTITY CARD
+//                             </span>
 
-                        </div>
+//                         </div>
 
-                    )}
+//                     )}
 
-                </div>
+//                 </div>
 
 
-                {/* BODY */}
+//                 {/* BODY */}
 
-                <div className="template-preview-body">
+//                 <div className="template-preview-body">
 
-                    <div className="template-identity">
+//                     <div className="template-identity">
 
-                        {photoField &&
-                            design.photo?.visible !== false && (
+//                         {photoField &&
+//                             design.photo?.visible !== false && (
 
-                                <div
-                                    className="template-photo"
-                                    style={{
-                                        width: Math.min(
-                                            Number(
-                                                design
-                                                    .photo
-                                                    ?.width ||
-                                                74
-                                            ),
-                                            42
-                                        ),
+//                                 <div
+//                                     className="template-photo"
+//                                     style={{
+//                                         width: Math.min(
+//                                             Number(
+//                                                 design
+//                                                     .photo
+//                                                     ?.width ||
+//                                                 74
+//                                             ),
+//                                             42
+//                                         ),
 
-                                        height: Math.min(
-                                            Number(
-                                                design
-                                                    .photo
-                                                    ?.height ||
-                                                91
-                                            ),
-                                            52
-                                        )
-                                    }}
-                                >
+//                                         height: Math.min(
+//                                             Number(
+//                                                 design
+//                                                     .photo
+//                                                     ?.height ||
+//                                                 91
+//                                             ),
+//                                             52
+//                                         )
+//                                     }}
+//                                 >
 
-                                    <span>
-                                        PHOTO
-                                    </span>
+//                                     <span>
+//                                         PHOTO
+//                                     </span>
 
-                                </div>
+//                                 </div>
 
-                            )}
+//                             )}
 
 
-                        <div className="template-name-area">
+//                         <div className="template-name-area">
 
-                            <strong>
-                                {
-                                    nameField
-                                        ?.label ||
-                                    "Student Name"
-                                }
-                            </strong>
+//                             <strong>
+//                                 {
+//                                     nameField
+//                                         ?.label ||
+//                                     "Student Name"
+//                                 }
+//                             </strong>
 
-                            <span>
-                                STUDENT
-                            </span>
+//                             <span>
+//                                 STUDENT
+//                             </span>
 
-                        </div>
+//                         </div>
 
-                    </div>
+//                     </div>
 
 
-                    <div className="template-info-title">
-                        STUDENT INFORMATION
-                    </div>
+//                     <div className="template-info-title">
+//                         STUDENT INFORMATION
+//                     </div>
 
 
-                    <div className="template-info-grid">
+//                     <div className="template-info-grid">
 
-                        {informationFields
-                            .slice(0, 4)
-                            .map(
-                                (
-                                    field
-                                ) => (
+//                         {informationFields
+//                             .slice(0, 4)
+//                             .map(
+//                                 (
+//                                     field
+//                                 ) => (
 
-                                    <div
-                                        key={
-                                            field.id
-                                        }
-                                        className="template-info-item"
-                                    >
+//                                     <div
+//                                         key={
+//                                             field.id
+//                                         }
+//                                         className="template-info-item"
+//                                     >
 
-                                        <span>
-                                            {
-                                                field.label ||
-                                                field.name ||
-                                                "Field"
-                                            }
-                                        </span>
+//                                         <span>
+//                                             {
+//                                                 field.label ||
+//                                                 field.name ||
+//                                                 "Field"
+//                                             }
+//                                         </span>
 
-                                        <strong>
-                                            Sample
-                                        </strong>
+//                                         <strong>
+//                                             Sample
+//                                         </strong>
 
-                                    </div>
+//                                     </div>
 
-                                )
-                            )}
+//                                 )
+//                             )}
 
-                    </div>
+//                     </div>
 
-                </div>
+//                 </div>
 
 
-                {/* FOOTER */}
+//                 {/* FOOTER */}
 
-                <div className="template-preview-footer">
+//                 <div className="template-preview-footer">
 
-                    <span>
-                        ID CARD
-                    </span>
+//                     <span>
+//                         ID CARD
+//                     </span>
 
-                    <div />
+//                     <div />
 
-                </div>
+//                 </div>
 
-            </div>
+//             </div>
 
-        </div>
+//         </div>
 
-    );
+//     );
 
-}
+// }
 
 
 /* =========================================================
@@ -415,11 +415,8 @@ function TemplateCard({
     const design =
         template?.design || {};
 
-    const fieldCount =
-        Array.isArray(form?.fields)
-            ? form.fields.length
-            : 0;
-
+    const templateFields = template?.form?.fields || form?.fields || [];
+    const fieldCount = templateFields.length;
 
     return (
 
@@ -432,16 +429,11 @@ function TemplateCard({
 
                 <div className="template-preview-card">
 
-                    {template.form ? (
+                    {template.form || form ? (
 
                         <IDCardRenderer
 
-                            formFields={
-                                template
-                                    .form
-                                    .fields ||
-                                []
-                            }
+                            formFields={template.form?.fields || form?.fields || []}
 
                             data={
                                 template
@@ -681,6 +673,8 @@ function Templates() {
         setToast
     ] = useState("");
 
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     /* =====================================================
        LOAD STORAGE
@@ -891,62 +885,45 @@ function Templates() {
        DELETE TEMPLATE
     ===================================================== */
 
-    function handleDeleteTemplate(
-        templateId
-    ) {
+    function handleDeleteTemplate(templateId) {
+        const template = templates.find(
+            (item) => item.id === templateId
+        );
 
-        const shouldDelete =
-            window.confirm(
-                "Are you sure you want to delete this template?"
-            );
-
-
-        if (!shouldDelete) {
+        if (!template) {
+            showToast("Template not found.");
             return;
         }
 
+        setDeleteTarget(template);
+    }
+
+    function confirmDeleteTemplate() {
+        if (!deleteTarget || isDeleting) return;
+
+        setIsDeleting(true);
 
         try {
-
-            const updatedTemplates =
-                templates.filter(
-                    (template) =>
-                        template.id !==
-                        templateId
-                );
-
+            const updatedTemplates = templates.filter(
+                (template) => template.id !== deleteTarget.id
+            );
 
             localStorage.setItem(
                 TEMPLATES_STORAGE_KEY,
-                JSON.stringify(
-                    updatedTemplates
-                )
+                JSON.stringify(updatedTemplates)
             );
 
-
-            setTemplates(
-                updatedTemplates
-            );
-
-
-            showToast(
-                "Template deleted."
-            );
-
+            setTemplates(updatedTemplates);
+            setDeleteTarget(null);
+            showToast("Template deleted successfully.");
         } catch (error) {
-
-            console.error(
-                "Unable to delete template:",
-                error
-            );
-
-            showToast(
-                "Unable to delete template."
-            );
-
+            console.error("Unable to delete template:", error);
+            showToast("Unable to delete template.");
+        } finally {
+            setIsDeleting(false);
         }
-
     }
+
 
 
     /* =====================================================
@@ -1142,7 +1119,83 @@ function Templates() {
 
                 </section>
 
+                
+{/* DELETE CONFIRMATION MODAL */}
+
+{deleteTarget && (
+    <div
+        className="delete-modal-overlay"
+        onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !isDeleting) {
+                setDeleteTarget(null);
+            }
+        }}
+    >
+        <div
+            className="delete-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-modal-title"
+            aria-describedby="delete-modal-description"
+        >
+            <div className="delete-modal-icon">
+                <svg
+                    width="26"
+                    height="26"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4h8v2" />
+                    <path d="m19 6-1 14H6L5 6" />
+                    <path d="M10 11v5" />
+                    <path d="M14 11v5" />
+                </svg>
+            </div>
+
+            <h2 id="delete-modal-title">
+                Delete template?
+            </h2>
+
+            <p id="delete-modal-description">
+                Are you sure you want to delete{" "}
+                <strong>
+                    {deleteTarget.name || "Untitled Template"}
+                </strong>
+                ? This action cannot be undone.
+            </p>
+
+            <div className="delete-modal-actions">
+                <button
+                    type="button"
+                    className="delete-modal-cancel"
+                    disabled={isDeleting}
+                    onClick={() => setDeleteTarget(null)}
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    className="delete-modal-confirm"
+                    disabled={isDeleting}
+                    onClick={confirmDeleteTemplate}
+                >
+                    {isDeleting ? "Deleting..." : "Delete Template"}
+                </button>
+            </div>
+        </div>
+    </div>
+)}
+
+
             </main>
+
 
 
             {/* =================================

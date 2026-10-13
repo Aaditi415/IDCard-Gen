@@ -927,3 +927,20 @@
     }
 
 }
+
+.field.has-error .input {
+    border-color: #dc2626;
+}
+
+.field.has-error .input:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgb(220 38 38 / 10%);
+}
+
+.field .error {
+    margin: 5px 0 0;
+    color: #dc2626;
+    font-size: 12px;
+    line-height: 1.5;
+    /* display: block; */
+}
