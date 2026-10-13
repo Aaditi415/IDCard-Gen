@@ -1,39 +1,132 @@
 
-
-
-
-        /* =====================================================
-   DATA MENU SETTINGS
+/* =====================================================
+   DATA MENU PAGE
 ===================================================== */
 
 .data-menu-settings {
+    width: 100%;
     max-width: 850px;
     margin-top: 28px;
 }
 
-.settings-card {
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 24px;
+/* =====================================================
+   PAGE HEADER
+===================================================== */
+
+.data-menu-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
 }
 
+.data-menu-header h1 {
+    margin: 10px 0 8px;
+    color: #111827;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.data-menu-header p {
+    max-width: 600px;
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+/* =====================================================
+   STORED LIST COUNT
+===================================================== */
+
+.data-menu-count {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.data-menu-count-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 21px;
+}
+
+.data-menu-count strong,
+.data-menu-count div:last-child span {
+    display: block;
+}
+
+.data-menu-count strong {
+    color: #111827;
+    font-size: 19px;
+}
+
+.data-menu-count div:last-child span {
+    margin-top: 2px;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+/* =====================================================
+   MAIN CONTENT CARD
+===================================================== */
+
+.data-menu-card {
+    min-width: 0;
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+/* =====================================================
+   CARD HEADER
+===================================================== */
+
 .settings-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
     margin-bottom: 24px;
 }
 
 .settings-card-header h2 {
     margin: 0 0 6px;
-    font-size: 18px;
     color: #111827;
+    font-size: 18px;
 }
 
 .settings-card-header p {
     margin: 0;
-    font-size: 14px;
     color: #6b7280;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
+
+.list-count-badge {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    color: #4f46e5;
+    background: #eef2ff;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
 
 /* =====================================================
    DRAG MENU
@@ -45,27 +138,17 @@
     gap: 8px;
 }
 
-
-/* =====================================================
-   MENU ITEM
-===================================================== */
-
 .drag-menu-item {
     display: flex;
     align-items: center;
     gap: 14px;
-
+    min-width: 0;
     min-height: 64px;
-
     padding: 10px 14px;
-
     background: #f9fafb;
-
     border: 1px solid #e5e7eb;
     border-radius: 8px;
-
     cursor: grab;
-
     transition:
         background 0.15s ease,
         border-color 0.15s ease,
@@ -81,16 +164,11 @@
     cursor: grabbing;
 }
 
-
-/* =====================================================
-   DRAGGING
-===================================================== */
-
 .drag-menu-item.dragging {
     opacity: 0.5;
     transform: scale(0.99);
+    border-color: #a5b4fc;
 }
-
 
 /* =====================================================
    DRAG HANDLE
@@ -98,43 +176,35 @@
 
 .drag-handle {
     width: 22px;
-
+    flex-shrink: 0;
+    color: #9ca3af;
     font-size: 18px;
     line-height: 1;
-
-    color: #9ca3af;
-
-    cursor: grab;
-
     letter-spacing: -4px;
+    cursor: grab;
+    user-select: none;
 }
 
-
 /* =====================================================
-   LETTER
+   LIST INITIALS
 ===================================================== */
 
 .menu-letter {
-    width: 36px;
-    height: 36px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
-    border-radius: 8px;
-
-    background: #eef2ff;
-
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
     color: #4f46e5;
-
+    background: #eef2ff;
+    border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
 }
 
-
 /* =====================================================
-   INFO
+   LIST INFORMATION
 ===================================================== */
 
 .menu-info {
@@ -143,120 +213,63 @@
 }
 
 .menu-name {
+    overflow: hidden;
+    color: #111827;
     font-size: 14px;
     font-weight: 600;
-
-    color: #111827;
-
-    white-space: nowrap;
-    overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .menu-meta {
+    overflow: hidden;
     margin-top: 3px;
-
-    font-size: 11px;
-
     color: #9ca3af;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-
 /* =====================================================
-   POSITION
+   LIST POSITION
 ===================================================== */
 
 .menu-position {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 30px;
-
-    text-align: center;
-
-    font-size: 12px;
-
+    height: 30px;
+    flex-shrink: 0;
     color: #9ca3af;
+    background: #f3f4f6;
+    border-radius: 7px;
+    font-size: 12px;
 }
 
-
 /* =====================================================
-   EMPTY
+   EMPTY STATE
 ===================================================== */
 
 .empty-menu {
     padding: 35px 20px;
-
     text-align: center;
-
     border: 1px dashed #d1d5db;
     border-radius: 8px;
-
     color: #6b7280;
 }
 
-.empty-menu div {
-    font-size: 14px;
-    font-weight: 600;
+.empty-menu h3 {
+    margin: 10px 0 6px;
+    color: #111827;
+    font-size: 16px;
 }
 
-.empty-menu span {
-    display: block;
-
-    margin-top: 5px;
-
+.empty-menu p {
+    margin: 0;
     font-size: 12px;
+    line-height: 1.6;
 }
-
-
-/* =====================================================
-   ACTIONS
-===================================================== */
-
-.settings-actions {
-    display: flex;
-    justify-content: flex-end;
-
-    gap: 10px;
-
-    margin-top: 20px;
-
-    padding-top: 20px;
-
-    border-top: 1px solid #e5e7eb;
-}
-
-.settings-actions button {
-    border: 0;
-    border-radius: 7px;
-
-    padding: 9px 16px;
-
-    font-size: 14px;
-
-    cursor: pointer;
-}
-
-.reset-order-btn {
-    background: #f3f4f6;
-    color: #374151;
-}
-
-.reset-order-btn:hover {
-    background: #e5e7eb;
-}
-
-.save-order-btn {
-    background: #111827;
-    color: #ffffff;
-}
-
-.save-order-btn:hover {
-    background: #1f2937;
-}
-
-.settings-actions button:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
 
 /* =====================================================
    TOAST
@@ -264,21 +277,95 @@
 
 .settings-toast {
     position: fixed;
-
     right: 24px;
     bottom: 24px;
-
-    padding: 12px 16px;
-
-    background: #111827;
-    color: #ffffff;
-
-    border-radius: 8px;
-
-    font-size: 14px;
-
-    box-shadow:
-        0 8px 24px rgba(0, 0, 0, 0.15);
-
     z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: calc(100vw - 32px);
+    padding: 12px 16px;
+    color: #ffffff;
+    background: #111827;
+    border-radius: 8px;
+    font-size: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 1050px) {
+    .data-menu-card {
+        padding: 20px;
+    }
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 560px) {
+    .data-menu-settings {
+        margin-top: 20px;
+    }
+
+    .data-menu-header {
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .data-menu-header h1 {
+        font-size: 24px;
+    }
+
+    .data-menu-count {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .data-menu-card {
+        padding: 16px;
+    }
+
+    .settings-card-header {
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+    }
+
+    .drag-menu-item {
+        gap: 9px;
+        padding: 10px 8px;
+    }
+
+    .drag-handle {
+        width: 17px;
+        font-size: 16px;
+    }
+
+    .menu-letter {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+
+    .menu-name {
+        font-size: 13px;
+    }
+
+    .menu-meta {
+        font-size: 10px;
+    }
+
+    .menu-position {
+        width: 25px;
+        height: 25px;
+    }
+
+    .settings-toast {
+        right: 16px;
+        bottom: 16px;
+        font-size: 12px;
+    }
 }
