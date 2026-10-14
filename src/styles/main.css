@@ -325,8 +325,15 @@ textarea {
 .theme-dark .review-card,
 .theme-dark .review-summary-item, 
 .theme-dark .settings-card,
-.theme-dark .drag-menu-item {
- 
+.theme-dark .drag-menu-item,
+.theme-dark .student-form-page,
+.theme-dark .student-form-card,
+.theme-dark .upload-box,
+.theme-dark .record-form-card,
+.theme-dark .record-field input,
+.theme-dark .delete-modal,
+.theme-dark .student-card-preview,
+.theme-dark .student-card-preview-body{ 
     background: var(--card);
     border-color: var(--border);
 }
@@ -342,7 +349,9 @@ textarea {
 .theme-dark h4,
 .theme-dark h5,
 .theme-dark strong,
-.theme-dark label {
+.theme-dark label,
+.theme-dark .record-field input,
+.theme-dark .delete-modal {
     color: var(--dark-text) !important;
 }
 

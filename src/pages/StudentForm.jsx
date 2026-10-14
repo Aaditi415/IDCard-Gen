@@ -307,7 +307,6 @@ const normalizeText = (value) => {
         .replace(/\s+/g, " ");
 };
 
-
 /* -----------------------------------------------------
    NORMALIZE DATE
 ----------------------------------------------------- */
@@ -978,6 +977,15 @@ const verifyStudentSubmission = ({
     };
 
 };
+
+function capitalizeFirstLetter(value) {
+    if (typeof value !== "string" || !value) return value;
+
+    return value.replace(/\b[a-z]/gi, (letter) =>
+        letter.toUpperCase()
+    );
+}
+
 
 /* =========================================================
    MAIN COMPONENT
@@ -1668,16 +1676,37 @@ const saveSubmission = () => {
         return;
     }
 
+    
+    const formattedValues = Object.fromEntries(
+        formFields.map((field) => {
+            const value = values[field.id];
+
+            // Keep email, phone, date, and other non-text fields unchanged.
+            if (
+                field.type === "email" ||
+                field.type === "phone" ||
+                isDateField(field) ||
+                isMediaField(field) ||
+                isCheckboxField(field) ||
+                isSelectField(field)
+            ) {
+                return [field.id, value];
+            }
+
+            return [field.id, capitalizeFirstLetter(value)];
+        })
+    );
+
+
     /* =====================================================
        VERIFY STUDENT
     ===================================================== */
 
-    const verificationResult =
-        verifyStudentSubmission({
-            submissionData: values,
-            formFields,
-            listData,
-        });
+    const verificationResult = verifyStudentSubmission({
+        submissionData: formattedValues,
+        formFields,
+        listData,
+    });
 
 
     /* =====================================================
@@ -1792,7 +1821,7 @@ const saveSubmission = () => {
         --------------------------------------------- */
 
         data: {
-            ...values
+            ...formattedValues 
         },
 
 
@@ -3848,7 +3877,7 @@ if (previewMode) {
                     LIST INFORMATION
                 ========================================= */}
 
-                {listData && (
+                {/* {listData && (
 
                     <div className="student-list-info">
 
@@ -3862,7 +3891,7 @@ if (previewMode) {
 
                     </div>
 
-                )}
+                )} */}
 
 
                 {/* =========================================

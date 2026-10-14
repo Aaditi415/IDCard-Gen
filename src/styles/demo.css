@@ -2,11 +2,6 @@
    CONTENT
 ===================================================== */
 
-.content {
-    padding: 28px 32px 50px;
-    max-width: 1500px;
-    margin: auto;
-}
 
 
 
@@ -905,12 +900,7 @@
 
 @media(max-width: 760px) {
 
-    .content {
-
-        padding:
-            22px 15px 40px;
-    }
-
+ 
     .review-summary {
 
         grid-template-columns:
