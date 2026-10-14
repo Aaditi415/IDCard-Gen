@@ -12,6 +12,8 @@ import Topbar from "../components/Topbar";
 
 
 function ListForm() {
+    const [isSaving, setIsSaving] = useState(false);
+
     const [listName, setListName] = useState("");
     const [tabName, setTabName] = useState("");
 
@@ -120,7 +122,10 @@ function ListForm() {
     ========================== */
 
     
-    const handleContinue = () => {
+    
+    const handleContinue = async () => {
+        if (isSaving) return;
+
         if (!validateForm()) {
             showToast("Please correct the errors before continuing.");
             return;
@@ -128,34 +133,98 @@ function ListForm() {
 
         const list = listName.trim();
         const tab = tabName.trim();
+        const token = localStorage.getItem("idFoundryToken");
 
-        const savedLists = JSON.parse(
-            localStorage.getItem("idCardLists") || "[]"
-        );
+        if (!token) {
+            showToast("Your session has expired. Please log in again.");
+            window.location.replace("/login");
+            return;
+        }
 
-        const newList = {
-            listName: list,
-            tabName: tab
-        };
+        setIsSaving(true);
 
-        savedLists.push(newList);
+        try {
+            const apiBaseUrl =
+                import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-        // Save all created lists
-        localStorage.setItem(
-            "idCardLists",
-            JSON.stringify(savedLists)
-        );
+            const response = await fetch(
+                `${apiBaseUrl}/api/master-lists`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        listName: list,
+                        tabName: tab,
+                        fields: [],
+                        records: [],
+                    }),
+                }
+            );
 
-        // Keep compatibility with your Import Data page
-        localStorage.setItem(
-            "idCardList",
-            JSON.stringify(newList)
-        );
+            const result = await response.json();
 
-        console.log("List created:", newList);
+            if (!response.ok) {
+                if (response.status === 401) {
+                    localStorage.removeItem("idFoundryToken");
+                    localStorage.removeItem("idFoundryUser");
+                    window.location.replace("/login");
+                    return;
+                }
 
-        setShowSuccess(true);
-        showToast("List information saved.");
+                if (response.status === 409) {
+                    setTabNameError(
+                        "This tab name already exists in your organization."
+                    );
+                    showToast("This tab name is already in use.");
+                    return;
+                }
+
+                throw new Error(
+                    result.message || "Unable to save the list."
+                );
+            }
+
+            // Keep compatibility with existing frontend pages.
+            const savedLists = JSON.parse(
+                localStorage.getItem("idCardLists") || "[]"
+            );
+
+            const newList = {
+                ...result.list,
+                id: result.list._id,
+                listName: result.list.listName,
+                tabName: result.list.tabName,
+            };
+
+            console.log("Created master list:", result.list);
+            console.log("Created MongoDB ID:", result.list?._id);
+            savedLists.push(newList);
+
+            localStorage.setItem(
+                "idCardLists",
+                JSON.stringify(savedLists)
+            );
+
+            localStorage.setItem(
+                "idCardList",
+                JSON.stringify(newList)
+            );
+
+            setShowSuccess(true);
+            showToast("List saved successfully!");
+
+        } catch (error) {
+            console.error("Create master list error:", error);
+            showToast(
+                error.message ||
+                "Unable to connect to the server. Please try again."
+            );
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     /* =========================
@@ -530,10 +599,10 @@ function ListForm() {
                                             type="button"
                                             className="ui-btn ui-btn--primary"
                                             onClick={handleContinue}
+                                            disabled={isSaving}
                                         >
-                                            Continue
-                                            <ArrowRight size={10} />
-                                            
+                                            {isSaving ? "Saving..." : "Continue"}
+                                            {!isSaving && <ArrowRight size={10} />}
                                         </button>
 
                                     </div>

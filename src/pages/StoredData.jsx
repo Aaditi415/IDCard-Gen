@@ -44,27 +44,54 @@ function StoredData() {
        LOAD STORED LISTS
     ===================================================== */
 
-    const loadStoredLists = () => {
+    
+    const API_BASE_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+    const loadStoredLists = async () => {
         try {
-            const stored =
-                JSON.parse(
-                    localStorage.getItem(
-                        "idCardStoredLists"
-                    )
-                ) || [];
+            const token = localStorage.getItem("idFoundryToken");
 
-            setStoredLists(stored);
+            if (!token) {
+                window.location.replace("/login");
+                return;
+            }
 
-        } catch (error) {
-            console.error(
-                "Failed to load stored data:",
-                error
+            const response = await fetch(
+                `${API_BASE_URL}/api/master-lists`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
 
+            if (response.status === 401) {
+                localStorage.removeItem("idFoundryToken");
+                localStorage.removeItem("idFoundryUser");
+                window.location.replace("/login");
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error("Failed to load master lists");
+            }
+
+            const result = await response.json();
+
+            setStoredLists(
+                (result.lists || []).map((list) => ({
+                    ...list,
+                    id: String(list._id),
+                    headers: list.fields || [],
+                    students: list.records || [],
+                }))
+            );
+        } catch (error) {
+            console.error("Failed to load stored data:", error);
             setStoredLists([]);
         }
     };
-
 
     useEffect(() => {
         loadStoredLists();
@@ -77,10 +104,10 @@ function StoredData() {
 
     const selectedList = useMemo(() => {
         return storedLists.find(
-            (list) => list.id === selectedId
+            (list) =>
+                String(list._id || list.id) === String(selectedId)
         );
     }, [storedLists, selectedId]);
-
 
     /* =====================================================
        CURRENT RECORDS
@@ -519,51 +546,118 @@ function StoredData() {
 
 
     /* =====================================================
-    CONFIRM DELETE ENTIRE LIST
+    CONFIRM DELETE ENTIRE LIST — MONGODB
     ===================================================== */
 
-    const confirmDeleteList = () => {
+    const confirmDeleteList = async () => {
         if (!selectedList) {
             return;
         }
 
-        const updatedLists = storedLists.filter(
-            (list) => list.id !== selectedId
-        );
-
-        localStorage.setItem(
-            "idCardStoredLists",
-            JSON.stringify(updatedLists)
-        );
-
-        /*
-        * Also remove any final-list reference
-        * if it points to this list.
-        */
         try {
-            const finalList = JSON.parse(
-                localStorage.getItem("idCardFinalList")
+            const token = localStorage.getItem("idFoundryToken");
+
+            if (!token) {
+                window.location.replace("/login");
+                return;
+            }
+
+            const listId = String(selectedList._id || selectedList.id);
+
+            const response = await fetch(
+                `${API_BASE_URL}/api/master-lists/${encodeURIComponent(listId)}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
 
-            if (finalList?.id === selectedId) {
-                localStorage.removeItem(
-                    "idCardFinalList"
+            if (response.status === 401) {
+                localStorage.removeItem("idFoundryToken");
+                localStorage.removeItem("idFoundryUser");
+                window.location.replace("/login");
+                return;
+            }
+
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(
+                    result.message || "Failed to delete the list."
                 );
             }
-        } catch (error) {
-            console.error(
-                "Failed to clear final list:",
-                error
+
+            // Remove the deleted list from the current UI.
+            setStoredLists((previousLists) =>
+                previousLists.filter(
+                    (list) =>
+                        String(list._id || list.id) !== listId
+                )
             );
+
+            // Remove stale local references to this master list.
+            try {
+                const cachedList = JSON.parse(
+                    localStorage.getItem("idCardList") || "null"
+                );
+
+                if (
+                    cachedList &&
+                    String(cachedList._id || cachedList.id) === listId
+                ) {
+                    localStorage.removeItem("idCardList");
+                }
+
+                const finalList = JSON.parse(
+                    localStorage.getItem("idCardFinalList") || "null"
+                );
+
+                if (
+                    finalList &&
+                    String(finalList._id || finalList.id) === listId
+                ) {
+                    localStorage.removeItem("idCardFinalList");
+                }
+
+                const importedData = JSON.parse(
+                    localStorage.getItem("idCardImportedData") || "null"
+                );
+
+                if (importedData) {
+                    // Clear imported data only when it belongs to this list.
+                    const importedListId =
+                        importedData.masterListId ||
+                        importedData.listId ||
+                        importedData._id;
+
+                    if (
+                        importedListId &&
+                        String(importedListId) === listId
+                    ) {
+                        localStorage.removeItem("idCardImportedData");
+                    }
+                }
+            } catch (storageError) {
+                console.error(
+                    "Failed to clean cached list data:",
+                    storageError
+                );
+            }
+
+            setShowDeleteListModal(false);
+
+            // Return to the Stored Data page without a deleted list ID.
+            window.location.href = "/";
+
+        } catch (error) {
+            console.error("Failed to delete master list:", error);
+
+            setShowDeleteListModal(false);
+
+            showToast(error.message || "Unable to delete the list.");
         }
-
-        setShowDeleteListModal(false);
-
-        /*
-        * Redirect to dashboard after
-        * deleting the complete list.
-        */
-        window.location.href = "/";
     };
 
 

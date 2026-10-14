@@ -23,6 +23,8 @@ import Templates from "./pages/Templates";
 import IDListForm from "./pages/IDListForm";
 import StudentData from "./pages/StudentData";
 import AppTheme from "./pages/AppTheme";
+import Login from "./pages/Login";
+
 
 import { TourProvider, useTour } from "./components/TourContext";
 import GuidedTour from "./components/GuidedTour";
@@ -53,9 +55,70 @@ function AppContent() {
         }
     }, []);
 
-    const path = window.location.pathname;
+
+    useEffect(() => {
+        const checkSession = async () => {
+            const currentPath = window.location.pathname;
+
+            if (
+                currentPath === "/login" ||
+                currentPath === "/login.html"
+            ) {
+                return;
+            }
+
+            const token = localStorage.getItem("idFoundryToken");
+
+            if (!token) {
+                window.location.replace("/login");
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    "http://localhost:5000/api/auth/me",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    localStorage.removeItem("idFoundryToken");
+                    localStorage.removeItem("idFoundryUser");
+                    window.location.replace("/login");
+                }
+            } catch (error) {
+                console.error("Session verification failed:", error);
+            }
+        };
+
+        checkSession();
+    }, []);    const path = window.location.pathname;
 
     let page;
+
+    const isLoginPage =
+        path === "/login" || path === "/login.html";
+
+    const token = localStorage.getItem("idFoundryToken");
+
+    useEffect(() => {
+        if (!isLoginPage && !token) {
+            window.location.replace("/login");
+        }
+    }, [isLoginPage, token]);
+
+    // Keep the login page accessible without a token.
+    if (isLoginPage) {
+        return <Login />;
+    }
+
+    // Don't render private pages while redirecting.
+    if (!token) {
+        return null;
+    }
 
     if (path.endsWith("/card") || path.endsWith("/card.html")) {
         page = <Card />;

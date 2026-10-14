@@ -8,19 +8,26 @@ function Review() {
     const [editErrors, setEditErrors] = useState({});
     const [deleteIndex, setDeleteIndex] = useState(null);
 
+    const [savedList, setSavedList] = useState(null);
+    const [headers, setHeaders] = useState([]);
+    const [students, setStudents] = useState([]);
+    const [removedCount, setRemovedCount] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState("");
+
     /* =====================================================
        CURRENT LIST
     ===================================================== */
 
-    const [savedList] = useState(() => {
-        try {
-            return JSON.parse(
-                localStorage.getItem("idCardList")
-            );
-        } catch {
-            return null;
-        }
-    });
+    // const [savedList] = useState(() => {
+    //     try {
+    //         return JSON.parse(
+    //             localStorage.getItem("idCardList")
+    //         );
+    //     } catch {
+    //         return null;
+    //     }
+    // });
 
 
     /* =====================================================
@@ -42,40 +49,40 @@ function Review() {
        DATA
     ===================================================== */
 
-    const [headers, setHeaders] = useState(() => {
-        if (
-            savedImport &&
-            Array.isArray(savedImport.headers)
-        ) {
-            return [...savedImport.headers];
-        }
+    // const [headers, setHeaders] = useState(() => {
+    //     if (
+    //         savedImport &&
+    //         Array.isArray(savedImport.headers)
+    //     ) {
+    //         return [...savedImport.headers];
+    //     }
 
-        return [];
-    });
-
-
-    const [students, setStudents] = useState(() => {
-        if (
-            savedImport &&
-            Array.isArray(savedImport.rows)
-        ) {
-            return savedImport.rows.map((row) => [...row]);
-        }
-
-        return [];
-    });
+    //     return [];
+    // });
 
 
-    const [removedCount, setRemovedCount] = useState(() => {
-        if (
-            savedImport &&
-            typeof savedImport.removedCount === "number"
-        ) {
-            return savedImport.removedCount;
-        }
+    // const [students, setStudents] = useState(() => {
+    //     if (
+    //         savedImport &&
+    //         Array.isArray(savedImport.rows)
+    //     ) {
+    //         return savedImport.rows.map((row) => [...row]);
+    //     }
 
-        return 0;
-    });
+    //     return [];
+    // });
+
+
+    // const [removedCount, setRemovedCount] = useState(() => {
+    //     if (
+    //         savedImport &&
+    //         typeof savedImport.removedCount === "number"
+    //     ) {
+    //         return savedImport.removedCount;
+    //     }
+
+    //     return 0;
+    // });
 
 
     const [editingIndex, setEditingIndex] = useState(null);
@@ -119,27 +126,191 @@ function Review() {
         };
     }, []);
 
+    
+    /* =====================================================
+    LOAD CURRENT MASTER LIST FROM API
+    ===================================================== */
+
+    useEffect(() => {
+        const loadMasterList = async () => {
+            const token = localStorage.getItem("idFoundryToken");
+
+            if (!token) {
+                window.location.replace("/login");
+                return;
+            }
+
+            try {
+                setIsLoading(true);
+                setLoadError("");
+
+                const apiBaseUrl =
+                    import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+                const storedList = JSON.parse(
+                    localStorage.getItem("idCardList") || "null"
+                );
+
+                const listId = storedList?._id || storedList?.id;
+
+                if (!listId) {
+                    throw new Error("No master list selected. Please return to Import Data.");
+                }
+
+                const response = await fetch(
+                    `${apiBaseUrl}/api/master-lists`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                if (response.status === 401) {
+                    localStorage.removeItem("idFoundryToken");
+                    localStorage.removeItem("idFoundryUser");
+                    window.location.replace("/login");
+                    return;
+                }
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(
+                        result.message || "Unable to load the master list."
+                    );
+                }
+
+                const currentList = result.lists.find(
+                    (list) => list._id === listId
+                );
+
+                if (!currentList) {
+                    throw new Error("The selected master list was not found.");
+                }
+
+                setSavedList(currentList);
+
+                const listHeaders = Array.isArray(currentList.fields)
+                    ? currentList.fields
+                    : [];
+
+                const listStudents = Array.isArray(currentList.records)
+                    ? currentList.records.map((row) =>
+                        Array.isArray(row) ? [...row] : []
+                    )
+                    : [];
+
+                setHeaders(listHeaders);
+                setStudents(listStudents);
+
+                localStorage.setItem(
+                    "idCardList",
+                    JSON.stringify(currentList)
+                );
+
+                localStorage.setItem(
+                    "idCardImportedData",
+                    JSON.stringify({
+                        headers: listHeaders,
+                        rows: listStudents,
+                        removedCount: 0,
+                    })
+                );
+            } catch (error) {
+                console.error("Review API error:", error);
+                setLoadError(error.message || "Unable to load student data.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadMasterList();
+    }, []);
+
 
     /* =====================================================
        SAVE IMPORTED DATA
     ===================================================== */
-
-    const saveImportedData = (
-        currentStudents = students,
-        currentRemovedCount = removedCount
+       
+    const saveImportedData = async (
+        updatedHeaders,
+        updatedStudents,
+        updatedRemovedCount = removedCount
     ) => {
-        localStorage.setItem(
-            "idCardImportedData",
-            JSON.stringify({
-                headers: headers,
-                rows: currentStudents,
-                removedCount: currentRemovedCount
-            })
-        );
+        try {
+            const token = localStorage.getItem("idFoundryToken");
+
+            const currentList = JSON.parse(
+                localStorage.getItem("idCardList") || "null"
+            );
+
+            const listId = currentList?._id || currentList?.id;
+
+            if (!token) {
+                throw new Error("Your session has expired. Please log in again.");
+            }
+
+            if (!listId) {
+                throw new Error("Master list ID not found. Please select your list again.");
+            }
+
+            const apiBaseUrl =
+                import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+            const response = await fetch(
+                `${apiBaseUrl}/api/master-lists/${listId}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        fields: updatedHeaders,
+                        records: updatedStudents,
+                    }),
+                }
+            );
+
+            const result = await response.json();
+
+            if (response.status === 401) {
+                localStorage.removeItem("idFoundryToken");
+                localStorage.removeItem("idFoundryUser");
+                window.location.replace("/login");
+                return false;
+            }
+
+            if (!response.ok || result.success === false) {
+                throw new Error(
+                    result.message || "Failed to save student data."
+                );
+            }
+
+            // Update React state only after the API confirms success.
+            setHeaders(updatedHeaders);
+            setStudents(updatedStudents);
+            setRemovedCount(updatedRemovedCount);
+
+            // Keep the local cache consistent with MongoDB.
+            localStorage.setItem(
+                "idCardImportedData",
+                JSON.stringify({
+                    headers: updatedHeaders,
+                    rows: updatedStudents,
+                    removedCount: updatedRemovedCount,
+                })
+            );
+
+            return true;
+        } catch (error) {
+            console.error("Save student data error:", error);
+            alert(error.message || "Unable to save changes.");
+            return false;
+        }
     };
 
-    
-    
     const getFieldType = (header) => {
         const name = String(header || "")
             .trim()
@@ -323,10 +494,10 @@ function Review() {
        SAVE EDIT
     ===================================================== */
 
-    const saveEdit = () => {
-        if (editingIndex === null) {
-            return;
-        }
+    
+    const saveEdit = async () => {
+        if (editingIndex === null) return;
+
         const errors = {};
 
         headers.forEach((header, index) => {
@@ -339,40 +510,25 @@ function Review() {
 
         setEditErrors(errors);
 
-        if (Object.keys(errors).length > 0) {
-            return;
-        }
+        if (Object.keys(errors).length > 0) return;
 
-        const updatedStudents = students.map(
-            (student, index) => {
-                if (index === editingIndex) {
-                    return editValues.map(
-                        (value) => value.trim()
-                    );
-                }
-
-                return student;
-            }
+        const updatedStudents = students.map((student, index) =>
+            index === editingIndex
+                ? editValues.map((value) => String(value ?? "").trim())
+                : student
         );
 
-        setStudents(updatedStudents);
-
-        setEditingIndex(null);
-
-        setEditValues([]);
-
-        saveImportedData(
+        const saved = await saveImportedData(
+            headers,
             updatedStudents,
             removedCount
         );
 
-        showToast(
-            "Student information updated."
-        );
+        if (!saved) return;
+
+        closeEditModal();
+        showToast("Student information updated successfully.");
     };
-
-
- 
 
 
     /* =====================================================
@@ -394,7 +550,8 @@ function Review() {
         setStudentToDelete(null);
     };
 
-    const confirmDeleteStudent = () => {
+    
+    const confirmDeleteStudent = async () => {
         if (studentToDelete === null) return;
 
         const { index, name } = studentToDelete;
@@ -405,224 +562,138 @@ function Review() {
 
         const newRemovedCount = removedCount + 1;
 
-        setStudents(updatedStudents);
-        setRemovedCount(newRemovedCount);
+        const saved = await saveImportedData(
+            headers,
+            updatedStudents,
+            newRemovedCount
+        );
+
+        if (!saved) return;
+
         setStudentToDelete(null);
-
-        saveImportedData(updatedStudents, newRemovedCount);
-
         showToast(`${name} deleted successfully.`);
     };
+
 
 
     /* =====================================================
        FINAL SAVE
     ===================================================== */
 
-    const saveStudentList = () => {
 
-    if (!students.length) {
+    const saveStudentList = async () => {
+        try {
+            const storedList = JSON.parse(
+                localStorage.getItem("idCardList") || "null"
+            );
 
-        showToast(
-            "There are no student records to save."
-        );
+            const token = localStorage.getItem("idFoundryToken");
 
-        return;
-    }
+            if (!token) {
+                window.location.replace("/login");
+                return;
+            }
 
+            if (!storedList?._id && !storedList?.id) {
+                showToast("Master list not found. Please select a list.", "error");
+                return;
+            }
 
-    /* =====================================================
-       GET EXISTING STORED LISTS
-    ===================================================== */
+            const listId = storedList._id || storedList.id;
 
-    let storedLists = [];
+            // Get the latest list from the backend
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/master-lists`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
 
-    try {
+            const result = await response.json();
 
-        storedLists =
-            JSON.parse(
-                localStorage.getItem(
-                    "idCardStoredLists"
-                )
-            ) || [];
+            if (response.status === 401) {
+                localStorage.removeItem("idFoundryToken");
+                localStorage.removeItem("idFoundryUser");
+                window.location.replace("/login");
+                return;
+            }
 
-    } catch {
+            if (!response.ok || result.success === false) {
+                throw new Error(result.message || "Unable to fetch master lists.");
+            }
 
-        storedLists = [];
+            const masterList = result.lists?.find(
+                (list) => String(list._id) === String(listId)
+            );
 
-    }
+            if (!masterList) {
+                showToast("Selected master list was not found.", "error");
+                return;
+            }
 
+            // Save the latest reviewed data to MongoDB
+            const saveResponse = await fetch(
+                `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/master-lists/${masterList._id}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        fields: headers,
+                        records: students,
+                    }),
+                }
+            );
 
-    if (!Array.isArray(storedLists)) {
-        storedLists = [];
-    }
+            const saveResult = await saveResponse.json();
 
+            if (saveResponse.status === 401) {
+                localStorage.removeItem("idFoundryToken");
+                localStorage.removeItem("idFoundryUser");
+                window.location.replace("/login");
+                return;
+            }
 
-    /* =====================================================
-       GENERATE NEXT LETTER
-    ===================================================== */
+            if (!saveResponse.ok || saveResult.success === false) {
+                throw new Error(
+                    saveResult.message || "Unable to save the student list."
+                );
+            }
 
-    const shortName =
-        String.fromCharCode(
-            65 + storedLists.length
-        );
+            // Update local cache only after MongoDB confirms the save
+            const savedMongoList = saveResult.list;
 
+            localStorage.setItem(
+                "idCardList",
+                JSON.stringify(savedMongoList)
+            );
 
-    /* =====================================================
-       CREATE MASTER LIST
-    ===================================================== */
+            localStorage.setItem(
+                "idCardImportedData",
+                JSON.stringify({
+                    headers: savedMongoList.fields,
+                    rows: savedMongoList.records,
+                    removedCount,
+                })
+            );
 
-    const masterListId =
-        "master_" + Date.now();
+            showToast("Student list saved successfully!", "success");
 
-
-    const storedList = {
-
-        id:
-            masterListId,
-
-        shortName:
-            shortName,
-
-        listName:
-            savedList
-                ? savedList.listName
-                : "Untitled List",
-
-        tabName:
-            savedList
-                ? savedList.tabName
-                : "List " + shortName,
-
-        headers:
-            [...headers],
-
-        students:
-            students.map(
-                row => [...row]
-            ),
-
-        totalRecords:
-            students.length,
-
-        validRecords:
-            students.length,
-
-        removedRecords:
-            removedCount,
-
-        createdAt:
-            new Date().toISOString(),
-
-        updatedAt:
-            new Date().toISOString()
-
+            // Keep your existing navigation destination
+            window.location.href = `/stored-data?id=${savedMongoList._id}`;
+        } catch (error) {
+            console.error("Save student list error:", error);
+            showToast(
+                error.message || "Failed to save student list.",
+                "error"
+            );
+        }
     };
-
-
-    /* =====================================================
-       SAVE TO EXISTING STORED LISTS
-    ===================================================== */
-
-    const updatedStoredLists = [
-        ...storedLists,
-        storedList
-    ];
-
-
-    localStorage.setItem(
-        "idCardStoredLists",
-        JSON.stringify(
-            updatedStoredLists
-        )
-    );
-
-
-    /* =====================================================
-       SAVE AS MASTER LIST
-       ---------------------------------------------
-       This is what StudentForm verification uses.
-    ===================================================== */
-
-    let masterLists = [];
-
-    try {
-
-        masterLists =
-            JSON.parse(
-                localStorage.getItem(
-                    "idCardMasterLists"
-                )
-            ) || [];
-
-    } catch {
-
-        masterLists = [];
-
-    }
-
-
-    if (!Array.isArray(masterLists)) {
-        masterLists = [];
-    }
-
-
-    /* =====================================================
-       REMOVE OLD VERSION OF SAME MASTER LIST
-    ===================================================== */
-
-    const updatedMasterLists = [
-        ...masterLists.filter(
-            master =>
-                master.id !==
-                masterListId
-        ),
-        storedList
-    ];
-
-
-    localStorage.setItem(
-        "idCardMasterLists",
-        JSON.stringify(
-            updatedMasterLists
-        )
-    );
-
-
-    /* =====================================================
-       KEEP OLD FINAL LIST
-    ===================================================== */
-
-    localStorage.setItem(
-        "idCardFinalList",
-        JSON.stringify(
-            storedList
-        )
-    );
-
-
-    /* =====================================================
-       TOAST
-    ===================================================== */
-
-    showToast(
-        "Student list saved successfully."
-    );
-
-
-    /* =====================================================
-       GO TO STORED DATA
-    ===================================================== */
-
-    setTimeout(() => {
-
-        window.location.href =
-            "/stored-data?id=" +
-            storedList.id;
-
-    }, 800);
-
-};
 
     /* =====================================================
        NAVIGATION

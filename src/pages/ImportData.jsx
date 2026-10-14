@@ -11,6 +11,8 @@ function ImportData() {
 
     const [savedList, setSavedList] = useState(null);
 
+    const [isLoadingList, setIsLoadingList] = useState(true);
+
     /* =====================================================
        FILE / UI STATE
     ===================================================== */
@@ -32,6 +34,7 @@ function ImportData() {
     const [invalidRecords, setInvalidRecords] = useState(0);
 
     const [isReady, setIsReady] = useState(false);
+    const [isSavingImport, setIsSavingImport] = useState(false);
 
     const [toast, setToast] = useState("");
     const toastTimer = useRef(null);
@@ -44,17 +47,100 @@ function ImportData() {
        LOAD CURRENT LIST
     ===================================================== */
 
-    useEffect(() => {
-        const stored = localStorage.getItem("idCardList");
 
-        if (stored) {
+    useEffect(() => {
+        const loadCurrentList = async () => {
+            setIsLoadingList(true);
+
             try {
+                const token = localStorage.getItem("idFoundryToken");
+
+                if (!token) {
+                    window.location.replace("/login");
+                    return;
+                }
+
+                const stored = localStorage.getItem("idCardList");
+
+                if (!stored) {
+                    showToast("No list selected. Please create a list first.");
+                    setSavedList(null);
+                    return;
+                }
+
                 const parsed = JSON.parse(stored);
-                setSavedList(parsed);
+
+                // A newly created backend list has a MongoDB _id.
+                const listId = parsed._id || parsed.id;
+
+                if (!listId) {
+                    setSavedList(parsed);
+                    showToast("This list has no server ID. Please recreate it.");
+                    return;
+                }
+
+                const apiBaseUrl =
+                    import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+                const response = await fetch(
+                    `${apiBaseUrl}/api/master-lists`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                if (response.status === 401) {
+                    localStorage.removeItem("idFoundryToken");
+                    localStorage.removeItem("idFoundryUser");
+                    window.location.replace("/login");
+                    return;
+                }
+
+                console.log("Import API status:", response.status);
+                console.log(
+                    "Import API authorization sent:",
+                    Boolean(token)
+                );
+
+                const result = await response.json();
+
+                console.log("Import API response:", result);
+
+                if (!response.ok) {
+                    throw new Error(
+                        result.message || "Unable to load master lists."
+                    );
+                }
+
+                const currentList = result.lists.find(
+                    (item) => item._id === listId
+                );
+
+                if (!currentList) {
+                    setSavedList(null);
+                    showToast("The selected list was not found in your organization.");
+                    return;
+                }
+
+                setSavedList(currentList);
+
+                // Refresh the compatibility cache with the server version.
+                localStorage.setItem(
+                    "idCardList",
+                    JSON.stringify(currentList)
+                );
+
             } catch (error) {
-                console.error("Unable to read saved list:", error);
+                console.error("Load master list error:", error);
+                showToast(error.message || "Unable to load the selected list.");
+            } finally {
+                setIsLoadingList(false);
             }
-        }
+        };
+
+        loadCurrentList();
     }, []);
 
 
@@ -181,6 +267,10 @@ function ImportData() {
     ===================================================== */
 
     const handleFile = (file) => {
+        if (!savedList?._id) {
+            showToast("Please select a valid master list before uploading.");
+            return;
+        }
         const extension = file.name
             .split(".")
             .pop()
@@ -536,18 +626,121 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
        IMPORT DATA
     ===================================================== */
 
-    const importData = () => {
-        if (!isReady) {
-            showToast(
-                "Please upload a file first."
-            );
+    
+    const importData = async () => {
+        console.log("IMPORT BUTTON CLICKED");
+        if (isSavingImport) return;
 
+        if (isLoadingList || !savedList?._id) {
+            showToast("Please select a valid master list first.");
             return;
         }
 
-        window.location.href =
-            "/review";
+        if (!isReady || !selectedFile) {
+            showToast("Please upload a file first.");
+            return;
+        }
+
+        // Excel parsing has not been implemented yet.
+        const extension = selectedFile.name
+            .split(".")
+            .pop()
+            .toLowerCase();
+
+        if (extension !== "csv") {
+            showToast(
+                "Actual Excel data reading is not available yet. Please use a CSV file for now."
+            );
+            return;
+        }
+
+        if (!headers.length || !previewRows.length) {
+            showToast("No student records found to import.");
+            return;
+        }
+
+        const token = localStorage.getItem("idFoundryToken");
+
+        if (!token) {
+            window.location.replace("/login");
+            return;
+        }
+
+        setIsSavingImport(true);
+
+        try {
+            const apiBaseUrl =
+                import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+            const response = await fetch(
+                `${apiBaseUrl}/api/master-lists/${savedList._id}`,
+                {
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        fields: headers,
+                        records: previewRows,
+                    }),
+                }
+            );
+            console.log("SAVE STATUS:", response.status);
+            console.log("SAVE REQUEST METHOD:", "PUT");
+            console.log("SAVE LIST ID:", savedList._id);
+            if (response.status === 401) {
+                localStorage.removeItem("idFoundryToken");
+                localStorage.removeItem("idFoundryUser");
+                window.location.replace("/login");
+                return;
+            }
+
+            const result = await response.json();
+
+            console.log("SAVE RESPONSE:", result);
+            if (!response.ok) {
+                throw new Error(
+                    result.message || "Unable to import student records."
+                );
+            }
+
+            // Update the selected list using the server response.
+            setSavedList(result.list);
+
+            localStorage.setItem(
+                "idCardList",
+                JSON.stringify(result.list)
+            );
+
+            // Preserve the data format used by the existing Review page.
+            localStorage.setItem(
+                "idCardImportedData",
+                JSON.stringify({
+                    headers: result.list.fields,
+                    rows: result.list.records,
+                })
+            );
+
+            showToast("Student records saved successfully!");
+
+            window.location.href = "/review";
+        }  catch (error) {
+            console.error("Import student records error:", error);
+
+            window.alert(
+                "Import failed:\n" + error.message
+            );
+
+            showToast(
+                error.message || "Unable to save student records."
+            );
+        }finally {
+            setIsSavingImport(false);
+        }
     };
+
 
     /* =====================================================
        NAVIGATION
@@ -679,7 +872,10 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
                                 className="list-name"
                                 id="listName"
                             >
-                                {savedList?.listName || ""}
+                                {isLoadingList
+                                    ? "Loading selected list..."
+                                    : savedList?.listName || "No list selected"
+                                }
                             </div>
 
                         </div>
@@ -1171,20 +1367,19 @@ Rohan Deshmukh,STU-2026-003,10th A,3,rohan.jpg,Science
                                 </button>
 
 
+                                
                                 <button
-                                    className={`ui-btn ui-btn--primary ${
-                                        isReady
-                                            ? "ready"
-                                            : ""
-                                    }`}
+                                    type="button"
+                                    className={`ui-btn ui-btn--primary ${isReady ? "ready" : ""}`}
                                     id="importBtn"
-                                    onClick={
-                                        importData
-                                    }
+                                    onClick={importData}
+                                    disabled={isSavingImport || isLoadingList}
                                 >
-                                    Import Data 
-                                    <ArrowRight size={10} />
+                                    {isSavingImport ? "Saving Records..." : "Import Data"}
+
+                                    {!isSavingImport && <ArrowRight size={10} />}
                                 </button>
+
 
                             </div>
 

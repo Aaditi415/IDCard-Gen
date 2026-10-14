@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
     LayoutDashboard,
@@ -9,7 +8,6 @@ import {
     ClipboardPenLine,
     FileUp,
     UserRoundPlus,
-    Plus,
     Settings,
     Palette,
     ListOrdered,
@@ -66,11 +64,9 @@ function Sidebar({ activePage = "dashboard" }) {
               currentPath.endsWith("/settings.html")
             ? "settings"
             : currentPath.endsWith("/data-menu-settings") ||
-                currentPath.endsWith("/data-menu-settings.html")
+              currentPath.endsWith("/data-menu-settings.html")
             ? "data-menu-settings"
             : activePage;
-
-            
 
     const isMasterDataPage =
         currentPage === "data" ||
@@ -86,82 +82,183 @@ function Sidebar({ activePage = "dashboard" }) {
     const [openSection, setOpenSection] = useState(() => {
         if (isMasterDataPage) return "master-data";
         if (isSubmissionsPage) return "submissions";
+
         if (
             currentPage === "settings" ||
             currentPage === "data-menu-settings"
         ) {
             return "settings";
         }
-        return null;
 
+        return null;
     });
+
+    /* =====================================================
+       LOAD MASTER DATA FROM MONGODB
+       KEEP SUBMISSIONS SEPARATE
+    ===================================================== */
 
     useEffect(() => {
         setSelectedId(params.get("id"));
         setSelectedStudentListId(params.get("listId"));
 
-        try {
-            const savedLists = JSON.parse(
-                localStorage.getItem("idCardStoredLists") || "[]"
-            );
+        let cancelled = false;
 
-            const savedOrder = JSON.parse(
-                localStorage.getItem("idCardMenuOrder") || "[]"
-            );
+        const loadSidebarData = async () => {
+            let savedStudentLists = [];
+            let masterListIds = new Set();
 
-            const validLists = Array.isArray(savedLists)
-                ? savedLists
-                : [];
+            try {
+                // Existing submission-list storage.
+                const savedLists = JSON.parse(
+                    localStorage.getItem("idCardLists") || "[]"
+                );
 
-            const orderedLists = [
-                ...savedOrder
-                    .map((id) =>
-                        validLists.find((item) => item.id === id)
-                    )
-                    .filter(Boolean),
-                ...validLists.filter(
-                    (item) => !savedOrder.includes(item.id)
-                ),
-            ];
+                savedStudentLists = Array.isArray(savedLists)
+                    ? savedLists
+                    : [];
+            } catch (error) {
+                console.error(
+                    "Failed to load submission lists:",
+                    error
+                );
+            }
 
-            setStoredLists(orderedLists);
+            try {
+                const token = localStorage.getItem("idFoundryToken");
+                const apiBaseUrl =
+                    import.meta.env.VITE_API_URL ||
+                    "http://localhost:5000";
 
-            const savedStudentLists = JSON.parse(
-                localStorage.getItem("idCardLists") || "[]"
-            );
+                if (!token) {
+                    if (!cancelled) {
+                        setStoredLists([]);
+                        setStudentLists(savedStudentLists);
+                    }
+                    return;
+                }
 
-            setStudentLists(
-                Array.isArray(savedStudentLists)
-                    ? savedStudentLists
-                    : []
-            );
-        } catch (error) {
-            console.error("Failed to load sidebar data:", error);
-            setStoredLists([]);
-            setStudentLists([]);
-        }
+                const response = await fetch(
+                    `${apiBaseUrl}/api/master-lists`,
+                    {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to load master lists (${response.status})`
+                    );
+                }
+
+                const result = await response.json();
+
+                // Normalize MongoDB IDs for navigation and selection.
+                const validLists = (result.lists || [])
+                    .filter((list) => list._id || list.id)
+                    .map((list) => ({
+                        ...list,
+                        id: String(list._id || list.id),
+                    }));
+
+                masterListIds = new Set(
+                    validLists.map((list) => String(list.id))
+                );
+
+                // Preserve the user's saved menu ordering.
+                let savedOrder = [];
+
+                try {
+                    const parsedOrder = JSON.parse(
+                        localStorage.getItem("idCardMenuOrder") || "[]"
+                    );
+
+                    savedOrder = Array.isArray(parsedOrder)
+                        ? parsedOrder.map(String)
+                        : [];
+                } catch {
+                    savedOrder = [];
+                }
+
+                const orderedLists = [
+                    ...savedOrder
+                        .map((id) =>
+                            validLists.find(
+                                (list) => String(list.id) === id
+                            )
+                        )
+                        .filter(Boolean),
+
+                    ...validLists.filter(
+                        (list) => !savedOrder.includes(String(list.id))
+                    ),
+                ];
+
+                if (!cancelled) {
+                    setStoredLists(orderedLists);
+
+                    // Do not show MongoDB master lists as submission lists.
+                    const separateStudentLists = savedStudentLists.filter(
+                        (list) => {
+                            const listId = String(
+                                list._id || list.id || ""
+                            );
+
+                            return !masterListIds.has(listId);
+                        }
+                    );
+
+                    setStudentLists(separateStudentLists);
+                }
+            } catch (error) {
+                console.error(
+                    "Failed to load master lists:",
+                    error
+                );
+
+                if (!cancelled) {
+                    setStoredLists([]);
+
+                    // Keep existing submissions available if the API fails.
+                    setStudentLists(savedStudentLists);
+                }
+            }
+        };
+
+        loadSidebarData();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
-    
+    /* =====================================================
+       MOBILE SIDEBAR
+    ===================================================== */
+
     useEffect(() => {
-    if (!mobileOpen) return;
+        if (!mobileOpen) return;
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+        const previousOverflow = document.body.style.overflow;
 
-    const handleEscape = (event) => {
-        if (event.key === "Escape") {
-            setMobileOpen(false);
-        }
-    };
+        document.body.style.overflow = "hidden";
 
-    document.addEventListener("keydown", handleEscape);
+        const handleEscape = (event) => {
+            if (event.key === "Escape") {
+                setMobileOpen(false);
+            }
+        };
 
-    return () => {
-        document.body.style.overflow = previousOverflow;
-        document.removeEventListener("keydown", handleEscape);
-    };
-}, [mobileOpen]);
+        document.addEventListener("keydown", handleEscape);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener("keydown", handleEscape);
+        };
+    }, [mobileOpen]);
 
     const navigate = (url) => {
         setMobileOpen(false);
@@ -189,13 +286,9 @@ function Sidebar({ activePage = "dashboard" }) {
         `nav-item ${currentPage === page ? "active" : ""} ${extraClass}`
             .trim();
 
-    const isDataActive =
-        isMasterDataPage || currentPage === "import";
+    const isDataActive = isMasterDataPage;
 
-    const isSubmissionActive =
-        isSubmissionsPage || currentPage === "single-record";
-
-   
+    const isSubmissionActive = isSubmissionsPage;
 
     return (
         <>
@@ -306,16 +399,21 @@ function Sidebar({ activePage = "dashboard" }) {
                                     </span>
                                 </button>
 
-                                
                                 <button
                                     type="button"
                                     className={`stored-item ${
-                                        currentPage === "single-record" ? "active" : ""
+                                        currentPage === "single-record"
+                                            ? "active"
+                                            : ""
                                     }`}
-                                    onClick={() => navigate("/single-record")}
+                                    onClick={() =>
+                                        navigate("/single-record")
+                                    }
                                 >
                                     <UserRoundPlus className="submenu-icon" />
-                                    <span className="stored-name">Add Single Record</span>
+                                    <span className="stored-name">
+                                        Add Single Record
+                                    </span>
                                 </button>
 
                                 {storedLists.length > 0 && (
@@ -342,12 +440,15 @@ function Sidebar({ activePage = "dashboard" }) {
                                                     : ""
                                             }`}
                                             title={
-                                                list.tabName || "Untitled list"
+                                                list.tabName ||
+                                                "Untitled list"
                                             }
                                             onClick={() =>
                                                 navigate(
                                                     "/stored-data?id=" +
-                                                        encodeURIComponent(list.id)
+                                                        encodeURIComponent(
+                                                            list.id
+                                                        )
                                                 )
                                             }
                                         >
@@ -358,6 +459,7 @@ function Sidebar({ activePage = "dashboard" }) {
                                                         "List"
                                                 )}
                                             </span>
+
                                             <span className="stored-name">
                                                 {list.tabName ||
                                                     list.listName ||
@@ -373,7 +475,9 @@ function Sidebar({ activePage = "dashboard" }) {
                         <button
                             type="button"
                             className={`nav-item ${
-                                isSubmissionActive ? "section-active" : ""
+                                isSubmissionActive
+                                    ? "section-active"
+                                    : ""
                             }`}
                             onClick={() => toggleSection("submissions")}
                             aria-expanded={openSection === "submissions"}
@@ -395,7 +499,6 @@ function Sidebar({ activePage = "dashboard" }) {
                                 id="submissions-submenu"
                                 className="nav-submenu"
                             >
-
                                 {studentLists.length > 0 && (
                                     <div className="submenu-caption">
                                         Submission lists
@@ -405,17 +508,23 @@ function Sidebar({ activePage = "dashboard" }) {
                                 {studentLists.length === 0 ? (
                                     <div className="nav-empty">
                                         <Users size={15} />
-                                        <span>No submission lists yet</span>
+                                        <span>
+                                            No submission lists yet
+                                        </span>
                                     </div>
                                 ) : (
                                     studentLists.map((list) => (
                                         <button
                                             type="button"
-                                            key={list.id}
+                                            key={list.id || list._id}
                                             className={`stored-item ${
                                                 currentPage === "student-data" &&
-                                                String(list.id) ===
-                                                    String(selectedStudentListId)
+                                                String(
+                                                    list.id || list._id
+                                                ) ===
+                                                    String(
+                                                        selectedStudentListId
+                                                    )
                                                     ? "active"
                                                     : ""
                                             }`}
@@ -427,7 +536,10 @@ function Sidebar({ activePage = "dashboard" }) {
                                             onClick={() =>
                                                 navigate(
                                                     "/student-data?listId=" +
-                                                        encodeURIComponent(list.id)
+                                                        encodeURIComponent(
+                                                            list.id ||
+                                                                list._id
+                                                        )
                                                 )
                                             }
                                         >
@@ -438,6 +550,7 @@ function Sidebar({ activePage = "dashboard" }) {
                                                         "List"
                                                 )}
                                             </span>
+
                                             <span className="stored-name">
                                                 {list.tabName ||
                                                     list.listName ||
@@ -457,7 +570,9 @@ function Sidebar({ activePage = "dashboard" }) {
                             onClick={() => navigate("/idlistform")}
                         >
                             <ClipboardPenLine className="nav-icon" />
-                            <span className="nav-label">Student Forms</span>
+                            <span className="nav-label">
+                                Student Forms
+                            </span>
                         </button>
 
                         <button
@@ -471,11 +586,16 @@ function Sidebar({ activePage = "dashboard" }) {
 
                         <button
                             type="button"
-                            className={navItemClass("createform", "create-nav")}
+                            className={navItemClass(
+                                "createform",
+                                "create-nav"
+                            )}
                             onClick={() => navigate("/create-form")}
                         >
                             <IdCard className="nav-icon" />
-                            <span className="nav-label">Create Design</span>
+                            <span className="nav-label">
+                                Create Design
+                            </span>
                         </button>
                     </nav>
 
@@ -484,7 +604,6 @@ function Sidebar({ activePage = "dashboard" }) {
                     </div>
 
                     <nav className="nav" aria-label="System">
-                        
                         {/* Settings */}
                         <button
                             type="button"
@@ -502,33 +621,51 @@ function Sidebar({ activePage = "dashboard" }) {
                             <span className="nav-label">Settings</span>
                             <ChevronDown
                                 className={`nav-chevron ${
-                                    openSection === "settings" ? "rotated" : ""
+                                    openSection === "settings"
+                                        ? "rotated"
+                                        : ""
                                 }`}
                             />
                         </button>
 
                         {openSection === "settings" && (
-                            <div id="settings-submenu" className="nav-submenu">
+                            <div
+                                id="settings-submenu"
+                                className="nav-submenu"
+                            >
                                 <button
                                     type="button"
                                     className={`stored-item ${
-                                        currentPage === "settings" ? "active" : ""
+                                        currentPage === "settings"
+                                            ? "active"
+                                            : ""
                                     }`}
-                                    onClick={() => navigate("/settings")}
+                                    onClick={() =>
+                                        navigate("/settings")
+                                    }
                                 >
                                     <Palette className="submenu-icon" />
-                                    <span className="stored-name">Appearance</span>
+                                    <span className="stored-name">
+                                        Appearance
+                                    </span>
                                 </button>
 
                                 <button
                                     type="button"
                                     className={`stored-item ${
-                                        currentPage === "data-menu-settings" ? "active" : ""
+                                        currentPage ===
+                                        "data-menu-settings"
+                                            ? "active"
+                                            : ""
                                     }`}
-                                    onClick={() => navigate("/data-menu-settings")}
+                                    onClick={() =>
+                                        navigate("/data-menu-settings")
+                                    }
                                 >
                                     <ListOrdered className="submenu-icon" />
-                                    <span className="stored-name">Data Menu</span>
+                                    <span className="stored-name">
+                                        Data Menu
+                                    </span>
                                 </button>
                             </div>
                         )}
@@ -539,9 +676,12 @@ function Sidebar({ activePage = "dashboard" }) {
                 <div className="sidebar-bottom">
                     <div className="sidebar-user">
                         <div className="avatar">AG</div>
+
                         <div className="user-info">
                             <div className="user-name">Aaditi</div>
-                            <div className="user-role">Administrator</div>
+                            <div className="user-role">
+                                Administrator
+                            </div>
                         </div>
                     </div>
                 </div>
