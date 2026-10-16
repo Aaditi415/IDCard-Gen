@@ -610,6 +610,61 @@ router.patch(
    DELETE /api/student-submissions/:id
 ========================================================= */
 
+
+/* =========================================================
+   FLUSH ALL ORGANIZATION DATA
+   DELETE /api/student-submissions/flush-all
+
+   IMPORTANT: Keep this route before /:id
+========================================================= */
+
+router.delete(
+    "/flush-all",
+    authenticate,
+    authorizeRoles("orgadmin"),
+    async (req, res) => {
+        try {
+            const organizationId = req.user.organizationId;
+
+            if (!organizationId) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Organization access could not be verified.",
+                });
+            }
+
+            const [submissions, forms, masterLists] =
+                await Promise.all([
+                    StudentSubmission.deleteMany({ organizationId }),
+                    StudentFormConfig.deleteMany({ organizationId }),
+                    MasterList.deleteMany({ organizationId }),
+                ]);
+
+            return res.json({
+                success: true,
+                message: "Organization data cleared successfully.",
+                deleted: {
+                    submissions: submissions.deletedCount,
+                    formConfigurations: forms.deletedCount,
+                    masterLists: masterLists.deletedCount,
+                },
+            });
+        } catch (error) {
+            console.error("Flush organization data error:", error);
+
+            return res.status(500).json({
+                success: false,
+                message: "Unable to clear organization data.",
+            });
+        }
+    }
+);
+
+/* =========================================================
+   DELETE ONE STUDENT SUBMISSION
+   DELETE /api/student-submissions/:id
+========================================================= */
+
 router.delete(
     "/:id",
     authenticate,

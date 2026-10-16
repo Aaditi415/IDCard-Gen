@@ -5,6 +5,7 @@ import authenticate, {
     authorizeRoles,
 } from "../middleware/auth.js";
 import MasterList from "../models/MasterList.js";
+import DataMenuSettings from "../models/DataMenuSettings.js";
 
 const router = express.Router();
 
@@ -33,6 +34,120 @@ router.get(
         }
     }
 );
+
+
+
+/* =========================================================
+   GET SAVED DATA MENU ORDER
+   GET /api/master-lists/menu-order
+========================================================= */
+
+router.get(
+    "/menu-order",
+    authenticate,
+    authorizeRoles("orgadmin"),
+    async (req, res) => {
+        try {
+            const settings = await DataMenuSettings.findOne({
+                organizationId: req.user.organizationId,
+            }).lean();
+
+            return res.json({
+                success: true,
+                listOrder: settings?.listOrder || [],
+            });
+        } catch (error) {
+            console.error("Fetch menu order error:", error);
+
+            return res.status(500).json({
+                success: false,
+                message: "Unable to fetch Data Menu order.",
+            });
+        }
+    }
+);
+
+/* =========================================================
+   SAVE DATA MENU ORDER
+   PUT /api/master-lists/menu-order
+========================================================= */
+
+router.put(
+    "/menu-order",
+    authenticate,
+    authorizeRoles("orgadmin"),
+    async (req, res) => {
+        try {
+            const organizationId = req.user.organizationId;
+            const { listOrder } = req.body;
+
+            if (!Array.isArray(listOrder)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "List order must be an array.",
+                });
+            }
+
+            if (
+                !listOrder.every(
+                    (id) =>
+                        typeof id === "string" &&
+                        mongoose.isValidObjectId(id)
+                )
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "List order contains an invalid ID.",
+                });
+            }
+
+            // Only allow IDs belonging to this organization.
+            const ownedLists = await MasterList.find({
+                _id: { $in: listOrder },
+                organizationId,
+            })
+                .select("_id")
+                .lean();
+
+            if (ownedLists.length !== new Set(listOrder).size) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Some lists are invalid or do not belong to your organization.",
+                });
+            }
+
+            const settings = await DataMenuSettings.findOneAndUpdate(
+                { organizationId },
+                {
+                    $set: {
+                        listOrder,
+                    },
+                },
+                {
+                    new: true,
+                    upsert: true,
+                    runValidators: true,
+                    setDefaultsOnInsert: true,
+                }
+            );
+
+            return res.json({
+                success: true,
+                message: "Data Menu order saved successfully.",
+                listOrder: settings.listOrder,
+            });
+        } catch (error) {
+            console.error("Save menu order error:", error);
+
+            return res.status(500).json({
+                success: false,
+                message: "Unable to save Data Menu order.",
+            });
+        }
+    }
+);
+
 
 /* =========================================================
    UPDATE IMPORTED DATA IN A MASTER LIST

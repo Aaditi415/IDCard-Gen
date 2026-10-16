@@ -1,64 +1,129 @@
-import { useEffect, useState } from "react";
+
+import { useCallback, useEffect, useState } from "react";
 
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
+
+const API_BASE_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+// Match these token keys to the ones used by your working Dashboard.
+const getAuthToken = () =>
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken") ||
+    localStorage.getItem("idFoundryToken") ||
+    localStorage.getItem("accessToken");
 
 function DataMenuSettings() {
     const [storedLists, setStoredLists] = useState([]);
     const [draggedIndex, setDraggedIndex] = useState(null);
     const [hasChanges, setHasChanges] = useState(false);
     const [toast, setToast] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState("");
 
-    useEffect(() => {
-        loadLists();
+    const showToast = (message) => {
+        setToast(message);
+        window.setTimeout(() => setToast(""), 2500);
+    };
+
+    const request = useCallback(async (path, options = {}) => {
+        const token = getAuthToken();
+
+        if (!token) {
+            throw new Error(
+                "Authentication token not found. Please sign in again."
+            );
+        }
+
+        const response = await fetch(
+            `${API_BASE_URL}${path}`,
+            {
+                ...options,
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                    ...options.headers,
+                },
+            }
+        );
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok || result.success === false) {
+            throw new Error(
+                result.message || "Unable to complete the request."
+            );
+        }
+
+        return result;
     }, []);
 
-    const loadLists = () => {
+    const loadLists = useCallback(async () => {
+        setLoading(true);
+        setError("");
+
         try {
-            const stored =
-                JSON.parse(
-                    localStorage.getItem("idCardStoredLists")
-                ) || [];
+            const [masterResult, orderResult] = await Promise.all([
+                request("/api/master-lists"),
+                request("/api/master-lists/menu-order"),
+            ]);
 
-            const savedOrder =
-                JSON.parse(
-                    localStorage.getItem("idCardMenuOrder")
-                ) || [];
+            const lists = Array.isArray(masterResult.lists)
+                ? masterResult.lists
+                : [];
 
-            if (!savedOrder.length) {
-                setStoredLists(stored);
-                return;
-            }
+            const savedOrder = Array.isArray(orderResult.listOrder)
+                ? orderResult.listOrder
+                : [];
 
             const orderedLists = [];
+            const usedIds = new Set();
 
             savedOrder.forEach((id) => {
-                const list = stored.find(
-                    (item) => item.id === id
+                const list = lists.find(
+                    (item) => String(item._id || item.id) === String(id)
                 );
 
-                if (list) orderedLists.push(list);
+                if (list) {
+                    const listId = String(list._id || list.id);
+
+                    if (!usedIds.has(listId)) {
+                        orderedLists.push(list);
+                        usedIds.add(listId);
+                    }
+                }
             });
 
-            stored.forEach((list) => {
-                const exists = orderedLists.some(
-                    (item) => item.id === list.id
-                );
+            // Add newly created lists that aren't in the saved order yet.
+            lists.forEach((list) => {
+                const id = String(list._id || list.id);
 
-                if (!exists) orderedLists.push(list);
+                if (!usedIds.has(id)) {
+                    orderedLists.push(list);
+                    usedIds.add(id);
+                }
             });
 
             setStoredLists(orderedLists);
-        } catch (error) {
-            console.error("Failed to load menu:", error);
-            setStoredLists([]);
+            setHasChanges(false);
+        } catch (err) {
+            console.error("Load Data Menu error:", err);
+            setError(err.message || "Unable to load stored data.");
+        } finally {
+            setLoading(false);
         }
-    };
+    }, [request]);
+
+    useEffect(() => {
+        loadLists();
+    }, [loadLists]);
+
+    const getListId = (list) => String(list._id || list.id);
 
     const getInitials = (name) => {
-        const words = (name || "Untitled")
-            .trim()
-            .split(/\s+/);
+        const words = (name || "Untitled").trim().split(/\s+/);
 
         if (!words[0]) return "A";
 
@@ -67,8 +132,7 @@ function DataMenuSettings() {
         }
 
         return (
-            words[0].charAt(0) +
-            words[1].charAt(0)
+            words[0].charAt(0) + words[1].charAt(0)
         ).toUpperCase();
     };
 
@@ -86,15 +150,19 @@ function DataMenuSettings() {
             return;
         }
 
-        const updatedLists = [...storedLists];
-        const [draggedItem] = updatedLists.splice(
-            draggedIndex,
-            1
-        );
+        setStoredLists((currentLists) => {
+            const updatedLists = [...currentLists];
 
-        updatedLists.splice(targetIndex, 0, draggedItem);
+            const [draggedItem] = updatedLists.splice(
+                draggedIndex,
+                1
+            );
 
-        setStoredLists(updatedLists);
+            updatedLists.splice(targetIndex, 0, draggedItem);
+
+            return updatedLists;
+        });
+
         setDraggedIndex(targetIndex);
         setHasChanges(true);
     };
@@ -103,26 +171,33 @@ function DataMenuSettings() {
         setDraggedIndex(null);
     };
 
-    const saveOrder = () => {
-        const order = storedLists.map((list) => list.id);
+    const saveOrder = async () => {
+        setSaving(true);
+        setError("");
 
-        localStorage.setItem(
-            "idCardMenuOrder",
-            JSON.stringify(order)
-        );
+        try {
+            const listOrder = storedLists.map(getListId);
 
-        setHasChanges(false);
-        setToast("Data menu order saved successfully.");
+            await request("/api/master-lists/menu-order", {
+                method: "PUT",
+                body: JSON.stringify({ listOrder }),
+            });
 
-        setTimeout(() => setToast(""), 2500);
+            setHasChanges(false);
+            showToast("Data menu order saved successfully.");
+        } catch (err) {
+            console.error("Save Data Menu order error:", err);
+            setError(err.message || "Unable to save Data Menu order.");
+        } finally {
+            setSaving(false);
+        }
     };
 
     const resetOrder = () => {
-        const alphabetical = [...storedLists].sort(
-            (a, b) =>
-                (a.tabName || "Untitled").localeCompare(
-                    b.tabName || "Untitled"
-                )
+        const alphabetical = [...storedLists].sort((a, b) =>
+            (a.tabName || "Untitled").localeCompare(
+                b.tabName || "Untitled"
+            )
         );
 
         setStoredLists(alphabetical);
@@ -137,7 +212,6 @@ function DataMenuSettings() {
                 <Topbar />
 
                 <section className="content data-menu-page">
-                    {/* PAGE HEADER */}
                     <header className="page-header data-menu-header">
                         <div className="data-menu-heading">
                             <div className="breadcrumb">
@@ -154,15 +228,12 @@ function DataMenuSettings() {
                                 in your sidebar.
                             </p>
                         </div>
-
                     </header>
 
-                    {/* MAIN CONTENT + ASIDE */}
                     <div className="layout">
                         <section className="settings-card data-menu-card">
                             <div className="settings-card-header">
                                 <div>
-
                                     <h2>Stored Data</h2>
 
                                     <p>
@@ -179,8 +250,31 @@ function DataMenuSettings() {
                                 </span>
                             </div>
 
+                            {error && (
+                                <div className="data-menu-error" role="alert">
+                                    <p>{error}</p>
+
+                                    <button
+                                        type="button"
+                                        className="ui-btn ui-btn--secondary"
+                                        onClick={loadLists}
+                                        disabled={loading}
+                                    >
+                                        Retry
+                                    </button>
+                                </div>
+                            )}
+
                             <div className="drag-menu">
-                                {!storedLists.length ? (
+                                {loading ? (
+                                    <div className="empty-menu">
+                                        <h3>Loading stored data...</h3>
+                                        <p>
+                                            Fetching your Master Lists from
+                                            the server.
+                                        </p>
+                                    </div>
+                                ) : storedLists.length === 0 ? (
                                     <div className="empty-menu">
                                         <div className="empty-menu-icon">
                                             <span aria-hidden="true">
@@ -199,21 +293,18 @@ function DataMenuSettings() {
                                 ) : (
                                     storedLists.map((list, index) => (
                                         <div
-                                            key={list.id}
+                                            key={getListId(list)}
                                             className={`drag-menu-item ${
                                                 draggedIndex === index
                                                     ? "dragging"
                                                     : ""
                                             }`}
-                                            draggable
+                                            draggable={!saving}
                                             onDragStart={() =>
                                                 handleDragStart(index)
                                             }
                                             onDragOver={(event) =>
-                                                handleDragOver(
-                                                    event,
-                                                    index
-                                                )
+                                                handleDragOver(event, index)
                                             }
                                             onDragEnd={handleDragEnd}
                                         >
@@ -226,15 +317,12 @@ function DataMenuSettings() {
                                             </div>
 
                                             <div className="menu-letter">
-                                                {getInitials(
-                                                    list.tabName
-                                                )}
+                                                {getInitials(list.tabName)}
                                             </div>
 
                                             <div className="menu-info">
                                                 <div className="menu-name">
-                                                    {list.tabName ||
-                                                        "Untitled"}
+                                                    {list.tabName || "Untitled"}
                                                 </div>
 
                                                 <div className="menu-meta">
@@ -256,7 +344,11 @@ function DataMenuSettings() {
                                     type="button"
                                     className="ui-btn ui-btn--secondary"
                                     onClick={resetOrder}
-                                    disabled={!storedLists.length}
+                                    disabled={
+                                        loading ||
+                                        saving ||
+                                        !storedLists.length
+                                    }
                                 >
                                     Sort A–Z
                                 </button>
@@ -265,9 +357,13 @@ function DataMenuSettings() {
                                     type="button"
                                     className="ui-btn ui-btn--primary"
                                     onClick={saveOrder}
-                                    disabled={!hasChanges}
+                                    disabled={
+                                        loading ||
+                                        saving ||
+                                        !hasChanges
+                                    }
                                 >
-                                    Save Order
+                                    {saving ? "Saving..." : "Save Order"}
                                 </button>
                             </div>
                         </section>
@@ -278,7 +374,12 @@ function DataMenuSettings() {
 
                                 <div>
                                     <h3>How Data Menu Works</h3>
-                                    <p>Arrange your stored student lists in the order that works best for your daily workflow.</p>
+
+                                    <p>
+                                        Arrange your stored student lists
+                                        in the order that works best for
+                                        your daily workflow.
+                                    </p>
                                 </div>
                             </div>
 
@@ -290,7 +391,8 @@ function DataMenuSettings() {
                                 <div>
                                     <strong>Drag a list</strong>
                                     <span>
-                                        Move any list up or down using its drag handle.
+                                        Move any list up or down using
+                                        its drag handle.
                                     </span>
                                 </div>
                             </div>
@@ -301,7 +403,8 @@ function DataMenuSettings() {
                                 <div>
                                     <strong>Review the order</strong>
                                     <span>
-                                       Check the numbered positions before saving.
+                                        Check the numbered positions
+                                        before saving.
                                     </span>
                                 </div>
                             </div>
@@ -312,15 +415,12 @@ function DataMenuSettings() {
                                 <div>
                                     <strong>Save changes</strong>
                                     <span>
-                                        Keep your preferred order for the sidebar.
+                                        Keep your preferred order in
+                                        the database.
                                     </span>
                                 </div>
                             </div>
-
-
                         </aside>
-
-
                     </div>
                 </section>
             </main>

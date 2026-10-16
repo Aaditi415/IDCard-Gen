@@ -7,7 +7,6 @@ import {
     Database,
     FileUp,
     GraduationCap,
-    IdCard,
     Layers3,
     Palette,
     ShieldAlert,
@@ -19,6 +18,9 @@ import {
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import "../styles/dashboard.css";
+
+const API_BASE_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const DATA_KEYS = [
     "idCardStoredLists",
@@ -53,31 +55,98 @@ function Dashboard() {
     const [storedLists, setStoredLists] = useState([]);
     const [submissions, setSubmissions] = useState([]);
     const [templates, setTemplates] = useState([]);
+
     const [greeting, setGreeting] = useState("Hello");
     const [currentDate, setCurrentDate] = useState("");
+
     const [flushOpen, setFlushOpen] = useState(false);
     const [flushText, setFlushText] = useState("");
     const [flushError, setFlushError] = useState("");
- 
+    const [flushLoading, setFlushLoading] = useState(false);
+    const [dashboardError, setDashboardError] = useState("");
 
-    const loadDashboard = () => {
-        setStoredLists(readArray("idCardStoredLists"));
-        setSubmissions(readArray("idCardSubmissions"));
+    const loadDashboard = async () => {
+        const tokenKeys = [
+            "token",
+            "authToken",
+            "idFoundryToken",
+            "accessToken",
+        ];
+
+        const token = tokenKeys
+            .map((key) => localStorage.getItem(key))
+            .find(Boolean);
+
+        // Templates remain local until their backend API is connected.
         setTemplates(readArray("idCardTemplates"));
+
+        if (!token) {
+            setDashboardError(
+                "Login session not found. Please sign in again."
+            );
+            setStoredLists([]);
+            setSubmissions([]);
+            return;
+        }
+
+        try {
+            setDashboardError("");
+
+            const headers = {
+                Authorization: `Bearer ${token}`,
+            };
+
+            const [masterResponse, submissionResponse] =
+                await Promise.all([
+                    fetch(`${API_BASE_URL}/api/master-lists`, {
+                        headers,
+                    }),
+                    fetch(`${API_BASE_URL}/api/student-submissions`, {
+                        headers,
+                    }),
+                ]);
+
+            if (
+                !masterResponse.ok ||
+                !submissionResponse.ok
+            ) {
+                throw new Error(
+                    "Unable to load dashboard data. Please check your login session."
+                );
+            }
+
+            const masterResult = await masterResponse.json();
+            const submissionResult =
+                await submissionResponse.json();
+
+            setStoredLists(
+                Array.isArray(masterResult.lists)
+                    ? masterResult.lists
+                    : []
+            );
+
+            setSubmissions(
+                Array.isArray(submissionResult.submissions)
+                    ? submissionResult.submissions
+                    : []
+            );
+        } catch (error) {
+            console.error("Dashboard loading error:", error);
+            setDashboardError(error.message);
+        }
     };
 
     useEffect(() => {
         loadDashboard();
 
         const now = new Date();
-        const hour = now.getHours();
 
         setGreeting(
-            hour < 12
+            now.getHours() < 12
                 ? "Good morning"
-                : hour < 17
-                ? "Good afternoon"
-                : "Good evening"
+                : now.getHours() < 17
+                    ? "Good afternoon"
+                    : "Good evening"
         );
 
         setCurrentDate(
@@ -90,17 +159,15 @@ function Dashboard() {
         );
     }, []);
 
-  
-
     const totalStudents = useMemo(
         () =>
             storedLists.reduce((total, list) => {
-                if (Array.isArray(list.students)) {
-                    return total + list.students.length;
-                }
-
                 if (Array.isArray(list.records)) {
                     return total + list.records.length;
+                }
+
+                if (Array.isArray(list.students)) {
+                    return total + list.students.length;
                 }
 
                 return total;
@@ -108,14 +175,18 @@ function Dashboard() {
         [storedLists]
     );
 
+    const getStatus = (submission) =>
+        String(
+            submission.status ||
+            submission.verification?.status ||
+            "pending"
+        ).toLowerCase();
+
     const pendingSubmissions = useMemo(
         () =>
-            submissions.filter((item) => {
-                const status =
-                    item.status || item.verification?.status || "pending";
-
-                return status.toLowerCase() === "pending";
-            }).length,
+            submissions.filter(
+                (item) => getStatus(item) === "pending"
+            ).length,
         [submissions]
     );
 
@@ -137,20 +208,13 @@ function Dashboard() {
         [submissions]
     );
 
-    const studentForm = useMemo(
-        () => readObject("idCardForm"),
-        []
-    );
-
     const getStudentName = (submission) => {
         const values = submission?.data || {};
-
         const form = readObject("idCardForm");
-        const nameField = form.fields?.find((field) => {
-            const label = (
-                field.label ||
-                field.name ||
-                ""
+
+        const nameField = (form.fields || []).find((field) => {
+            const label = String(
+                field.label || field.name || ""
             ).toLowerCase();
 
             return (
@@ -160,14 +224,28 @@ function Dashboard() {
             );
         });
 
-        if (nameField && values[nameField.id]) {
+        if (
+            nameField &&
+            values[nameField.id] !== undefined &&
+            values[nameField.id] !== ""
+        ) {
             return String(values[nameField.id]);
         }
+
+        // Fallback when the local form configuration isn't available.
+        const submittedName = Object.entries(values).find(
+            ([key, value]) =>
+                /^(name|studentname|fullname)$/i.test(key) &&
+                value !== null &&
+                value !== undefined &&
+                String(value).trim() !== ""
+        );
 
         return (
             submission.studentName ||
             submission.name ||
             submission.fullName ||
+            submittedName?.[1] ||
             "Student"
         );
     };
@@ -176,6 +254,7 @@ function Dashboard() {
         if (!date) return "—";
 
         const value = new Date(date);
+
         if (Number.isNaN(value.getTime())) return "—";
 
         const diff = Math.max(
@@ -184,8 +263,12 @@ function Dashboard() {
         );
 
         if (diff < 60) return "Just now";
-        if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-        if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+        if (diff < 3600) {
+            return `${Math.floor(diff / 60)} min ago`;
+        }
+        if (diff < 86400) {
+            return `${Math.floor(diff / 3600)} hr ago`;
+        }
 
         return value.toLocaleDateString("en-IN", {
             day: "numeric",
@@ -193,46 +276,91 @@ function Dashboard() {
         });
     };
 
-    const getStatus = (submission) =>
-        (
-            submission.status ||
-            submission.verification?.status ||
-            "pending"
-        ).toLowerCase();
-
     const navigate = (path) => {
         window.location.href = path;
     };
 
-    const handleFlush = () => {
+    const handleFlush = async () => {
         setFlushError("");
 
         if (flushText.trim() !== "DELETE") {
-            setFlushError('Type DELETE to confirm this action.');
+            setFlushError("Type DELETE to confirm this action.");
             return;
         }
 
+        if (flushLoading) return;
+
+        // IMPORTANT:
+        // Replace these keys with the actual JWT storage key
+        // used by your login code if it is different.
+        const tokenKeys = [
+            "token",
+            "authToken",
+            "idFoundryToken",
+            "accessToken",
+        ];
+
+        const token = tokenKeys
+            .map((key) => localStorage.getItem(key))
+            .find(Boolean);
+
+        if (!token) {
+            setFlushError(
+                "Login session not found. Please sign in again."
+            );
+            return;
+        }
+
+        setFlushLoading(true);
+
         try {
-            DATA_KEYS.forEach((key) => localStorage.removeItem(key));
+            const response = await fetch(
+                `${API_BASE_URL}/api/student-submissions/flush-all`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(
+                    result.message ||
+                    "Unable to clear organization data."
+                );
+            }
+
+            // Remove local data only after server success.
+            DATA_KEYS.forEach((key) => {
+                localStorage.removeItem(key);
+            });
 
             setStoredLists([]);
             setSubmissions([]);
             setTemplates([]);
-            setFlushText("");
-            setFlushOpen(false);
 
-            window.dispatchEvent(new Event("idfoundry:data-cleared"));
-        } catch (error) {
-            console.error("Failed to clear IDFoundry data:", error);
-            setFlushError(
-                "Some data could not be cleared. Please try again."
+            setFlushText("");
+            setFlushError("");
+            setFlushOpen(false);
+            setDashboardError("");
+
+            window.dispatchEvent(
+                new Event("idfoundry:data-cleared")
             );
+        } catch (error) {
+            console.error("Flush Data failed:", error);
+
+            setFlushError(
+                error.message ||
+                "Unable to clear data. Please try again."
+            );
+        } finally {
+            setFlushLoading(false);
         }
     };
-
-   
-
-    
 
     const quickActions = [
         {
@@ -299,8 +427,6 @@ function Dashboard() {
                         </div>
 
                         <div className="dashboard-header-actions">
-                          
-
                             <button
                                 type="button"
                                 className="flush-trigger"
@@ -309,12 +435,25 @@ function Dashboard() {
                                     setFlushError("");
                                     setFlushOpen(true);
                                 }}
+                                disabled={flushLoading}
                             >
                                 <Trash2 size={16} />
                                 Flush Data
                             </button>
                         </div>
                     </header>
+
+                    {dashboardError && (
+                        <div className="flush-error" role="alert">
+                            {dashboardError}
+                            <button
+                                type="button"
+                                onClick={loadDashboard}
+                            >
+                                Retry
+                            </button>
+                        </div>
+                    )}
 
                     {/* Statistics */}
                     <div className="dashboard-stats">
@@ -387,10 +526,12 @@ function Dashboard() {
                         </div>
                     </div>
 
-                    {/* Recent activity */}
+                    {/* Recent Submissions */}
                     <div className="section-header dashboard-section-header">
                         <div>
-                            <h2 className="section-title">Recent Submissions</h2>
+                            <h2 className="section-title">
+                                Recent Submissions
+                            </h2>
                             <p className="section-description">
                                 The latest student form responses
                             </p>
@@ -436,8 +577,6 @@ function Dashboard() {
                                     Import Master Data
                                     <ArrowRight size={15} />
                                 </button>
-
-                               
                             </div>
                         ) : (
                             <div className="dashboard-table-scroll">
@@ -453,88 +592,96 @@ function Dashboard() {
                                     </thead>
 
                                     <tbody>
-                                        {recentSubmissions.map((submission, index) => {
-                                            const name = getStudentName(submission);
-                                            const status = getStatus(submission);
-                                            const initials = name
-                                                .split(/\s+/)
-                                                .filter(Boolean)
-                                                .slice(0, 2)
-                                                .map((word) => word[0])
-                                                .join("")
-                                                .toUpperCase();
+                                        {recentSubmissions.map(
+                                            (submission, index) => {
+                                                const name =
+                                                    getStudentName(submission);
 
-                                            return (
-                                                <tr
-                                                    key={
-                                                        submission.id ||
-                                                        submission.slug ||
-                                                        `${name}-${index}`
-                                                    }
-                                                >
-                                                    <td>
-                                                        <div className="id-person">
-                                                            <div className="person-photo">
-                                                                {initials || "S"}
-                                                            </div>
-                                                            <div>
-                                                                <div className="person-name">
-                                                                    {name}
+                                                const status =
+                                                    getStatus(submission);
+
+                                                const initials = name
+                                                    .split(/\s+/)
+                                                    .filter(Boolean)
+                                                    .slice(0, 2)
+                                                    .map((word) => word[0])
+                                                    .join("")
+                                                    .toUpperCase();
+
+                                                return (
+                                                    <tr
+                                                        key={
+                                                            submission._id ||
+                                                            submission.id ||
+                                                            `${name}-${index}`
+                                                        }
+                                                    >
+                                                        <td>
+                                                            <div className="id-person">
+                                                                <div className="person-photo">
+                                                                    {initials || "S"}
                                                                 </div>
-                                                                <div className="person-type">
-                                                                    Student
+                                                                <div>
+                                                                    <div className="person-name">
+                                                                        {name}
+                                                                    </div>
+                                                                    <div className="person-type">
+                                                                        Student
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    </td>
+                                                        </td>
 
-                                                    <td className="template">
-                                                        {submission.listName ||
-                                                            submission.tabName ||
-                                                            "—"}
-                                                    </td>
+                                                        <td className="template">
+                                                            {submission.listName ||
+                                                                submission.tabName ||
+                                                                "—"}
+                                                        </td>
 
-                                                    <td>
-                                                        <span
-                                                            className={`status-pill status-${status}`}
-                                                        >
-                                                            <span className="status-dot" />
-                                                            {status.charAt(0).toUpperCase() +
-                                                                status.slice(1)}
-                                                        </span>
-                                                    </td>
+                                                        <td>
+                                                            <span
+                                                                className={`status-pill status-${status}`}
+                                                            >
+                                                                <span className="status-dot" />
+                                                                {status
+                                                                    .charAt(0)
+                                                                    .toUpperCase() +
+                                                                    status.slice(1)}
+                                                            </span>
+                                                        </td>
 
-                                                    <td>
-                                                        {formatDate(
-                                                            submission.updatedAt ||
-                                                            submission.submittedAt
-                                                        )}
-                                                    </td>
+                                                        <td>
+                                                            {formatDate(
+                                                                submission.updatedAt ||
+                                                                submission.submittedAt
+                                                            )}
+                                                        </td>
 
-                                                    <td>
-                                                        <button
-                                                            type="button"
-                                                            className="action-btn"
-                                                            aria-label={`Review ${name}`}
-                                                            title="Review submission"
-                                                            onClick={() => {
-                                                                if (submission.slug) {
-                                                                    navigate(
-                                                                        `/studentform/${submission.slug}`
-                                                                    );
-                                                                } else {
-                                                                    navigate(
-                                                                        "/student-data"
-                                                                    );
-                                                                }
-                                                            }}
-                                                        >
-                                                            <ArrowRight size={16} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
+                                                        <td>
+                                                            <button
+                                                                type="button"
+                                                                className="action-btn"
+                                                                aria-label={`Review ${name}`}
+                                                                title="Review submission"
+                                                                onClick={() => {
+                                                                    if (submission.slug) {
+                                                                        navigate(
+                                                                            `/studentform/${submission.slug}`
+                                                                        );
+                                                                    } else {
+                                                                        navigate(
+                                                                            "/student-data"
+                                                                        );
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <ArrowRight size={16} />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            }
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
@@ -544,7 +691,9 @@ function Dashboard() {
                     {/* Quick Actions */}
                     <div className="section-header dashboard-section-header quick-heading">
                         <div>
-                            <h2 className="section-title">Your Workflow</h2>
+                            <h2 className="section-title">
+                                Your Workflow
+                            </h2>
                             <p className="section-description">
                                 Follow these steps to create student ID cards
                             </p>
@@ -559,7 +708,9 @@ function Dashboard() {
                                 key={action.title}
                                 onClick={() => navigate(action.path)}
                             >
-                                <div className={`quick-icon quick-icon-${index + 1}`}>
+                                <div
+                                    className={`quick-icon quick-icon-${index + 1}`}
+                                >
                                     {action.icon}
                                 </div>
 
@@ -584,12 +735,15 @@ function Dashboard() {
                 </section>
             </main>
 
-            {/* Flush Data confirmation */}
+            {/* Flush Data Confirmation */}
             {flushOpen && (
                 <div
                     className="dashboard-modal-backdrop"
                     onMouseDown={(event) => {
-                        if (event.target === event.currentTarget) {
+                        if (
+                            event.target === event.currentTarget &&
+                            !flushLoading
+                        ) {
                             setFlushOpen(false);
                         }
                     }}
@@ -604,6 +758,7 @@ function Dashboard() {
                             type="button"
                             className="modal-close"
                             onClick={() => setFlushOpen(false)}
+                            disabled={flushLoading}
                             aria-label="Close confirmation"
                         >
                             <X size={19} />
@@ -613,30 +768,58 @@ function Dashboard() {
                             <div className="flush-sticker-circle">
                                 <ShieldAlert size={34} />
                             </div>
-                            <span className="flush-spark flush-spark-one">✦</span>
-                            <span className="flush-spark flush-spark-two">✧</span>
+                            <span className="flush-spark flush-spark-one">
+                                ✦
+                            </span>
+                            <span className="flush-spark flush-spark-two">
+                                ✧
+                            </span>
                         </div>
 
-                        <div className="modal-eyebrow">DESTRUCTIVE ACTION</div>
-                        <h2 id="flush-title">Clear your IDFoundry data?</h2>
+                        <div className="modal-eyebrow">
+                            DESTRUCTIVE ACTION
+                        </div>
+
+                        <h2 id="flush-title">
+                            Clear your IDFoundry data?
+                        </h2>
 
                         <p className="modal-description">
-                            This removes saved application data from this
-                            browser. This action cannot be undone.
+                            This permanently deletes this organization's
+                            master lists, student submissions, and student
+                            form configurations from the server. Saved
+                            browser data will also be removed. This cannot
+                            be undone.
                         </p>
 
                         <div className="flush-list">
-                            <div><Database size={16} /> Imported master lists and list order</div>
-                            <div><Users size={16} /> Student lists and submissions</div>
-                            <div><Layers3 size={16} /> Saved templates, forms and card designs</div>
+                            <div>
+                                <Database size={16} />
+                                Master lists and student records
+                            </div>
+                            <div>
+                                <Users size={16} />
+                                Student submissions
+                            </div>
+                            <div>
+                                <Layers3 size={16} />
+                                Form configurations
+                            </div>
+                            <div>
+                                <Palette size={16} />
+                                Local templates, designs and demo data
+                            </div>
                         </div>
 
                         <div className="flush-preserve-note">
-                            Your theme preference is preserved. This does not
-                            delete data stored on another device or server.
+                            Your login session is preserved. Data belonging
+                            to other organizations is not deleted.
                         </div>
 
-                        <label className="flush-confirm-label" htmlFor="flush-confirm">
+                        <label
+                            className="flush-confirm-label"
+                            htmlFor="flush-confirm"
+                        >
                             Type <strong>DELETE</strong> to confirm
                         </label>
 
@@ -650,6 +833,7 @@ function Dashboard() {
                             }}
                             placeholder="Type DELETE"
                             autoComplete="off"
+                            disabled={flushLoading}
                         />
 
                         {flushError && (
@@ -663,6 +847,7 @@ function Dashboard() {
                                 type="button"
                                 className="modal-cancel"
                                 onClick={() => setFlushOpen(false)}
+                                disabled={flushLoading}
                             >
                                 Cancel
                             </button>
@@ -671,16 +856,17 @@ function Dashboard() {
                                 type="button"
                                 className="modal-delete"
                                 onClick={handleFlush}
+                                disabled={flushLoading}
                             >
                                 <Trash2 size={16} />
-                                Clear all data
+                                {flushLoading
+                                    ? "Clearing data..."
+                                    : "Clear all data"}
                             </button>
                         </div>
                     </section>
                 </div>
             )}
-
-           
         </div>
     );
 }
