@@ -1,7 +1,84 @@
+
 import { useEffect, useState } from "react";
 
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
+
+
+
+const TEMPLATES_KEY = "idCardTemplates";
+// const MASTER_LISTS_KEY = "idCardStoredLists";
+// const LEGACY_MASTER_LIST_KEY = "idCardFinalList";
+const LISTS_KEY = "idCardLists";
+// const CURRENT_LIST_KEY = "idCardList";
+
+const LIST_NAME_MIN_LENGTH = 3;
+const LIST_NAME_MAX_LENGTH = 50;
+const TAB_NAME_MIN_LENGTH = 2;
+const TAB_NAME_MAX_LENGTH = 30;
+
+/* =========================================================
+   SAFE STORAGE HELPERS
+========================================================= */
+
+function readStorage(key, fallback = []) {
+    try {
+        const value = localStorage.getItem(key);
+
+        if (!value) return fallback;
+
+        return JSON.parse(value);
+    } catch (error) {
+        console.error(`Unable to read ${key}:`, error);
+        return fallback;
+    }
+}
+
+function getRecordId(record) {
+    if (!record) return "";
+
+    const id = record.id ?? record._id;
+
+    return id == null ? "" : String(id);
+}
+
+function getTemplateId(template) {
+    if (!template) return "";
+
+    return String(
+        template.id ??
+        template._id ??
+        ""
+    );
+}
+
+function getMasterListName(masterList) {
+    return (
+        masterList?.listName ||
+        masterList?.name ||
+        masterList?.title ||
+        "Unnamed Master List"
+    );
+}
+
+function createSlug(value) {
+    return value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+}
+
+
+const API_BASE_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+
+/* =========================================================
+   COMPONENT
+========================================================= */
 
 function IDListForm() {
     const [listName, setListName] = useState("");
@@ -16,915 +93,561 @@ function IDListForm() {
     const [templates, setTemplates] = useState([]);
     const [masterLists, setMasterLists] = useState([]);
 
-    const [listNameError, setListNameError] =
-        useState(false);
+    const [listNameError, setListNameError] = useState("");
+    const [tabNameError, setTabNameError] = useState("");
+    const [templateError, setTemplateError] = useState("");
+    const [masterListError, setMasterListError] = useState("");
 
-    const [tabNameError, setTabNameError] =
-        useState(false);
-
-    const [templateError, setTemplateError] =
-        useState(false);
-
-    const [masterListError, setMasterListError] =
-        useState(false);
-
-    const [showSuccess, setShowSuccess] =
-        useState(false);
-
-    const [createdList, setCreatedList] =
-        useState(null);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [createdList, setCreatedList] = useState(null);
 
     const [toast, setToast] = useState("");
-    const [toastVisible, setToastVisible] =
-        useState(false);
+    const [toastVisible, setToastVisible] = useState(false);
 
+    const [isSaving, setIsSaving] = useState(false);
 
-    /* =========================
+    /* =====================================================
        TOAST
-    ========================== */
+    ===================================================== */
 
     const showToast = (message) => {
         setToast(message);
         setToastVisible(true);
-
-        setTimeout(() => {
-            setToastVisible(false);
-        }, 2500);
     };
 
+    useEffect(() => {
+        if (!toastVisible) return undefined;
 
-    /* =========================
-       LOAD TEMPLATES + MASTER LISTS
-    ========================== */
+        const timer = window.setTimeout(() => {
+            setToastVisible(false);
+        }, 2500);
+
+        return () => window.clearTimeout(timer);
+    }, [toastVisible, toast]);
+
+    /* =====================================================
+       LOAD TEMPLATES AND MASTER LISTS
+    ===================================================== */
 
     useEffect(() => {
-        try {
+        let cancelled = false;
 
-            /* =========================
-               LOAD TEMPLATES
-            ========================== */
+        const loadData = async () => {
+            // Templates remain on the current source for now.
+            const savedTemplates = readStorage(TEMPLATES_KEY, []);
 
-            const savedTemplates =
-                JSON.parse(
-                    localStorage.getItem("idCardTemplates")
-                ) || [];
-
-            setTemplates(
-                Array.isArray(savedTemplates)
-                    ? savedTemplates
-                    : []
-            );
-
-
-            /* =========================
-               LOAD MASTER LISTS
-            ========================== */
-
-            const savedMasterLists =
-                JSON.parse(
-                    localStorage.getItem("idCardStoredLists")
-                );
-
-
-            /*
-             * New storage:
-             *
-             * idCardStoredLists = [
-             *   masterList1,
-             *   masterList2,
-             *   masterList3
-             * ]
-             */
-
-            if (Array.isArray(savedMasterLists)) {
-
-                setMasterLists(
-                    savedMasterLists
-                );
-
-            } else {
-
-                /*
-                 * Backward compatibility
-                 *
-                 * If old data exists under
-                 * idCardFinalList, convert it
-                 * into an array.
-                 */
-
-                const oldMasterList =
-                    JSON.parse(
-                        localStorage.getItem(
-                            "idCardFinalList"
+            if (!cancelled) {
+                setTemplates(
+                    Array.isArray(savedTemplates)
+                        ? savedTemplates.filter(
+                            (item) =>
+                                item &&
+                                getTemplateId(item) &&
+                                (item.name || item.title)
                         )
-                    );
-
-
-                if (oldMasterList) {
-
-                    const convertedMasterList = {
-
-                        ...oldMasterList,
-
-                        id:
-                            oldMasterList.id ||
-                            "master_" + Date.now()
-
-                    };
-
-
-                    const convertedLists = [
-                        convertedMasterList
-                    ];
-
-
-                    /*
-                     * Save it in the new format
-                     * so future lists can be added.
-                     */
-
-                    localStorage.setItem(
-                        "idCardStoredLists",
-                        JSON.stringify(
-                            convertedLists
-                        )
-                    );
-
-
-                    setMasterLists(
-                        convertedLists
-                    );
-
-                } else {
-
-                    setMasterLists([]);
-
-                }
+                        : []
+                );
             }
 
-        } catch (error) {
+            try {
+                const token = localStorage.getItem("idFoundryToken");
 
-            console.error(
-                "Unable to load templates or master lists:",
-                error
-            );
+                if (!token) {
+                    throw new Error("Please log in again.");
+                }
 
-            setTemplates([]);
-            setMasterLists([]);
-        }
+                const response = await fetch(
+                    `${API_BASE_URL}/api/master-lists`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
 
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(
+                        data.message || "Unable to load master lists."
+                    );
+                }
+
+                if (!cancelled) {
+                    setMasterLists(
+                        Array.isArray(data.lists) ? data.lists : []
+                    );
+                }
+            } catch (error) {
+                console.error("Unable to load form data:", error);
+
+                if (!cancelled) {
+                    setMasterLists([]);
+                    showToast(error.message || "Unable to load master lists.");
+                }
+            }
+        };
+
+        loadData();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
-    
-    const LIST_NAME_MIN_LENGTH = 3;
-    const LIST_NAME_MAX_LENGTH = 50;
+    /* =====================================================
+       SELECTED RECORDS
+    ===================================================== */
 
-    const TAB_NAME_MIN_LENGTH = 2;
-    const TAB_NAME_MAX_LENGTH = 30;
+    const selectedTemplate = templates.find(
+        (template) =>
+            getTemplateId(template) === selectedTemplateId
+    );
 
-    /* =========================
+    const selectedMasterList = masterLists.find(
+        (masterList) =>
+            getRecordId(masterList) === selectedMasterListId
+    );
+
+    const getTemplateName = () => {
+        return (
+            selectedTemplate?.name ||
+            selectedTemplate?.title ||
+            "Select template"
+        );
+    };
+
+    const getSelectedMasterListName = () => {
+        return selectedMasterList
+            ? getMasterListName(selectedMasterList)
+            : "Select master list";
+    };
+
+    /* =====================================================
        VALIDATION
-    ========================== */
+    ===================================================== */
 
-
+    
     const validateForm = () => {
         let valid = true;
 
-        const listValue = listName.trim();
-        const tabValue = tabName.trim();
+        const cleanListName = listName.trim();
+        const cleanTabName = tabName.trim();
 
-        setListNameError(false);
-        setTabNameError(false);
-        setTemplateError(false);
-        setMasterListError(false);
+        setListNameError("");
+        setTabNameError("");
+        setTemplateError("");
+        setMasterListError("");
 
-        // Validate List Name
-        if (!listValue) {
+        // List name validation
+        if (!cleanListName) {
             setListNameError("Please enter a list name.");
             valid = false;
-        } else if (listValue.length < LIST_NAME_MIN_LENGTH) {
+        } else if (cleanListName.length < LIST_NAME_MIN_LENGTH) {
             setListNameError(
                 `List name must contain at least ${LIST_NAME_MIN_LENGTH} characters.`
             );
             valid = false;
-        } else if (listValue.length > LIST_NAME_MAX_LENGTH) {
+        } else if (cleanListName.length > LIST_NAME_MAX_LENGTH) {
             setListNameError(
                 `List name cannot exceed ${LIST_NAME_MAX_LENGTH} characters.`
             );
             valid = false;
         }
 
-        // Validate Tab Name
-        if (!tabValue) {
+        // Tab name validation
+        if (!cleanTabName) {
             setTabNameError("Please enter a tab name.");
             valid = false;
-        } else if (tabValue.length < TAB_NAME_MIN_LENGTH) {
+        } else if (cleanTabName.length < TAB_NAME_MIN_LENGTH) {
             setTabNameError(
                 `Tab name must contain at least ${TAB_NAME_MIN_LENGTH} characters.`
             );
             valid = false;
-        } else if (tabValue.length > TAB_NAME_MAX_LENGTH) {
+        } else if (cleanTabName.length > TAB_NAME_MAX_LENGTH) {
             setTabNameError(
                 `Tab name cannot exceed ${TAB_NAME_MAX_LENGTH} characters.`
             );
             valid = false;
         }
 
-        // Load existing lists
-        let existingLists = [];
+        // Public student-link slug validation
+        const slug = createSlug(cleanTabName);
 
-        try {
-            const savedLists = JSON.parse(
-                localStorage.getItem("idCardLists") || "[]"
-            );
-
-            if (Array.isArray(savedLists)) {
-                existingLists = savedLists;
-            }
-        } catch (error) {
-            console.error("Unable to load existing lists:", error);
-        }
-
-        const normalizedList = listValue.toLowerCase();
-        const normalizedTab = tabValue.toLowerCase();
-        const slug = createSlug(tabValue);
-
-        // Duplicate List Name
-        if (
-            listValue &&
-            existingLists.some(
-                (item) =>
-                    item.listName?.trim().toLowerCase() === normalizedList
-            )
-        ) {
-            setListNameError("This list name already exists.");
-            valid = false;
-        }
-
-        // Duplicate Tab Name or Student Link
-        if (
-            tabValue &&
-            existingLists.some(
-                (item) =>
-                    item.tabName?.trim().toLowerCase() === normalizedTab ||
-                    item.slug === slug
-            )
-        ) {
+        if (cleanTabName && !slug) {
             setTabNameError(
-                "This tab name or its student link already exists."
+                "Please use letters or numbers in the tab name."
             );
             valid = false;
         }
 
-        // Validate Template
-        if (!selectedTemplateId) {
-            setTemplateError(true);
+        // Template validation
+        if (
+            !selectedTemplateId ||
+            !templates.some(
+                (template) =>
+                    getTemplateId(template) === selectedTemplateId
+            )
+        ) {
+            setTemplateError(
+                "Please select a valid ID card template."
+            );
             valid = false;
         }
 
-        // Validate Master List
-        if (!selectedMasterListId) {
-            setMasterListError(true);
+        // Master-list validation
+        if (
+            !selectedMasterListId ||
+            !masterLists.some(
+                (masterList) =>
+                    getRecordId(masterList) === selectedMasterListId
+            )
+        ) {
+            setMasterListError(
+                "Please select a valid master list."
+            );
             valid = false;
         }
 
         return valid;
     };
 
-    /* =========================
-       CREATE SLUG
-    ========================== */
 
-    const createSlug = (value) => {
+    /* =====================================================
+       CREATE STUDENT FORM / LINK
+    ===================================================== */
 
-        return value
-            .toLowerCase()
-            .trim()
-            .replace(/[^a-z0-9\s-]/g, "")
-            .replace(/\s+/g, "-")
-            .replace(/-+/g, "-");
+    const handleContinue = async () => {
+    if (isSaving) return;
 
-    };
+    if (!validateForm()) {
+        showToast("Please correct the highlighted fields.");
+        return;
+    }
 
+    const template = templates.find(
+        (item) => getTemplateId(item) === selectedTemplateId
+    );
 
-    /* =========================
-       CONTINUE
-    ========================== */
+    const masterList = masterLists.find(
+        (item) => getRecordId(item) === selectedMasterListId
+    );
 
-    const handleContinue = () => {
+    if (!template || !masterList) {
+        showToast(
+            "The selected template or master list is unavailable."
+        );
+        return;
+    }
 
-        if (!validateForm()) {
+    const cleanListName = listName.trim();
+    const cleanTabName = tabName.trim();
+    const slug = createSlug(cleanTabName);
 
-            showToast(
-                "Please complete the required fields."
-            );
+    if (!slug) {
+        setTabNameError("Please enter a valid tab name.");
+        return;
+    }
 
-            return;
+    setIsSaving(true);
+
+    try {
+        const token = localStorage.getItem("idFoundryToken");
+
+        if (!token) {
+            throw new Error("Please log in again.");
         }
 
+        const response = await fetch(
+            `${API_BASE_URL}/api/student-form-configs`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    listName: cleanListName,
+                    tabName: cleanTabName,
+                    slug,
+                    templateId: getTemplateId(template),
+                    templateName:
+                        template.name ||
+                        template.title ||
+                        "Untitled Template",
+                    templateSnapshot: template,
+                    masterListId: getRecordId(masterList),
+                }),
+            }
+        );
 
-        const list =
-            listName.trim();
+        const data = await response.json();
 
-        const tab =
-            tabName.trim();
-
-
-        /* =========================
-           FIND TEMPLATE
-        ========================== */
-
-        const selectedTemplate =
-            templates.find(
-                (template) =>
-                    template.id ===
-                    selectedTemplateId
-            );
-
-
-        /* =========================
-           FIND MASTER LIST
-        ========================== */
-
-        const selectedMasterList =
-            masterLists.find(
-                (masterList) =>
-                    masterList.id ===
-                    selectedMasterListId
-            );
-
-
-        if (!selectedMasterList) {
-
-            showToast(
-                "Selected master list could not be found."
-            );
-
-            return;
-        }
-
-
-        /* =========================
-           CREATE SLUG
-        ========================== */
-
-        const slug =
-            createSlug(tab);
-
-
-        if (!slug) {
-
-            showToast(
-                "Please enter a valid tab name."
-            );
-
-            return;
-        }
-
-
-        /* =========================
-           CREATE STUDENT LINK
-        ========================== */
-
-        const studentLink =
-            `/studentform/${slug}`;
-
-
-        /* =========================
-           LOAD EXISTING CLASS LISTS
-        ========================== */
-
-        let existingLists = [];
-
-        try {
-
-            const savedLists =
-                JSON.parse(
-                    localStorage.getItem(
-                        "idCardLists"
-                    )
-                ) || [];
-
-
-            if (Array.isArray(savedLists)) {
-
-                existingLists =
-                    savedLists;
-
+        if (!response.ok || !data.success || !data.config) {
+            if (response.status === 409) {
+                setTabNameError(
+                    "This student link already exists. Choose another tab name."
+                );
             }
 
-        } catch (error) {
-
-            console.error(
-                "Unable to load existing class lists:",
-                error
+            throw new Error(
+                data.message || "Unable to create the student form."
             );
-
         }
 
+        const savedConfig = data.config;
 
-        /* =========================
-           CHECK DUPLICATE TAB / SLUG
-        ========================== */
-
-        const duplicate =
-            existingLists.find(
-                (item) =>
-                    item.slug === slug
-            );
-
-
-        if (duplicate) {
-
-            showToast(
-                `A link already exists for ${tab}.`
-            );
-
-            return;
-        }
-
-
-        /* =========================
-           CREATE LIST DATA
-        ========================== */
-
-        const now =
-            new Date().toISOString();
-
-
+        // Use the server-generated MongoDB configuration ID.
         const listData = {
-
-            id:
-                "list_" +
-                Date.now(),
-
-            listName:
-                list,
-
-            tabName:
-                tab,
-
-            slug:
-                slug,
-
-            studentLink:
-                studentLink,
-
-
-            /* =========================
-               TEMPLATE
-            ========================= */
-
-            templateId:
-                selectedTemplateId,
-
-            templateName:
-                selectedTemplate?.name ||
-                "",
-
-
-            /* =========================
-               MASTER LIST
-            ========================= */
-
-            masterListId:
-                selectedMasterListId,
-
-            masterListName:
-                selectedMasterList?.listName ||
-                selectedMasterList?.name ||
-                "",
-
-
-            /* =========================
-               VERIFICATION
-            ========================= */
-
-            verification: {
-
-                status:
-                    "pending",
-
-                masterListId:
-                    selectedMasterListId
-
-            },
-
-
-            createdAt:
-                now,
-
-            updatedAt:
-                now
-
+            id: savedConfig._id,
+            listName: savedConfig.listName,
+            tabName: savedConfig.tabName,
+            slug: savedConfig.slug,
+            studentLink: `/studentform/${savedConfig.slug}`,
+            templateId: savedConfig.templateId,
+            templateName: savedConfig.templateName,
+            templateFormId: String(
+                template.formId ||
+                template.form?._id ||
+                template.form?.id ||
+                ""
+            ),
+            masterListId: String(savedConfig.masterListId),
+            masterListName: savedConfig.masterListName,
+            verification: savedConfig.verification,
+            createdAt: savedConfig.createdAt,
+            updatedAt: savedConfig.updatedAt,
         };
 
+        setCreatedList(listData);
+        setShowSuccess(true);
+        showToast("Student form configuration saved successfully.");
+    } catch (error) {
+        console.error("Unable to create student form:", error);
+        showToast(error.message || "Unable to save the student form.");
+    } finally {
+        setIsSaving(false);
+    }
+};
 
-        /* =========================
-           ADD NEW CLASS LIST
-        ========================== */
-
-        const updatedLists = [
-
-            ...existingLists,
-
-            listData
-
-        ];
-
-
-        /* =========================
-           SAVE ALL CLASS LISTS
-        ========================= */
-
-        localStorage.setItem(
-            "idCardLists",
-            JSON.stringify(
-                updatedLists
-            )
-        );
-
-
-        /* =========================
-           SAVE CURRENT LIST
-           
-           Kept for backward
-           compatibility with
-           current StudentForm.
-        ========================= */
-
-        localStorage.setItem(
-            "idCardList",
-            JSON.stringify(
-                listData
-            )
-        );
-
-
-        /* =========================
-           SET CREATED LIST
-        ========================= */
-
-        setCreatedList(
-            listData
-        );
-
-
-        console.log(
-            "Class list created:",
-            listData
-        );
-
-
-        /* =========================
-           SHOW SUCCESS
-        ========================= */
-
-        setShowSuccess(
-            true
-        );
-
-
-        showToast(
-            "Class link created successfully."
-        );
-
-    };
-
-
-    /* =========================
-       CANCEL
-    ========================== */
+    /* =====================================================
+       CANCEL / RESET
+    ===================================================== */
 
     const handleCancel = () => {
-
         const hasData =
             listName.trim() ||
             tabName.trim() ||
             selectedTemplateId ||
             selectedMasterListId;
 
-
-        if (hasData) {
-
-            const confirmCancel =
-                window.confirm(
-                    "Are you sure you want to cancel? Your entered information will be lost."
-                );
-
-
-            if (!confirmCancel) {
-                return;
-            }
-
+        if (
+            hasData &&
+            !window.confirm(
+                "Are you sure you want to cancel? Your entered information will be lost."
+            )
+        ) {
+            return;
         }
-
 
         setListName("");
         setTabName("");
-
         setSelectedTemplateId("");
         setSelectedMasterListId("");
 
-        setListNameError(false);
-        setTabNameError(false);
-        setTemplateError(false);
-        setMasterListError(false);
+        setListNameError("");
+        setTabNameError("");
+        setTemplateError("");
+        setMasterListError("");
 
         setShowSuccess(false);
         setCreatedList(null);
     };
 
-
-    /* =========================
-       ENTER KEY
-    ========================== */
+    /* =====================================================
+       INPUT HANDLING
+    ===================================================== */
 
     const handleKeyDown = (event) => {
-
-        if (event.key === "Enter") {
-
+        if (
+            event.key === "Enter" &&
+            event.target.tagName !== "TEXTAREA"
+        ) {
             event.preventDefault();
-
             handleContinue();
-
         }
-
     };
 
-
-    /* =========================
-       INITIALS
-    ========================== */
-
     const getInitials = (name) => {
+        const words = String(name || "")
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean);
 
-        const words =
-            name.trim().split(/\s+/);
-
-
-        if (
-            !words.length ||
-            !words[0]
-        ) {
-
-            return "A";
-
-        }
-
+        if (words.length === 0) return "A";
 
         if (words.length === 1) {
-
-            return words[0]
-                .charAt(0)
-                .toUpperCase();
-
+            return words[0].charAt(0).toUpperCase();
         }
-
 
         return (
             words[0].charAt(0) +
             words[1].charAt(0)
         ).toUpperCase();
-
     };
 
-
-    /* =========================
+    /* =====================================================
        NAVIGATION
-    ========================== */
+    ===================================================== */
 
     const goImportData = () => {
-
-        window.location.href =
-            "/importdata";
-
+        window.location.href = "/importdata";
     };
-
 
     const goBack = () => {
-
-        window.location.href =
-            "/idlistform";
-
+        window.location.href = "/idlistform";
     };
 
+    const fullStudentLink = createdList
+        ? `${window.location.origin}${createdList.studentLink}`
+        : "";
 
-    /* =========================
-       TEMPLATE NAME
-    ========================== */
+    const copyStudentLink = async () => {
+        if (!fullStudentLink) {
+            showToast("No student link is available to copy.");
+            return;
+        }
 
-    const getTemplateName = () => {
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(
+                    fullStudentLink
+                );
+            } else {
+                // Fallback for browsers without Clipboard API access.
+                const textArea = document.createElement("textarea");
+                textArea.value = fullStudentLink;
+                textArea.style.position = "fixed";
+                textArea.style.opacity = "0";
 
-        const template =
-            templates.find(
-                (item) =>
-                    item.id ===
-                    selectedTemplateId
+                document.body.appendChild(textArea);
+                textArea.select();
+
+                const copied = document.execCommand("copy");
+                document.body.removeChild(textArea);
+
+                if (!copied) {
+                    throw new Error("Clipboard copy failed.");
+                }
+            }
+
+            showToast("Student link copied.");
+        } catch (error) {
+            console.error(
+                "Unable to copy student link:",
+                error
             );
 
-
-        return (
-            template?.name ||
-            "Select template"
-        );
-
-    };
-
-
-    /* =========================
-       MASTER LIST NAME
-    ========================== */
-
-    const getMasterListName = () => {
-
-        const masterList =
-            masterLists.find(
-                (item) =>
-                    item.id ===
-                    selectedMasterListId
+            showToast(
+                "Unable to copy automatically. Select and copy the link."
             );
-
-
-        return (
-            masterList?.listName ||
-            masterList?.name ||
-            "Select master list"
-        );
-
+        }
     };
 
+    /* =====================================================
+       RENDER
+    ===================================================== */
 
     return (
         <div className="app">
-
-            {/* =========================
-                SIDEBAR
-            ========================== */}
-
-            <Sidebar
-                activePage="IDlistform"
-            />
-
+            <Sidebar activePage="IDlistform" />
 
             <main className="main">
-
                 <Topbar />
 
-
                 <section className="content">
-
-                    {/* =========================
-                        BREADCRUMB
-                    ========================== */}
-
                     <div className="breadcrumb">
-
                         <button
+                            type="button"
                             onClick={goBack}
                         >
                             Import Data
                         </button>
-
-                        <span>
-                            ›
-                        </span>
-
-                        <span>
-                            Create New List
-                        </span>
-
+                        <span>›</span>
+                        <span>Create New List</span>
                     </div>
-
-
-                    {/* =========================
-                        HEADER
-                    ========================== */}
 
                     <h1 className="page-title">
                         Create Student Form
                     </h1>
 
                     <p className="page-subtitle">
-                        Create a shareable student registration form, choose
-                        the master list for verification, and select the ID
-                        card design.
+                        Create a shareable student registration form,
+                        choose the master list for verification, and
+                        select the ID card design.
                     </p>
 
-
-                    {/* =========================
-                        STEPS
-                    ========================== */}
-
-                   
-
                     <div className="steps">
-
                         <div
                             className={`step ${
                                 showSuccess ? "completed" : "active"
                             }`}
                         >
-
                             <div className="step-number">
                                 {showSuccess ? "✓" : "1"}
                             </div>
-
                             <div className="step-label">
                                 Create List
                             </div>
-
                         </div>
-
 
                         <div
                             className={`step-line ${
                                 showSuccess ? "completed" : ""
                             }`}
-                        ></div>
-
+                        />
 
                         <div
                             className={`step ${
                                 showSuccess ? "active" : ""
                             }`}
                         >
-
-                            <div className="step-number">
-                                2
-                            </div>
-
+                            <div className="step-number">2</div>
                             <div className="step-label">
                                 Copy Link
                             </div>
-
                         </div>
-
                     </div>
 
-
-                    {/* =========================
-                        MAIN LAYOUT
-                    ========================== */}
-
                     <div className="layout">
-
-
-                        {/* =========================
-                            FORM
-                        ========================== */}
-
                         <div>
-
                             {!showSuccess && (
-
                                 <div
                                     className="form-card"
                                     id="formCard"
                                 >
-
                                     <div className="form-card-header">
-
-                                        <h2>
-                                            List Information
-                                        </h2>
-
+                                        <h2>List Information</h2>
                                         <p>
-                                            Set up this student
-                                            list before importing
-                                            student records.
+                                            Set up this student list
+                                            before importing student records.
                                         </p>
-
                                     </div>
 
-
                                     <div className="form-body">
-
-
-                                        {/* =========================
-                                            LIST NAME
-                                        ========================== */}
+                                        {/* LIST NAME */}
 
                                         <div className="field">
-
                                             <div className="field-label">
-
                                                 <label htmlFor="listName">
-
                                                     List Name
-
                                                     <span className="required">
                                                         *
                                                     </span>
-
                                                 </label>
-
-
                                             </div>
 
-
                                             <div className="input-wrap">
-
                                                 <input
                                                     type="text"
                                                     id="listName"
@@ -934,73 +657,55 @@ function IDListForm() {
                                                             : ""
                                                     }`}
                                                     placeholder="e.g. 1st Standard - A Students"
-                                                    minLength={LIST_NAME_MIN_LENGTH}
-                                                    maxLength={LIST_NAME_MAX_LENGTH}
+                                                    minLength={
+                                                        LIST_NAME_MIN_LENGTH
+                                                    }
+                                                    maxLength={
+                                                        LIST_NAME_MAX_LENGTH
+                                                    }
                                                     value={listName}
                                                     onChange={(event) => {
-
                                                         setListName(
                                                             event.target.value
                                                         );
-
-
-                                                        if (
-                                                            event.target.value.trim()
-                                                        ) {
-
-                                                            setListNameError(
-                                                                false
-                                                            );
-
-                                                        }
-
+                                                        setListNameError("");
                                                     }}
-                                                    onKeyDown={
-                                                        handleKeyDown
+                                                    onKeyDown={handleKeyDown}
+                                                    aria-invalid={
+                                                        Boolean(listNameError)
                                                     }
                                                 />
-
                                             </div>
 
-                                            <p class="field-hint">Give the complete group a recognizable name. For example, use an academic year or a class name so you can find it later.</p>
-
+                                            <p className="field-hint">
+                                                Give the complete group a
+                                                recognizable name. For example,
+                                                use an academic year or a class
+                                                name so you can find it later.
+                                            </p>
 
                                             <div
                                                 className={`error ${
-                                                    listNameError
-                                                        ? "show"
-                                                        : ""
+                                                    listNameError ? "show" : ""
                                                 }`}
                                             >
                                                 {listNameError}
                                             </div>
-
                                         </div>
 
-
-                                        {/* =========================
-                                            TAB NAME
-                                        ========================== */}
+                                        {/* TAB NAME */}
 
                                         <div className="field">
-
                                             <div className="field-label">
-
                                                 <label htmlFor="tabName">
-
                                                     Tab Name
-
                                                     <span className="required">
                                                         *
                                                     </span>
-
                                                 </label>
-
                                             </div>
 
-
                                             <div className="input-wrap">
-
                                                 <input
                                                     type="text"
                                                     id="tabName"
@@ -1010,77 +715,59 @@ function IDListForm() {
                                                             : ""
                                                     }`}
                                                     placeholder="e.g. 1st A"
-                                                    minLength={TAB_NAME_MIN_LENGTH}
-                                                    maxLength={TAB_NAME_MAX_LENGTH}
+                                                    minLength={
+                                                        TAB_NAME_MIN_LENGTH
+                                                    }
+                                                    maxLength={
+                                                        TAB_NAME_MAX_LENGTH
+                                                    }
                                                     value={tabName}
                                                     onChange={(event) => {
-
                                                         setTabName(
                                                             event.target.value
                                                         );
-
-
-                                                        if (
-                                                            event.target.value.trim()
-                                                        ) {
-
-                                                            setTabNameError(
-                                                                false
-                                                            );
-
-                                                        }
-
+                                                        setTabNameError("");
                                                     }}
-                                                    onKeyDown={
-                                                        handleKeyDown
+                                                    onKeyDown={handleKeyDown}
+                                                    aria-invalid={
+                                                        Boolean(tabNameError)
                                                     }
                                                 />
-
                                             </div>
 
-                                            <p class="field-hint">This is the short label used to identify this group in your student data view. Keep it brief, such as "10th A" or "5th B".</p>
-
+                                            <p className="field-hint">
+                                                This is the short label used
+                                                to identify this group in your
+                                                student data view. Keep it brief,
+                                                such as "10th A" or "5th B".
+                                            </p>
 
                                             <div
                                                 className={`error ${
-                                                    tabNameError
-                                                        ? "show"
-                                                        : ""
+                                                    tabNameError ? "show" : ""
                                                 }`}
                                             >
                                                 {tabNameError}
                                             </div>
-
                                         </div>
 
-
-                                        {/* =========================
-                                            TEMPLATE
-                                        ========================== */}
+                                        {/* ID CARD TEMPLATE */}
 
                                         <div className="field">
-
                                             <div className="field-label">
-
                                                 <label htmlFor="template">
-
                                                     ID Card Template
-
                                                     <span className="required">
                                                         *
                                                     </span>
-
                                                 </label>
 
                                                 <span className="field-hint">
                                                     Card design
                                                 </span>
-
                                             </div>
 
-
                                             <div className="input-wrap">
-
                                                 <select
                                                     id="template"
                                                     className={`input ${
@@ -1088,100 +775,75 @@ function IDListForm() {
                                                             ? "invalid"
                                                             : ""
                                                     }`}
-                                                    value={
-                                                        selectedTemplateId
-                                                    }
+                                                    value={selectedTemplateId}
                                                     onChange={(event) => {
-
                                                         setSelectedTemplateId(
                                                             event.target.value
                                                         );
-
-
-                                                        if (
-                                                            event.target.value
-                                                        ) {
-
-                                                            setTemplateError(
-                                                                false
-                                                            );
-
-                                                        }
-
+                                                        setTemplateError("");
                                                     }}
+                                                    aria-invalid={
+                                                        Boolean(templateError)
+                                                    }
                                                 >
-
                                                     <option value="">
                                                         Select ID card template
                                                     </option>
 
-
                                                     {templates.map(
                                                         (template) => (
-
                                                             <option
-                                                                key={
-                                                                    template.id
-                                                                }
-                                                                value={
-                                                                    template.id
-                                                                }
+                                                                key={getTemplateId(
+                                                                    template
+                                                                )}
+                                                                value={getTemplateId(
+                                                                    template
+                                                                )}
                                                             >
-                                                                {
-                                                                    template.name
-                                                                }
+                                                                {template.name ||
+                                                                    template.title ||
+                                                                    "Untitled Template"}
                                                             </option>
-
                                                         )
                                                     )}
-
                                                 </select>
-
                                             </div>
 
-                                            <p class="field-hint">Select the ID card design you want to use for students in this group. The selected template will be used to generate their ID cards.</p>
-
+                                            <p className="field-hint">
+                                                Select the saved ID card design
+                                                you want to associate with this
+                                                student group.
+                                            </p>
 
                                             <div
                                                 className={`error ${
-                                                    templateError
-                                                        ? "show"
-                                                        : ""
+                                                    templateError ? "show" : ""
                                                 }`}
                                             >
-                                                Please select an ID card template.
+                                                {templateError}
+                                                {!templateError &&
+                                                    templates.length === 0 &&
+                                                    "No saved templates found. Save a template before creating a student form."}
                                             </div>
-
                                         </div>
 
-
-                                        {/* =========================
-                                            MASTER LIST
-                                        ========================== */}
+                                        {/* MASTER LIST */}
 
                                         <div className="field">
-
                                             <div className="field-label">
-
                                                 <label htmlFor="masterList">
-
                                                     Master List
-
                                                     <span className="required">
                                                         *
                                                     </span>
-
                                                 </label>
 
                                                 <span className="field-hint">
                                                     Verification source
                                                 </span>
-
                                             </div>
 
-
                                             <div className="input-wrap">
-
                                                 <select
                                                     id="masterList"
                                                     className={`input ${
@@ -1189,60 +851,46 @@ function IDListForm() {
                                                             ? "invalid"
                                                             : ""
                                                     }`}
-                                                    value={
-                                                        selectedMasterListId
-                                                    }
+                                                    value={selectedMasterListId}
                                                     onChange={(event) => {
-
                                                         setSelectedMasterListId(
                                                             event.target.value
                                                         );
-
-
-                                                        if (
-                                                            event.target.value
-                                                        ) {
-
-                                                            setMasterListError(
-                                                                false
-                                                            );
-
-                                                        }
-
+                                                        setMasterListError("");
                                                     }}
+                                                    aria-invalid={
+                                                        Boolean(masterListError)
+                                                    }
                                                 >
-
                                                     <option value="">
                                                         Select master list
                                                     </option>
 
-
                                                     {masterLists.map(
                                                         (masterList) => (
-
                                                             <option
-                                                                key={
-                                                                    masterList.id
-                                                                }
-                                                                value={
-                                                                    masterList.id
-                                                                }
+                                                                key={getRecordId(
+                                                                    masterList
+                                                                )}
+                                                                value={getRecordId(
+                                                                    masterList
+                                                                )}
                                                             >
-                                                                {
-                                                                    masterList.listName ||
-                                                                    masterList.name ||
-                                                                    "Unnamed Master List"
-                                                                }
+                                                                {getMasterListName(
+                                                                    masterList
+                                                                )}
                                                             </option>
-
                                                         )
                                                     )}
-
                                                 </select>
-
                                             </div>
 
-                                            <p class="field-hint">Select the master student list used to verify submitted details. Student information will be checked against this list before approval.</p>
+                                            <p className="field-hint">
+                                                Select the master student list
+                                                used to verify submitted details.
+                                                Student information can then be
+                                                checked against this list.
+                                            </p>
 
                                             <div
                                                 className={`error ${
@@ -1251,245 +899,152 @@ function IDListForm() {
                                                         : ""
                                                 }`}
                                             >
-                                                Please select a master list.
+                                                {masterListError}
+                                                {!masterListError &&
+                                                    masterLists.length === 0 &&
+                                                    "No master lists found. Import or create a master list first."}
                                             </div>
-
                                         </div>
 
-
-                                        {/* =========================
-                                            PREVIEW
-                                        ========================== */}
+                                        {/* PREVIEW */}
 
                                         <div className="preview-box">
-
                                             <div className="preview-label">
                                                 List Preview
                                             </div>
 
-
                                             <div className="tab-preview">
-
                                                 <div className="tab-icon">
-
-                                                    {getInitials(
-                                                        tabName
-                                                    )}
-
+                                                    {getInitials(tabName)}
                                                 </div>
 
-
                                                 <div>
-
                                                     <strong>
                                                         {tabName.trim() ||
                                                             "Your tab name"}
                                                     </strong>
 
-
                                                     <span
                                                         style={{
-                                                            display:
-                                                                "block",
-
-                                                            fontSize:
-                                                                "12px",
-
-                                                            marginTop:
-                                                                "3px"
+                                                            display: "block",
+                                                            fontSize: "12px",
+                                                            marginTop: "3px",
                                                         }}
                                                     >
                                                         {listName.trim() ||
                                                             "Your list name"}
                                                     </span>
-
                                                 </div>
-
                                             </div>
-
 
                                             <div
                                                 style={{
-                                                    marginTop:
-                                                        "12px",
-
-                                                    fontSize:
-                                                        "13px"
+                                                    marginTop: "12px",
+                                                    fontSize: "13px",
                                                 }}
                                             >
-
-                                                <strong>
-                                                    Template:
-                                                </strong>{" "}
-
+                                                <strong>Template:</strong>{" "}
                                                 {getTemplateName()}
-
-
                                                 <br />
-
-
-                                                <strong>
-                                                    Master List:
-                                                </strong>{" "}
-
-                                                {getMasterListName()}
-
+                                                <strong>Master List:</strong>{" "}
+                                                {getSelectedMasterListName()}
                                             </div>
-
                                         </div>
-
                                     </div>
 
-
-                                    {/* =========================
-                                        FOOTER
-                                    ========================== */}
-
-                                     
-
                                     <div className="bottom-actions">
-
                                         <button
                                             type="button"
                                             className="ui-btn ui-btn--secondary"
-                                            onClick={
-                                                handleCancel
-                                            }
+                                            onClick={handleCancel}
+                                            disabled={isSaving}
                                         >
                                             Cancel
                                         </button>
 
-
                                         <button
                                             type="button"
                                             className="ui-btn ui-btn--primary"
-                                            onClick={
-                                                handleContinue
-                                            }
+                                            onClick={handleContinue}
+                                            disabled={isSaving}
                                         >
-                                            Continue
-
+                                            {isSaving
+                                                ? "Creating..."
+                                                : "Continue"}
                                             <span
                                                 style={{
-                                                    marginLeft:
-                                                        "5px"
+                                                    marginLeft: "5px",
                                                 }}
                                             >
                                                 →
                                             </span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
+                            {/* SUCCESS STATE */}
+
+                            {showSuccess && createdList && (
+                                <div className="success-state show">
+                                    <div className="success-icon">✓</div>
+
+                                    <h2>Class Link Created</h2>
+
+                                    <p>
+                                        Share this link with students of
+                                        <strong>
+                                            {" "}
+                                            {createdList.tabName}
+                                        </strong>.
+                                    </p>
+
+                                    <div className="generated-link-box">
+                                        <span>
+                                            Student Registration Link:
+                                            &nbsp;
+                                        </span>
+
+                                        <strong
+                                            style={{
+                                                overflowWrap: "anywhere",
+                                            }}
+                                        >
+                                            {fullStudentLink}
+                                        </strong>
+                                        <br />
+                                    </div>
+
+                                    <div className="success-actions">
+                                        <button
+                                            type="button"
+                                            className="ui-btn ui-btn--primary"
+                                            style={{
+                                                marginTop: "10px",
+                                            }}
+                                            onClick={copyStudentLink}
+                                        >
+                                            Copy Link
                                         </button>
 
                                     </div>
-
-                                 
-
                                 </div>
-
                             )}
-
-
-                            {/* =========================
-                                SUCCESS STATE
-                            ========================== */}
-
-                            <div
-                                className={`success-state ${
-                                    showSuccess
-                                        ? "show"
-                                        : ""
-                                }`}
-                            >
-
-                                <div className="success-icon">
-                                    ✓
-                                </div>
-
-
-                                <h2>
-                                    Class Link Created
-                                </h2>
-
-
-                                <p>
-
-                                    Share this link with students of
-
-                                    <strong>
-                                        {" "}
-                                        {createdList?.tabName}
-                                    </strong>.
-
-                                </p>
-
-
-                                <div className="generated-link-box">
-
-                                    <span>
-                                        Student Registration Link : &nbsp;
-                                    </span>
-
-
-                                    <strong>
-
-                                        {window.location.origin}
-
-                                        {createdList?.studentLink}
-
-                                    </strong>
-                                    <br />
-
-
-
-                                </div>
-
-
-                                <div className="success-actions">
-
-                                    <button
-                                        type="button"
-                                        className="ui-btn ui-btn--primary"
-                                        style={{marginTop: "10px"}}
-                                        onClick={() => {
-
-                                            const fullLink =
-                                                window.location.origin +
-                                                createdList?.studentLink;
-
-
-                                            navigator.clipboard.writeText(
-                                                fullLink
-                                            );
-
-
-                                            showToast(
-                                                "Student link copied."
-                                            );
-
-                                        }}
-                                    >
-                                         Copy Link
-                                    </button>
-
-                                </div>
-
-                            </div>
-
                         </div>
 
+                        {/* INFORMATION SIDEBAR */}
 
-                        {/* =========================
-                            INFORMATION
-                        ========================== */}
-
-                        
                         <aside className="info-card">
                             <div className="info-card-heading">
-                                <div className="info-heading-icon">i</div>
+                                <div className="info-heading-icon">
+                                    i
+                                </div>
+
                                 <div>
                                     <h3>How this works</h3>
                                     <p>
-                                        Set up a student submission flow in a few steps.
+                                        Set up a student submission flow
+                                        in a few steps.
                                     </p>
                                 </div>
                             </div>
@@ -1499,9 +1054,11 @@ function IDListForm() {
                             <div className="info-item">
                                 <div className="info-number">1</div>
                                 <div>
-                                    <strong>Identify submissions</strong>
+                                    <strong>
+                                        Identify submissions
+                                    </strong>
                                     <span>
-                                        The list name and tab name organize the
+                                        The list name and tab name organize
                                         submissions from your student form.
                                     </span>
                                 </div>
@@ -1510,10 +1067,12 @@ function IDListForm() {
                             <div className="info-item">
                                 <div className="info-number">2</div>
                                 <div>
-                                    <strong>Verify student details</strong>
+                                    <strong>
+                                        Verify student details
+                                    </strong>
                                     <span>
-                                        Select the master list that will be used
-                                        to check the submitted student information.
+                                        Choose the master list used to check
+                                        submitted student information.
                                     </span>
                                 </div>
                             </div>
@@ -1521,10 +1080,12 @@ function IDListForm() {
                             <div className="info-item">
                                 <div className="info-number">3</div>
                                 <div>
-                                    <strong>Choose the ID card design</strong>
+                                    <strong>
+                                        Choose the ID card design
+                                    </strong>
                                     <span>
-                                        Associate a saved template with this student
-                                        form for the later card-generation workflow.
+                                        Associate a saved template with this
+                                        student group for card generation.
                                     </span>
                                 </div>
                             </div>
@@ -1534,9 +1095,10 @@ function IDListForm() {
                                 <div>
                                     <strong>Share the link</strong>
                                     <span>
-                                        Students can open the generated URL to submit
-                                        their information. The public form route must
-                                        load and save this configuration.
+                                        Students can open the generated URL
+                                        once the public student form route
+                                        is configured to load and save
+                                        this group's information.
                                     </span>
                                 </div>
                             </div>
@@ -1544,35 +1106,29 @@ function IDListForm() {
                             <div className="info-tip">
                                 <strong>Tip</strong>
                                 <p>
-                                    Select the correct master list before sharing
-                                    the link. Student verification depends on the
-                                    master data configured for this form.
+                                    Select the correct master list before
+                                    sharing the link. Student verification
+                                    depends on the master data configured
+                                    for this form.
                                 </p>
                             </div>
                         </aside>
-
                     </div>
-
                 </section>
-
             </main>
 
-
-            {/* =========================
-                TOAST
-            ========================== */}
+            {/* TOAST */}
 
             <div
                 className={`toast ${
-                    toastVisible
-                        ? "show"
-                        : ""
+                    toastVisible ? "show" : ""
                 }`}
                 id="toast"
+                role="status"
+                aria-live="polite"
             >
                 {toast}
             </div>
-
         </div>
     );
 }

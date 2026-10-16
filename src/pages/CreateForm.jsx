@@ -180,6 +180,9 @@ const getDefaultField = (type) => ({
 
 });
 
+const API_BASE_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 function CreateForm() {
 
@@ -763,76 +766,135 @@ function CreateForm() {
     };
 
 
-    const handleContinue = () => {
-        if (isSaving || !validateForm()) return;
+    
+const handleContinue = async () => {
+    if (isSaving) return;
 
-        setIsSaving(true);
+    if (!validateForm()) return;
 
-        try {
-            const trimmedName = formName.trim();
+    setIsSaving(true);
 
-            const parseStoredJson = (key, fallback) => {
-                try {
-                    const value = JSON.parse(localStorage.getItem(key) || "null");
-                    return value ?? fallback;
-                } catch {
-                    return fallback;
-                }
-            };
+    try {
+        const token = localStorage.getItem("idFoundryToken");
 
-            const storedFormsValue = parseStoredJson("idCardForms", []);
-            if (!Array.isArray(storedFormsValue)) {
-                throw new Error("Saved forms have an invalid format.");
-            }
-
-            let updatedForms = [...storedFormsValue];
-
-            // Migrate the previous single-form storage into the new array,
-            // so existing work is not lost the first time this code is used.
-            const legacyForm = parseStoredJson("idCardForm", null);
-            if (
-                legacyForm &&
-                typeof legacyForm.id === "string" &&
-                Array.isArray(legacyForm.fields) &&
-                !updatedForms.some((item) => item?.id === legacyForm.id)
-            ) {
-                updatedForms.push(legacyForm);
-            }
-
-            // This screen creates a new form, so always assign a fresh ID.
-            const nextFormId = `form_${Date.now()}_${Math.random()
-                .toString(36)
-                .slice(2, 8)}`;
-
-            const formData = {
-                id: nextFormId,
-                name: trimmedName,
-                fields: fields.map((field) => ({
-                    ...field,
-                    label: field.label.trim(),
-                    name: field.name.trim(),
-                })),
-            };
-
-            // Append the new form without replacing any previously saved form.
-            updatedForms.push(formData);
-
-            localStorage.setItem("idCardForms", JSON.stringify(updatedForms));
-
-            // Keep these legacy keys for the existing Design → Demo → Preview flow.
-            localStorage.setItem("idCardForm", JSON.stringify(formData));
-            localStorage.setItem("idCardFormId", nextFormId);
-
-            // Reset any legacy edit marker so the next Create Form visit is new.
-            localStorage.removeItem("idCardEditingFormId");
-
-            window.location.href = "/design";
-        } catch (error) {
-            console.error("Unable to save form:", error);
-            showToast("Unable to save form. Please try again.");
+        if (!token) {
+            showToast("Your session has expired. Please log in again.");
             setIsSaving(false);
+            return;
         }
-    };
+
+        const trimmedName = formName.trim();
+
+        const fieldsToSave = fields.map((field) => ({
+            ...field,
+            label: field.label.trim(),
+            name: field.name.trim(),
+        }));
+
+        // Save the form to the backend first.
+        const response = await fetch(
+            `${API_BASE_URL}/api/id-card-forms`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    name: trimmedName,
+                    fields: fieldsToSave,
+                }),
+            }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success || !result.form?._id) {
+            throw new Error(
+                result.message || "Unable to save the form."
+            );
+        }
+
+        // MongoDB is now the source of truth.
+        const formData = {
+            id: result.form._id,
+            name: result.form.name,
+            fields: result.form.fields,
+        };
+
+        /*
+         * Temporary compatibility for Step 2.
+         * Your current Design page still reads these keys.
+         * We'll remove this dependency when Design is migrated.
+         */
+        const parseStoredJson = (key, fallback) => {
+            try {
+                const value = JSON.parse(
+                    localStorage.getItem(key) || "null"
+                );
+
+                return value ?? fallback;
+            } catch {
+                return fallback;
+            }
+        };
+
+        const storedForms = parseStoredJson("idCardForms", []);
+
+        if (!Array.isArray(storedForms)) {
+            throw new Error(
+                "The form was saved, but existing local form data has an invalid format. Your backend form is safe."
+            );
+        }
+
+        let updatedForms = [...storedForms];
+
+        // Preserve any legacy form already stored in the browser.
+        const legacyForm = parseStoredJson("idCardForm", null);
+
+        if (
+            legacyForm &&
+            typeof legacyForm.id === "string" &&
+            Array.isArray(legacyForm.fields) &&
+            !updatedForms.some((item) => item?.id === legacyForm.id)
+        ) {
+            updatedForms.push(legacyForm);
+        }
+
+        // Avoid duplicating this form in the local compatibility array.
+        updatedForms = updatedForms.filter(
+            (item) => item?.id !== formData.id
+        );
+
+        updatedForms.push(formData);
+
+        localStorage.setItem(
+            "idCardForms",
+            JSON.stringify(updatedForms)
+        );
+
+        localStorage.setItem(
+            "idCardForm",
+            JSON.stringify(formData)
+        );
+
+        localStorage.setItem("idCardFormId", formData.id);
+        localStorage.removeItem("idCardEditingFormId");
+
+        showToast("Form saved successfully!");
+
+        window.location.href = "/design";
+    } catch (error) {
+        console.error("Save ID card form error:", error);
+
+        showToast(
+            error.message || "Unable to save the form. Please try again."
+        );
+
+        setIsSaving(false);
+    }
+};
+
 
     const handleCancel = () => {
 

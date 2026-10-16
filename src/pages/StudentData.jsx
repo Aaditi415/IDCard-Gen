@@ -5,6 +5,10 @@ import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import IDCardRenderer from "../components/IDCardRenderer";
 
+
+const API_BASE_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 function StudentData() {
     const [lists, setLists] = useState([]);
     const [submissions, setSubmissions] = useState([]);
@@ -15,8 +19,7 @@ function StudentData() {
     // Delete modal state
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
-    const [isDeleting, setIsDeleting] = useState(false);
-
+    const [isDeleting, setIsDeleting] = useState(false);        
     const params = new URLSearchParams(window.location.search);
     const selectedListId = params.get("listId");
 
@@ -25,29 +28,106 @@ function StudentData() {
     ===================================================== */
 
     useEffect(() => {
-        try {
-            const savedLists =
-                JSON.parse(localStorage.getItem("idCardLists")) || [];
+        const loadData = async () => {
+            try {
+                const token = localStorage.getItem("idFoundryToken");
 
-            const savedSubmissions =
-                JSON.parse(
-                    localStorage.getItem("idCardSubmissions")
-                ) || [];
+                const headers = {
+                    Authorization: `Bearer ${token}`,
+                };
 
-            setLists(
-                Array.isArray(savedLists) ? savedLists : []
-            );
+                const [listsResponse, submissionsResponse] =
+                    await Promise.all([
+                        fetch(`${API_BASE_URL}/api/master-lists`, {
+                            headers,
+                        }),
+                        fetch(`${API_BASE_URL}/api/student-submissions`, {
+                            headers,
+                        }),
+                    ]);
 
-            setSubmissions(
-                Array.isArray(savedSubmissions)
-                    ? savedSubmissions
-                    : []
-            );
-        } catch (error) {
-            console.error("Failed to load student data:", error);
-            setLists([]);
-            setSubmissions([]);
-        }
+                const listsResult = await listsResponse.json();
+                const submissionsResult =
+                    await submissionsResponse.json();
+
+                if (!listsResponse.ok || !listsResult.success) {
+                    throw new Error(
+                        listsResult.message || "Unable to load master lists."
+                    );
+                }
+
+                if (
+                    !submissionsResponse.ok ||
+                    !submissionsResult.success
+                ) {
+                    throw new Error(
+                        submissionsResult.message ||
+                        "Unable to load student applications."
+                    );
+                }
+
+                const mongoLists = (listsResult.lists || []).map(list => ({
+                    ...list,
+                    id: String(list._id || list.id),
+                }));
+
+                const mongoSubmissions = (
+                    submissionsResult.submissions || []
+                ).map(submission => ({
+                    ...submission,
+                    id: String(submission._id || submission.id),
+                    masterListId: String(
+                        submission.masterListId?._id ||
+                        submission.masterListId ||
+                        ""
+                    ),
+                    status:
+                        submission.verification?.status ||
+                        submission.status ||
+                        "pending",
+                    data: submission.data || {},
+                }));
+
+                // Resolve an old localStorage list ID to its MongoDB list.
+                const oldLists = JSON.parse(
+                    localStorage.getItem("idCardLists") || "[]"
+                );
+
+                const oldSelectedList = oldLists.find(
+                    list => String(list.id) === String(selectedListId)
+                );
+
+                let resolvedList = mongoLists.find(
+                    list => String(list.id) === String(selectedListId)
+                );
+
+                if (!resolvedList && oldSelectedList) {
+                    resolvedList = mongoLists.find(list =>
+                        String(list.listName).trim().toLowerCase() ===
+                            String(oldSelectedList.listName).trim().toLowerCase() &&
+                        String(list.tabName).trim().toLowerCase() ===
+                            String(oldSelectedList.tabName).trim().toLowerCase()
+                    );
+                }
+
+                setLists(mongoLists);
+                setSubmissions(mongoSubmissions);
+
+                // Update the URL to use the actual MongoDB ID.
+                if (resolvedList && resolvedList.id !== selectedListId) {
+                    window.history.replaceState(
+                        {},
+                        "",
+                        `/student-data?listId=${encodeURIComponent(resolvedList.id)}`
+                    );
+                }
+            } catch (error) {
+                console.error("Failed to load student data:", error);
+                window.alert(error.message);
+            }
+        };
+
+        loadData();
     }, []);
 
     /* =====================================================
@@ -55,7 +135,9 @@ function StudentData() {
     ===================================================== */
 
     const selectedList = useMemo(() => {
-        return lists.find(list => list.id === selectedListId);
+        return lists.find(
+            list => String(list.id) === String(selectedListId)
+        );
     }, [lists, selectedListId]);
 
     /* =====================================================
@@ -66,7 +148,9 @@ function StudentData() {
         if (!selectedList) return [];
 
         return submissions.filter(
-            submission => submission.listId === selectedList.id
+            submission =>
+                String(submission.masterListId) ===
+                String(selectedList.id)
         );
     }, [submissions, selectedList]);
 

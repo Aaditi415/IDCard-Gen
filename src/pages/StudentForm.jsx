@@ -1063,264 +1063,224 @@ function StudentForm() {
     /* =====================================================
        LOAD FORM + DESIGN + CREATED LIST
     ===================================================== */
-
+    
     useEffect(() => {
+        let cancelled = false;
 
-    try {
+        const loadStudentForm = async () => {
+            try {
+                // 1. Get the slug from /studentform/:slug
+                const pathParts = window.location.pathname
+                    .split("/")
+                    .filter(Boolean);
 
-        /* =============================================
-           GET CLASS SLUG FROM URL
+                const slug = pathParts[1] || "";
 
-           Example:
-           /student-form/1st-a
-
-           slug = "1st-a"
-        ============================================= */
-
-        const pathParts =
-            window.location.pathname
-                .split("/")
-                .filter(Boolean);
-
-        const slug =
-            pathParts[1] || "";
-
-
-        /* =============================================
-           LOAD ALL CREATED CLASS LISTS
-        ============================================= */
-
-        const savedLists =
-            JSON.parse(
-                localStorage.getItem(
-                    "idCardLists"
-                )
-            ) || [];
-
-
-        /* =============================================
-           FIND CURRENT CLASS USING URL SLUG
-        ============================================= */
-
-        const currentList =
-            Array.isArray(savedLists)
-                ? savedLists.find(
-                    list =>
-                        list.slug === slug
-                )
-                : null;
-
-
-        /* =============================================
-           INVALID / UNKNOWN LINK
-        ============================================= */
-
-        if (!currentList) {
-
-            console.warn(
-                "Student form list not found for slug:",
-                slug
-            );
-
-            setInvalidLink(true);
-            setListLoading(false);
-
-            return;
-
-        }
-
-
-        /* =============================================
-           SAVE CURRENT LIST
-        ============================================= */
-
-        setListData(
-            currentList
-        );
-
-
-        /* =============================================
-           LOAD FORM
-        ============================================= */
-
-        const savedForm =
-            JSON.parse(
-                localStorage.getItem(
-                    FORM_STORAGE_KEY
-                )
-            );
-
-
-        if (
-            savedForm &&
-            Array.isArray(
-                savedForm.fields
-            )
-        ) {
-
-            const fields =
-                savedForm.fields.map(
-                    (
-                        field,
-                        index
-                    ) =>
-                        normalizeField(
-                            field,
-                            index
-                        )
-                );
-
-
-            setFormFields(
-                fields
-            );
-
-
-            setFormId(
-                savedForm.id || ""
-            );
-
-
-            setFormName(
-                savedForm.name ||
-                "Student ID Card Form"
-            );
-
-
-            const initialValues = {};
-
-            fields.forEach((field) => {
-                initialValues[field.id] =
-                    getInitialValue(field);
-            });
-
-            const editSubmission = JSON.parse(
-                localStorage.getItem("idCardEditSubmission")
-            );
-
-            if (
-                editSubmission &&
-                editSubmission.listId === currentList.id
-            ) {
-                setEditingSubmissionId(
-                    editSubmission.id
-                );
-
-                setValues({
-                    ...initialValues,
-                    ...(editSubmission.data || {})
-                });
-            } else {
-                setValues(initialValues);
-            }
-
-        }
-
-
-        /* =============================================
-           LOAD DESIGN
-        ============================================= */
-
-        const savedDesign =
-            JSON.parse(
-                localStorage.getItem(
-                    DESIGN_STORAGE_KEY
-                )
-            );
-
-
-        if (
-            savedDesign &&
-            typeof savedDesign ===
-                "object"
-        ) {
-
-            const mergedDesign = {
-
-                ...DEFAULT_DESIGN,
-
-                ...savedDesign,
-
-                logo: {
-                    ...DEFAULT_DESIGN.logo,
-                    ...(savedDesign.logo || {})
-                },
-
-                backgroundImage: {
-                    ...DEFAULT_DESIGN.backgroundImage,
-                    ...(savedDesign.backgroundImage || {})
-                },
-
-                organization: {
-                    ...DEFAULT_DESIGN.organization,
-                    ...(savedDesign.organization || {})
-                },
-
-                photo: {
-                    ...DEFAULT_DESIGN.photo,
-                    ...(savedDesign.photo || {})
-                },
-
-                fieldLayout: {
-                    ...(savedDesign.fieldLayout || {})
-                },
-
-                frontFieldLayout: {
-                    ...(savedDesign.frontFieldLayout || {})
-                },
-
-                backFieldLayout: {
-                    ...(savedDesign.backFieldLayout || {})
-                },
-
-                fieldSides: {
-                    ...(savedDesign.fieldSides || {})
+                if (!slug) {
+                    throw new Error("Student form slug is missing.");
                 }
 
-            };
+                // 2. Fetch the saved configuration from MongoDB
+                const API_BASE_URL =
+                    import.meta.env.VITE_API_URL ||
+                    "http://localhost:5000";
 
+                const response = await fetch(
+                    `${API_BASE_URL}/api/student-form-configs/public/${encodeURIComponent(slug)}`
+                );
 
-            setDesign(
-                mergedDesign
-            );
+                const data = await response.json();
 
+                if (!response.ok || !data.success || !data.config) {
+                    throw new Error(
+                        data.message || "Student form not found."
+                    );
+                }
 
-            setOrganization(
-                mergedDesign
-                    .organization
-                    ?.text ||
-                "ORGANIZATION"
-            );
+                const config = data.config;
 
+                if (cancelled) return;
 
-            setPreviewSide(
-                mergedDesign.sides === 2
-                    ? (
-                        mergedDesign.previewSide ||
-                        "front"
+                // 3. Adapt the MongoDB configuration to the existing UI
+                const currentList = {
+                    ...config,
+                    id: String(config._id),
+                    masterListId: config.masterListId ? String(config.masterListId._id || config.masterListId) : "",
+                    studentLink: `/studentform/${config.slug}`,
+                };
+
+                setListData(currentList);
+
+                // 4. Load the fields from the saved public configuration first.
+                // Local storage is only a backward-compatible fallback for older records.
+                const savedForm = (() => {
+                    try {
+                        return JSON.parse(
+                            localStorage.getItem(FORM_STORAGE_KEY) || "null"
+                        );
+                    } catch {
+                        return null;
+                    }
+                })();
+
+                const configuredFields =
+                    Array.isArray(config.formFields) ? config.formFields :
+                    Array.isArray(config.formSnapshot?.fields) ? config.formSnapshot.fields :
+                    Array.isArray(config.form?.fields) ? config.form.fields :
+                    Array.isArray(savedForm?.fields) ? savedForm.fields :
+                    null;
+
+                if (!configuredFields) {
+                    throw new Error(
+                        "Student form fields were not found in the saved public configuration. Please open the admin form and save the configuration again."
+                    );
+                }
+
+                const fields = configuredFields.map((field, index) =>
+                    normalizeField(field, index)
+                );
+
+                setFormFields(fields);
+                setFormId(String(config.formId || savedForm?.id || ""));
+                setFormName(
+                    config.formName || savedForm?.name || "Student ID Card Form"
+                );
+
+                const initialValues = {};
+                fields.forEach((field) => {
+                    initialValues[field.id] = getInitialValue(field);
+                });
+
+                // Keep the existing local edit workflow where it applies.
+                let editSubmission = null;
+                try {
+                    editSubmission = JSON.parse(
+                        localStorage.getItem("idCardEditSubmission") || "null"
+                    );
+                } catch {
+                    editSubmission = null;
+                }
+
+                if (
+                    editSubmission &&
+                    String(editSubmission.listId) === currentList.id
+                ) {
+                    setEditingSubmissionId(editSubmission.id);
+                    setValues({
+                        ...initialValues,
+                        ...(editSubmission.data || {}),
+                    });
+                } else {
+                    setValues(initialValues);
+                }
+
+                // 5. Prefer the design saved with the public configuration.
+                // Fall back to local storage for existing single-device setups.
+                let savedDesign =
+                    config.designSnapshot ||
+                    config.cardDesign ||
+                    config.design ||
+                    config.templateSnapshot?.design ||
+                    null;
+
+                // Some older configurations store the design fields directly
+                // inside templateSnapshot rather than under templateSnapshot.design.
+                if (
+                    !savedDesign &&
+                    config.templateSnapshot &&
+                    typeof config.templateSnapshot === "object" &&
+                    (
+                        config.templateSnapshot.primaryColor ||
+                        config.templateSnapshot.orientation ||
+                        config.templateSnapshot.photo ||
+                        config.templateSnapshot.fieldLayout
                     )
-                    : "front"
-            );
+                ) {
+                    savedDesign = config.templateSnapshot;
+                }
 
-        }
+                if (!savedDesign) {
+                    try {
+                        savedDesign = JSON.parse(
+                            localStorage.getItem(DESIGN_STORAGE_KEY) || "null"
+                        );
+                    } catch {
+                        savedDesign = null;
+                    }
+                }
 
-    } catch (error) {
+                if (savedDesign && typeof savedDesign === "object") {
+                    const mergedDesign = {
+                        ...DEFAULT_DESIGN,
+                        ...savedDesign,
+                        logo: {
+                            ...DEFAULT_DESIGN.logo,
+                            ...(savedDesign.logo || {}),
+                        },
+                        backgroundImage: {
+                            ...DEFAULT_DESIGN.backgroundImage,
+                            ...(savedDesign.backgroundImage || {}),
+                        },
+                        organization: {
+                            ...DEFAULT_DESIGN.organization,
+                            ...(savedDesign.organization || {}),
+                        },
+                        photo: {
+                            ...DEFAULT_DESIGN.photo,
+                            ...(savedDesign.photo || {}),
+                        },
+                        fieldLayout: {
+                            ...(savedDesign.fieldLayout || {}),
+                        },
+                        frontFieldLayout: {
+                            ...(savedDesign.frontFieldLayout || {}),
+                        },
+                        backFieldLayout: {
+                            ...(savedDesign.backFieldLayout || {}),
+                        },
+                        fieldSides: {
+                            ...(savedDesign.fieldSides || {}),
+                        },
+                    };
 
-        console.error(
-            "Unable to load student form:",
-            error
-        );
+                    setDesign(mergedDesign);
+                    setOrganization(
+                        mergedDesign.organization?.text ||
+                        config.organizationName ||
+                        "ORGANIZATION"
+                    );
+                    setPreviewSide(
+                        mergedDesign.sides === 2
+                            ? mergedDesign.previewSide || "front"
+                            : "front"
+                    );
+                } else {
+                    setDesign(DEFAULT_DESIGN);
+                    setOrganization(
+                        config.organizationName || "ORGANIZATION"
+                    );
+                    setPreviewSide("front");
+                }
 
-        setInvalidLink(true);
+            } catch (error) {
+                console.error("Unable to load student form:", error);
 
-    } finally {
+                if (!cancelled) {
+                    setInvalidLink(true);
+                }
+            } finally {
+                if (!cancelled) {
+                    setListLoading(false);
+                }
+            }
+        };
 
-        setListLoading(false);
+        loadStudentForm();
 
-    }
-
-}, []);
-
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     /* =====================================================
        HANDLE NORMAL FIELD
@@ -1670,277 +1630,127 @@ function StudentForm() {
        SUBMIT
     ===================================================== */
 
-const saveSubmission = () => {
+    const saveSubmission = async () => {
+        if (!listData || submitting) {
+            return;
+        }
 
-    if (!listData) {
-        return;
-    }
+        setSubmitting(true);
+        setToast("");
 
-    
-    const formattedValues = Object.fromEntries(
-        formFields.map((field) => {
-            const value = values[field.id];
+        try {
+            // 1. Format the student form values.
+            const formattedValues = Object.fromEntries(
+                formFields.map((field) => {
+                    const value = values[field.id];
 
-            // Keep email, phone, date, and other non-text fields unchanged.
-            if (
-                field.type === "email" ||
-                field.type === "phone" ||
-                isDateField(field) ||
-                isMediaField(field) ||
-                isCheckboxField(field) ||
-                isSelectField(field)
-            ) {
-                return [field.id, value];
+                    // Preserve special field values.
+                    if (
+                        field.type === "email" ||
+                        field.type === "phone" ||
+                        isDateField(field) ||
+                        isMediaField(field) ||
+                        isCheckboxField(field) ||
+                        isSelectField(field)
+                    ) {
+                        return [field.id, value];
+                    }
+
+                    return [
+                        field.id,
+                        capitalizeFirstLetter(
+                            typeof value === "string" ? value : ""
+                        ),
+                    ];
+                })
+            );
+
+            // 2. Get the public form slug.
+            const slug = String(listData.slug || "").trim();
+
+            if (!slug) {
+                throw new Error("Student form slug is missing.");
             }
 
-            return [field.id, capitalizeFirstLetter(value)];
-        })
-    );
+            // 3. Send the submission to the backend.
+            const API_BASE_URL =
+                import.meta.env.VITE_API_URL ||
+                "http://localhost:5000";
 
+            const response = await fetch(
+                `${API_BASE_URL}/api/student-submissions/public/${encodeURIComponent(slug)}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        data: formattedValues,
+                    }),
+                }
+            );
 
-    /* =====================================================
-       VERIFY STUDENT
-    ===================================================== */
+            const result = await response.json();
 
-    const verificationResult = verifyStudentSubmission({
-        submissionData: formattedValues,
-        formFields,
-        listData,
-    });
+            if (!response.ok || !result.success || !result.submission) {
+                throw new Error(
+                    result.message || "Unable to submit the application."
+                );
+            }
 
+            // 4. Adapt the backend response to the existing UI.
+            const savedSubmission = {
+                ...result.submission,
+                id: result.submission.id,
+                listId: listData.id || "",
+                listName: result.submission.listName || listData.listName || "",
+                tabName: result.submission.tabName || listData.tabName || "",
+                slug: result.submission.slug || slug,
+                studentLink: listData.studentLink || "",
+                templateId: listData.templateId || "",
+                templateName: listData.templateName || "",
+                masterListId: listData.masterListId || "",
+                masterListName: listData.masterListName || "",
+                formId,
+                formName,
+                data: result.submission.data || formattedValues,
+                status: result.submission.status || "pending",
+                verification: result.submission.verification || {
+                    status: "pending",
+                    matched: false,
+                    issues: ["Awaiting server-side verification."],
+                },
+            };
 
-    /* =====================================================
-       LOAD EXISTING SUBMISSIONS
-    ===================================================== */
+            // 5. Preserve the existing success-screen behavior.
+            // The submission itself is stored in MongoDB.
+            setSubmission(savedSubmission);
+            setEditingSubmissionId(null);
+            setShowSubmitPopup(false);
+            setPreviewMode(false);
+            setSubmitted(true);
 
-    let existingSubmissions = [];
+            // Remove the old edit marker, if present.
+            localStorage.removeItem("idCardEditSubmission");
+        } catch (error) {
+            console.error("Unable to save student submission:", error);
 
-    try {
+            setToast(
+                error.message || "Unable to submit. Please try again."
+            );
 
-        existingSubmissions =
-            JSON.parse(
-                localStorage.getItem(
-                    SUBMISSIONS_STORAGE_KEY
-                )
-            ) || [];
-
-    } catch {
-
-        existingSubmissions = [];
-
-    }
-
-
-    if (!Array.isArray(existingSubmissions)) {
-        existingSubmissions = [];
-    }
-
-
-    /* =====================================================
-       GET OLD SUBMISSION WHEN EDITING
-    ===================================================== */
-
-    let oldSubmission = null;
-
-    if (editingSubmissionId) {
-
-        oldSubmission =
-            existingSubmissions.find(
-                item =>
-                    item.id ===
-                    editingSubmissionId
-            ) || null;
-
-    }
-
-
-    /* =====================================================
-       CREATE / UPDATE SUBMISSION
-    ===================================================== */
-
-    const newSubmission = {
-
-        id:
-            editingSubmissionId ||
-            `submission_${Date.now()}`,
-
-
-        /* ---------------------------------------------
-           CLASS / LIST
-        --------------------------------------------- */
-
-        listId:
-            listData.id || "",
-
-        listName:
-            listData.listName || "",
-
-        tabName:
-            listData.tabName || "",
-
-        slug:
-            listData.slug || "",
-
-        studentLink:
-            listData.studentLink || "",
-
-
-        /* ---------------------------------------------
-           TEMPLATE
-        --------------------------------------------- */
-
-        templateId:
-            listData.templateId || "",
-
-        templateName:
-            listData.templateName || "",
-
-
-        /* ---------------------------------------------
-           MASTER LIST
-        --------------------------------------------- */
-
-        masterListId:
-            listData.masterListId || "",
-
-        masterListName:
-            listData.masterListName || "",
-
-
-        /* ---------------------------------------------
-           FORM
-        --------------------------------------------- */
-
-        formId,
-
-        formName,
-
-
-        /* ---------------------------------------------
-           STUDENT DATA
-        --------------------------------------------- */
-
-        data: {
-            ...formattedValues 
-        },
-
-
-        /* ---------------------------------------------
-           VERIFICATION
-        --------------------------------------------- */
-
-        status:
-            verificationResult.status,
-
-        verification:
-            verificationResult,
-
-
-        /* ---------------------------------------------
-           TIMESTAMP
-        --------------------------------------------- */
-
-        submittedAt:
-            oldSubmission?.submittedAt ||
-            new Date().toISOString(),
-
-        updatedAt:
-            new Date().toISOString()
-
+            window.setTimeout(() => {
+                setToast("");
+            }, 4000);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
 
-    /* =====================================================
-       UPDATE OR ADD
-    ===================================================== */
-
-    let updatedSubmissions;
-
-
-    if (editingSubmissionId) {
-
-        updatedSubmissions =
-            existingSubmissions.map(
-                submission =>
-                    submission.id ===
-                    editingSubmissionId
-                        ? newSubmission
-                        : submission
-            );
-
-    } else {
-
-        updatedSubmissions = [
-            ...existingSubmissions,
-            newSubmission
-        ];
-
+    function handleBack(){
+        window.location.href = "/"
     }
-
-
-    /* =====================================================
-       SAVE SUBMISSIONS
-    ===================================================== */
-
-    localStorage.setItem(
-        SUBMISSIONS_STORAGE_KEY,
-        JSON.stringify(
-            updatedSubmissions
-        )
-    );
-
-
-    /* =====================================================
-       LATEST SUBMISSION
-    ===================================================== */
-
-    localStorage.setItem(
-        "idCardLatestSubmission",
-        JSON.stringify(
-            newSubmission
-        )
-    );
-
-
-    /* =====================================================
-       REMOVE EDIT MODE
-    ===================================================== */
-
-    localStorage.removeItem(
-        "idCardEditSubmission"
-    );
-
-
-    /* =====================================================
-       UPDATE STATE
-    ===================================================== */
-
-    setSubmission(
-        newSubmission
-    );
-
-    setEditingSubmissionId(
-        null
-    );
-
-    setShowSubmitPopup(
-        false
-    );
-
-    setPreviewMode(
-        false
-    );
-
-    setSubmitted(
-        true
-    );
-
-};
-
-
-function handleBack(){
-    window.location.href = "/"
-}
 
     /* =====================================================
        RESET

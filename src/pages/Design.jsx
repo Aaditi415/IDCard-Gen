@@ -1,6 +1,6 @@
 import React, {
     useEffect,
-    useMemo,
+    useRef,
     useState,
 } from "react";
 
@@ -242,12 +242,16 @@ const isMediaField = (field) =>
         String(field?.type || "").toLowerCase()
     );
 
-/* =====================================================
+const API_BASE_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+    /* =====================================================
    DESIGN
 ===================================================== */
 
 function Design() {
 
+    const formRequestStarted = useRef(false);
     const [formFields, setFormFields] = useState([]);
 
     const [design, setDesign] = useState(
@@ -275,49 +279,79 @@ function Design() {
            LOAD FORM
         ============================================= */
 
-        try {
+        /* =============================================
+   LOAD FORM FROM BACKEND
+============================================= */
 
-            const savedForm =
-                JSON.parse(
-                    localStorage.getItem(
-                        FORM_STORAGE_KEY
-                    )
-                );
+const loadForm = async () => {
+    try {
+        const token = localStorage.getItem("idFoundryToken");
+        const savedFormId = localStorage.getItem("idCardFormId");
 
-            if (Array.isArray(savedForm)) {
+        if (!token) {
+            setToast("Please log in again to continue.");
+            return;
+        }
 
-                setFormFields(
-                    savedForm.map(
-                        (field, index) =>
-                            normalizeField(
-                                field,
-                                index
-                            )
-                    )
-                );
+        if (!savedFormId) {
+            setToast("No form selected. Please return to Step 1.");
+            return;
+        }
 
-            } else if (
-                Array.isArray(savedForm?.fields)
-            ) {
-
-                setFormFields(
-                    savedForm.fields.map(
-                        (field, index) =>
-                            normalizeField(
-                                field,
-                                index
-                            )
-                    )
-                );
+        const response = await fetch(
+            `${API_BASE_URL}/api/id-card-forms/${encodeURIComponent(savedFormId)}`,
+            {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             }
+        );
 
-        } catch (error) {
+        const result = await response.json();
 
-            console.error(
-                "Failed to load form:",
-                error
+        if (!response.ok || !result.success || !result.form) {
+            throw new Error(
+                result.message || "Unable to load your ID card form."
             );
         }
+
+        const savedForm = result.form;
+
+        if (!Array.isArray(savedForm.fields)) {
+            throw new Error("The saved form has an invalid fields format.");
+        }
+
+        setFormFields(
+            savedForm.fields.map((field, index) =>
+                normalizeField(field, index)
+            )
+        );
+
+        // Keep the selected MongoDB form ID available
+        // for the next workflow steps.
+        localStorage.setItem("idCardFormId", savedForm._id);
+
+        // Temporary compatibility for components that still
+        // read the form from localStorage.
+        localStorage.setItem(
+            FORM_STORAGE_KEY,
+            JSON.stringify({
+                ...savedForm,
+                id: savedForm._id,
+            })
+        );
+
+    } catch (error) {
+        console.error("Failed to load form from backend:", error);
+        setToast(error.message || "Unable to load the saved form.");
+    }
+};
+
+if (!formRequestStarted.current) {
+    formRequestStarted.current = true;
+    loadForm();
+}
 
 
         /* =============================================

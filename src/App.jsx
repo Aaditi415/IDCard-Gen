@@ -56,46 +56,60 @@ function AppContent() {
     }, []);
 
 
-    useEffect(() => {
-        const checkSession = async () => {
-            const currentPath = window.location.pathname;
+    
+useEffect(() => {
+    let cancelled = false;
 
-            if (
-                currentPath === "/login" ||
-                currentPath === "/login.html"
-            ) {
-                return;
-            }
+    const checkSession = async () => {
+        const currentPath = window.location.pathname;
 
-            const token = localStorage.getItem("idFoundryToken");
+        if (
+            currentPath === "/login" ||
+            currentPath === "/login.html"
+        ) {
+            return;
+        }
 
-            if (!token) {
-                window.location.replace("/login");
-                return;
-            }
+        const token = localStorage.getItem("idFoundryToken");
 
-            try {
-                const response = await fetch(
-                    "http://localhost:5000/api/auth/me",
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
+        if (!token) {
+            window.location.replace("/login");
+            return;
+        }
 
-                if (!response.ok) {
-                    localStorage.removeItem("idFoundryToken");
-                    localStorage.removeItem("idFoundryUser");
-                    window.location.replace("/login");
+        try {
+            const response = await fetch(
+                "http://localhost:5000/api/auth/me",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 }
-            } catch (error) {
+            );
+
+            if (cancelled) return;
+
+            if (!response.ok) {
+                localStorage.removeItem("idFoundryToken");
+                localStorage.removeItem("idFoundryUser");
+                window.location.replace("/login");
+            }
+        } catch (error) {
+            if (!cancelled) {
                 console.error("Session verification failed:", error);
             }
-        };
+        }
+    };
 
-        checkSession();
-    }, []);    const path = window.location.pathname;
+    checkSession();
+
+    return () => {
+        cancelled = true;
+    };
+}, []);
+
+    
+    const path = window.location.pathname;
 
     let page;
 

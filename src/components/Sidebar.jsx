@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
     LayoutDashboard,
@@ -53,7 +54,7 @@ function Sidebar({ activePage = "dashboard" }) {
             ? "single-record"
             : currentPath.endsWith("/idlistform") ||
               currentPath.endsWith("/idlistform.html")
-            ? "cards"
+            ? "student-forms"
             : currentPath.endsWith("/templates") ||
               currentPath.endsWith("/templates.html")
             ? "templates"
@@ -71,12 +72,12 @@ function Sidebar({ activePage = "dashboard" }) {
     const isMasterDataPage =
         currentPage === "data" ||
         currentPage === "stored-data" ||
-        currentPage === "import";
+        currentPage === "import" ||
+        currentPage === "single-record";
 
     const isSubmissionsPage =
         currentPage === "student-data" ||
-        currentPage === "studentform" ||
-        currentPage === "single-record";
+        currentPage === "studentform";
 
     // Only one expandable section can be open.
     const [openSection, setOpenSection] = useState(() => {
@@ -94,8 +95,8 @@ function Sidebar({ activePage = "dashboard" }) {
     });
 
     /* =====================================================
-       LOAD MASTER DATA FROM MONGODB
-       KEEP SUBMISSIONS SEPARATE
+       LOAD MASTER LISTS FROM MONGODB
+       USE THE SAME LISTS FOR SUBMISSIONS NAVIGATION
     ===================================================== */
 
     useEffect(() => {
@@ -105,27 +106,9 @@ function Sidebar({ activePage = "dashboard" }) {
         let cancelled = false;
 
         const loadSidebarData = async () => {
-            let savedStudentLists = [];
-            let masterListIds = new Set();
-
-            try {
-                // Existing submission-list storage.
-                const savedLists = JSON.parse(
-                    localStorage.getItem("idCardLists") || "[]"
-                );
-
-                savedStudentLists = Array.isArray(savedLists)
-                    ? savedLists
-                    : [];
-            } catch (error) {
-                console.error(
-                    "Failed to load submission lists:",
-                    error
-                );
-            }
-
             try {
                 const token = localStorage.getItem("idFoundryToken");
+
                 const apiBaseUrl =
                     import.meta.env.VITE_API_URL ||
                     "http://localhost:5000";
@@ -133,7 +116,7 @@ function Sidebar({ activePage = "dashboard" }) {
                 if (!token) {
                     if (!cancelled) {
                         setStoredLists([]);
-                        setStudentLists(savedStudentLists);
+                        setStudentLists([]);
                     }
                     return;
                 }
@@ -148,25 +131,30 @@ function Sidebar({ activePage = "dashboard" }) {
                     }
                 );
 
-                if (!response.ok) {
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
                     throw new Error(
+                        result.message ||
                         `Failed to load master lists (${response.status})`
                     );
                 }
 
-                const result = await response.json();
-
-                // Normalize MongoDB IDs for navigation and selection.
-                const validLists = (result.lists || [])
-                    .filter((list) => list._id || list.id)
+                // Normalize MongoDB IDs for both navigation sections.
+                const validLists = (
+                    Array.isArray(result.lists) ? result.lists : []
+                )
+                    .filter((list) => list && (list._id || list.id))
                     .map((list) => ({
                         ...list,
                         id: String(list._id || list.id),
-                    }));
-
-                masterListIds = new Set(
-                    validLists.map((list) => String(list.id))
-                );
+                    }))
+                    .filter(
+                        (list, index, lists) =>
+                            lists.findIndex(
+                                (item) => item.id === list.id
+                            ) === index
+                    );
 
                 // Preserve the user's saved menu ordering.
                 let savedOrder = [];
@@ -187,43 +175,33 @@ function Sidebar({ activePage = "dashboard" }) {
                     ...savedOrder
                         .map((id) =>
                             validLists.find(
-                                (list) => String(list.id) === id
+                                (list) => list.id === id
                             )
                         )
                         .filter(Boolean),
 
                     ...validLists.filter(
-                        (list) => !savedOrder.includes(String(list.id))
+                        (list) => !savedOrder.includes(list.id)
                     ),
                 ];
 
                 if (!cancelled) {
+                    // Master Data > Your lists
                     setStoredLists(orderedLists);
 
-                    // Do not show MongoDB master lists as submission lists.
-                    const separateStudentLists = savedStudentLists.filter(
-                        (list) => {
-                            const listId = String(
-                                list._id || list.id || ""
-                            );
-
-                            return !masterListIds.has(listId);
-                        }
-                    );
-
-                    setStudentLists(separateStudentLists);
+                    // Submissions > Submission lists
+                    // Use MongoDB IDs, not legacy localStorage IDs.
+                    setStudentLists(orderedLists);
                 }
             } catch (error) {
                 console.error(
-                    "Failed to load master lists:",
+                    "Failed to load sidebar master lists:",
                     error
                 );
 
                 if (!cancelled) {
                     setStoredLists([]);
-
-                    // Keep existing submissions available if the API fails.
-                    setStudentLists(savedStudentLists);
+                    setStudentLists([]);
                 }
             }
         };
@@ -260,6 +238,10 @@ function Sidebar({ activePage = "dashboard" }) {
         };
     }, [mobileOpen]);
 
+    /* =====================================================
+       NAVIGATION HELPERS
+    ===================================================== */
+
     const navigate = (url) => {
         setMobileOpen(false);
         window.location.href = url;
@@ -287,7 +269,6 @@ function Sidebar({ activePage = "dashboard" }) {
             .trim();
 
     const isDataActive = isMasterDataPage;
-
     const isSubmissionActive = isSubmissionsPage;
 
     return (
@@ -349,6 +330,7 @@ function Sidebar({ activePage = "dashboard" }) {
                     <div className="nav-title">Workspace</div>
 
                     <nav className="nav" aria-label="Workspace">
+                        {/* Dashboard */}
                         <button
                             type="button"
                             className={navItemClass("dashboard")}
@@ -370,6 +352,7 @@ function Sidebar({ activePage = "dashboard" }) {
                         >
                             <Database className="nav-icon" />
                             <span className="nav-label">Master Data</span>
+
                             <ChevronDown
                                 className={`nav-chevron ${
                                     openSection === "master-data"
@@ -384,6 +367,7 @@ function Sidebar({ activePage = "dashboard" }) {
                                 id="master-data-submenu"
                                 className="nav-submenu"
                             >
+                                {/* Import Data */}
                                 <button
                                     type="button"
                                     className={`stored-item ${
@@ -399,6 +383,7 @@ function Sidebar({ activePage = "dashboard" }) {
                                     </span>
                                 </button>
 
+                                {/* Add Single Record */}
                                 <button
                                     type="button"
                                     className={`stored-item ${
@@ -416,11 +401,9 @@ function Sidebar({ activePage = "dashboard" }) {
                                     </span>
                                 </button>
 
-                                {storedLists.length > 0 && (
-                                    <div className="submenu-caption">
-                                        Your lists
-                                    </div>
-                                )}
+                                <div className="submenu-caption">
+                                    Your lists
+                                </div>
 
                                 {storedLists.length === 0 ? (
                                     <div className="nav-empty">
@@ -455,8 +438,8 @@ function Sidebar({ activePage = "dashboard" }) {
                                             <span className="stored-letter">
                                                 {getInitials(
                                                     list.tabName ||
-                                                        list.listName ||
-                                                        "List"
+                                                    list.listName ||
+                                                    "List"
                                                 )}
                                             </span>
 
@@ -485,6 +468,7 @@ function Sidebar({ activePage = "dashboard" }) {
                         >
                             <ClipboardList className="nav-icon" />
                             <span className="nav-label">Submissions</span>
+
                             <ChevronDown
                                 className={`nav-chevron ${
                                     openSection === "submissions"
@@ -499,32 +483,24 @@ function Sidebar({ activePage = "dashboard" }) {
                                 id="submissions-submenu"
                                 className="nav-submenu"
                             >
-                                {studentLists.length > 0 && (
-                                    <div className="submenu-caption">
-                                        Submission lists
-                                    </div>
-                                )}
+                                <div className="submenu-caption">
+                                    Submission lists
+                                </div>
 
                                 {studentLists.length === 0 ? (
                                     <div className="nav-empty">
                                         <Users size={15} />
-                                        <span>
-                                            No submission lists yet
-                                        </span>
+                                        <span>No submission lists yet</span>
                                     </div>
                                 ) : (
                                     studentLists.map((list) => (
                                         <button
                                             type="button"
-                                            key={list.id || list._id}
+                                            key={list.id}
                                             className={`stored-item ${
                                                 currentPage === "student-data" &&
-                                                String(
-                                                    list.id || list._id
-                                                ) ===
-                                                    String(
-                                                        selectedStudentListId
-                                                    )
+                                                String(list.id) ===
+                                                    String(selectedStudentListId)
                                                     ? "active"
                                                     : ""
                                             }`}
@@ -537,8 +513,7 @@ function Sidebar({ activePage = "dashboard" }) {
                                                 navigate(
                                                     "/student-data?listId=" +
                                                         encodeURIComponent(
-                                                            list.id ||
-                                                                list._id
+                                                            list.id
                                                         )
                                                 )
                                             }
@@ -546,8 +521,8 @@ function Sidebar({ activePage = "dashboard" }) {
                                             <span className="stored-letter">
                                                 {getInitials(
                                                     list.tabName ||
-                                                        list.listName ||
-                                                        "List"
+                                                    list.listName ||
+                                                    "List"
                                                 )}
                                             </span>
 
@@ -564,6 +539,7 @@ function Sidebar({ activePage = "dashboard" }) {
 
                         <div className="nav-divider" />
 
+                        {/* Student Forms */}
                         <button
                             type="button"
                             className={navItemClass("student-forms")}
@@ -575,6 +551,7 @@ function Sidebar({ activePage = "dashboard" }) {
                             </span>
                         </button>
 
+                        {/* Templates */}
                         <button
                             type="button"
                             className={navItemClass("templates")}
@@ -584,6 +561,7 @@ function Sidebar({ activePage = "dashboard" }) {
                             <span className="nav-label">Templates</span>
                         </button>
 
+                        {/* Create Design */}
                         <button
                             type="button"
                             className={navItemClass(
@@ -619,6 +597,7 @@ function Sidebar({ activePage = "dashboard" }) {
                         >
                             <Settings className="nav-icon" />
                             <span className="nav-label">Settings</span>
+
                             <ChevronDown
                                 className={`nav-chevron ${
                                     openSection === "settings"
@@ -633,6 +612,7 @@ function Sidebar({ activePage = "dashboard" }) {
                                 id="settings-submenu"
                                 className="nav-submenu"
                             >
+                                {/* Appearance */}
                                 <button
                                     type="button"
                                     className={`stored-item ${
@@ -640,9 +620,7 @@ function Sidebar({ activePage = "dashboard" }) {
                                             ? "active"
                                             : ""
                                     }`}
-                                    onClick={() =>
-                                        navigate("/settings")
-                                    }
+                                    onClick={() => navigate("/settings")}
                                 >
                                     <Palette className="submenu-icon" />
                                     <span className="stored-name">
@@ -650,11 +628,11 @@ function Sidebar({ activePage = "dashboard" }) {
                                     </span>
                                 </button>
 
+                                {/* Data Menu */}
                                 <button
                                     type="button"
                                     className={`stored-item ${
-                                        currentPage ===
-                                        "data-menu-settings"
+                                        currentPage === "data-menu-settings"
                                             ? "active"
                                             : ""
                                     }`}
